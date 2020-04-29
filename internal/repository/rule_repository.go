@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"strings"
 
+	ruleserrors "github.com/nicopozo/mockserver/internal/errors"
+
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 
 	"github.com/elastic/go-elasticsearch/v7/esapi"
@@ -77,33 +79,45 @@ func (repository *RuleElasticRepository) Save(rule *model.Rule, txn newrelic.Tra
 func (repository *RuleElasticRepository) Get(key string, txn newrelic.Transaction,
 	logger log.ILogger) (*model.Rule, error) {
 	var err error
-	/*
-		var item gokvsclient.Item
+	getRuleReq := esapi.GetRequest{
+		DocumentID: strings.ToLower(key),
+		Index:      "rules",
+	}
 
-		gorelic.WrapDatastoreSegment("KVS", "GET", txn, func() {
-			item, err = repository.getRulesKvsClient().Get(key)
-		})
+	getRuleResp, err := getRuleReq.Do(context.Background(), repository.getElasticClient())
+	if getRuleResp != nil {
+		defer closeBody(getRuleResp.Body, repository, logger)
+	}
 
-		if err != nil {
-			logger.Error(repository, nil, err, "error getting rule from KVS")
-			return nil, err
-		}
+	if err != nil {
+		logger.Error(repository, nil, err, "error getting rule from Elastic Search")
+		return nil, err
+	}
 
-		if item == nil {
-			msg := fmt.Sprintf("no rule found with key: %v", key)
+	if getRuleResp.IsError() {
+		if getRuleResp.StatusCode == http.StatusNotFound {
+			msg := fmt.Sprintf("no rule found for key: %v", key)
 			logger.Debug(repository, nil, msg)
 
 			return nil, ruleserrors.RuleNotFoundError{Message: msg}
 		}
+		logger.Error(repository, nil, errors.New("http status != 200: Actual: "+getRuleResp.String()),
+			"error getting expression from Elastic Search")
+		buf := new(bytes.Buffer)
+		_, _ = buf.ReadFrom(getRuleResp.Body)
+		newStr := buf.String()
 
-		result := model.Rule{}
+		return nil, errors.New("error getting expressions from Elastic Search - " + newStr)
+	}
 
-		err = item.GetValue(&result)
-		if err != nil {
-			return nil, err
-		}*/
+	var rule *model.Rule
 
-	return nil, err
+	rule, err = model.UnmarshalESRule(getRuleResp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return rule, err
 }
 
 func (repository *RuleElasticRepository) Search(params map[string]interface{}, paging model.Paging, txn newrelic.Transaction,
@@ -169,29 +183,40 @@ func (repository *RuleElasticRepository) Delete(application, name string, txn ne
 
 func (repository *RuleElasticRepository) SearchByMethodAndPath(method string, path string, txn newrelic.Transaction,
 	logger log.ILogger) (*model.Rule, error) {
-	/*var err error
+	var err error
 
-	var item gokvsclient.Item
+	getExprReq := esapi.GetRequest{
+		DocumentID: strings.ToLower(method),
+		Index:      "expressions",
+	}
 
-	gorelic.WrapDatastoreSegment("KVS", "GET", txn, func() {
-		item, err = repository.getExpressionsKvsClient().Get(strings.ToLower(method))
-	})
+	getExprResp, err := getExprReq.Do(context.Background(), repository.getElasticClient())
+	if getExprResp != nil {
+		defer closeBody(getExprResp.Body, repository, logger)
+	}
 
 	if err != nil {
-		logger.Error(repository, nil, err, "error getting expressions from KVS")
+		logger.Error(repository, nil, err, "error getting expressions from Elastic Search")
 		return nil, err
 	}
 
-	if item == nil {
-		msg := fmt.Sprintf("no expression found for method: %v", method)
-		logger.Debug(repository, nil, msg)
+	if getExprResp.IsError() {
+		if getExprResp.StatusCode == http.StatusNotFound {
+			msg := fmt.Sprintf("no expression found for method: %v", method)
+			logger.Debug(repository, nil, msg)
+			return nil, ruleserrors.RuleNotFoundError{Message: msg}
+		}
+		logger.Error(repository, nil, nil, "error getting expressions from Elastic Search")
+		buf := new(bytes.Buffer)
+		_, _ = buf.ReadFrom(getExprResp.Body)
+		newStr := buf.String()
 
-		return nil, ruleserrors.RuleNotFoundError{Message: msg}
+		return nil, errors.New("error getting expressions from Elastic Search - " + newStr)
 	}
 
-	patternList := model.PatternList{}
+	var patternList *model.PatternList
 
-	err = item.GetValue(&patternList)
+	patternList, err = model.UnmarshalESPatternList(getExprResp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -212,31 +237,45 @@ func (repository *RuleElasticRepository) SearchByMethodAndPath(method string, pa
 		}
 	}
 
-	gorelic.WrapDatastoreSegment("KVS", "GET", txn, func() {
-		item, err = repository.getRulesKvsClient().Get(ruleKey)
-	})
+	getRuleReq := esapi.GetRequest{
+		DocumentID: strings.ToLower(ruleKey),
+		Index:      "rules",
+	}
+
+	getRuleResp, err := getRuleReq.Do(context.Background(), repository.getElasticClient())
+	if getRuleResp != nil {
+		defer closeBody(getRuleResp.Body, repository, logger)
+	}
 
 	if err != nil {
-		logger.Error(repository, nil, err, "error getting rule from KVS")
+		logger.Error(repository, nil, err, "error getting rule from Elastic Search")
 		return nil, err
 	}
 
-	if item == nil {
-		msg := fmt.Sprintf("no rule found for hey: %v", ruleKey)
-		logger.Debug(repository, nil, msg)
+	if getRuleResp.IsError() {
+		if getRuleResp.StatusCode == http.StatusNotFound {
+			msg := fmt.Sprintf("no rule found for key: %v", ruleKey)
+			logger.Debug(repository, nil, msg)
 
-		return nil, ruleserrors.RuleNotFoundError{Message: msg}
+			return nil, ruleserrors.RuleNotFoundError{Message: msg}
+		}
+		logger.Error(repository, nil, errors.New("http status != 200: Actual: "+getRuleResp.String()),
+			"error getting expressions from Elastic Search")
+		buf := new(bytes.Buffer)
+		_, _ = buf.ReadFrom(getRuleResp.Body)
+		newStr := buf.String()
+
+		return nil, errors.New("error getting expressions from Elastic Search - " + newStr)
 	}
 
-	rule := model.Rule{}
-	err = item.GetValue(&rule)
+	var rule *model.Rule
 
+	rule, err = model.UnmarshalESRule(getRuleResp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	return &rule, err*/
-	return nil, nil
+	return rule, err
 }
 
 func (repository *RuleElasticRepository) createPatterns(rule *model.Rule, txn newrelic.Transaction,
@@ -249,11 +288,13 @@ func (repository *RuleElasticRepository) createPatterns(rule *model.Rule, txn ne
 	}
 
 	getResp, err := getReq.Do(context.Background(), repository.getElasticClient())
-	if err != nil {
-		logger.Error(repository, nil, err, "error getting expressions from Elastic Search")
-	}
 	if getResp != nil {
 		defer closeBody(getResp.Body, repository, logger)
+	}
+
+	if err != nil {
+		logger.Error(repository, nil, err, "error getting expressions from Elastic Search")
+		return nil, err
 	}
 
 	if getResp.IsError() {
@@ -269,7 +310,7 @@ func (repository *RuleElasticRepository) createPatterns(rule *model.Rule, txn ne
 	var list model.PatternList
 
 	if getResp.StatusCode != http.StatusNotFound {
-		l, err := model.UnmarshalPatternList(getResp.Body)
+		l, err := model.UnmarshalESPatternList(getResp.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -373,8 +414,9 @@ func (repository *RuleElasticRepository) getElasticClient() *elasticsearch.Clien
 			},
 		}
 		es, err := elasticsearch.NewClient(cfg)
-		if err != nil {
 
+		if err != nil {
+			fmt.Println("Que hacer aqui!!")
 		}
 
 		repository.client = es

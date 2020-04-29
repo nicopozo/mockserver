@@ -66,7 +66,7 @@ func (controller *RuleController) Get(context *gin.Context) {
 		case ruleserrors.RuleNotFoundError:
 			logger.Debug(controller, nil, "No rule found with key: %v", key)
 
-			errorResult := model.NewError(model.ResourceNotFoundError, "Error getting rule. %s", err.Error())
+			errorResult := model.NewError(model.ResourceNotFoundError, "%s", err.Error())
 			context.JSON(http.StatusNotFound, errorResult)
 		default:
 			logger.Error(controller, nil, err,

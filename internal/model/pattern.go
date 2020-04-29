@@ -15,9 +15,13 @@ type PatternList struct {
 	Patterns []*Pattern `json:"patterns"`
 }
 
-func UnmarshalPatternList(body io.Reader) (*PatternList, error) {
-	patternList := &PatternList{}
+type ESPatternList struct {
+	Source *PatternList `json:"_source"`
+}
+
+func UnmarshalESPatternList(body io.Reader) (*PatternList, error) {
+	patternList := &ESPatternList{}
 	err := jsonutils.Unmarshal(body, patternList)
 
-	return patternList, err
+	return patternList.Source, err
 }

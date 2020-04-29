@@ -22,9 +22,20 @@ type RuleList struct {
 	Results []*Rule
 }
 
-func UnmarshalRule(body io.Reader) (*Rule, error) {
-	task := &Rule{}
-	err := jsonutils.Unmarshal(body, task)
+type ESRule struct {
+	Source *Rule `json:"_source"`
+}
 
-	return task, err
+func UnmarshalRule(body io.Reader) (*Rule, error) {
+	rule := &Rule{}
+	err := jsonutils.Unmarshal(body, rule)
+
+	return rule, err
+}
+
+func UnmarshalESRule(body io.Reader) (*Rule, error) {
+	rule := &ESRule{}
+	err := jsonutils.Unmarshal(body, rule)
+
+	return rule.Source, err
 }

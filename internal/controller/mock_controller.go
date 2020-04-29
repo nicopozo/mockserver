@@ -35,10 +35,10 @@ func (controller *MockController) Execute(context *gin.Context) {
 	if err != nil {
 		switch err.(type) {
 		case ruleserrors.RuleNotFoundError:
-			logger.Debug(controller, nil, "No rule found for path: %v and method: ", path, method)
+			logger.Debug(controller, nil, "No rule found for path: %v and method: %s", path, method)
 
 			errorResult := model.NewError(model.ResourceNotFoundError,
-				"No rule found for path: %v and method: %v. %v", path, method, err.Error())
+				"No rule found for path: %v and method: %s. %v", path, method, err.Error())
 			context.JSON(http.StatusNotFound, errorResult)
 		default:
 			logger.Error(controller, nil, err,
