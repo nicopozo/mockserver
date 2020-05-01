@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
@@ -27,24 +28,33 @@ type log struct {
 }
 
 func DefaultLogger() ILogger {
+	format := new(logrus.TextFormatter)
+	format.TimestampFormat = time.RFC3339
+	format.FullTimestamp = true
 	iLogger := &log{
 		trackingID: newRequestID(),
-		logrus:     logrus.New(),
+		logrus: &logrus.Logger{
+			Out:       os.Stdout,
+			Formatter: format,
+			Hooks:     make(logrus.LevelHooks),
+			Level:     logrus.DebugLevel,
+		},
 	}
-
-	iLogger.logrus.Out = os.Stdout
-	iLogger.logrus.Level = logrus.TraceLevel
 
 	return iLogger
 }
 
 func NewLogger(trackingID string) ILogger {
+	format := new(logrus.TextFormatter)
+	format.TimestampFormat = time.RFC3339
+	format.FullTimestamp = true
 	iLogger := &log{
 		trackingID: trackingID,
 		logrus: &logrus.Logger{
-			Out:   os.Stdout,
-			Hooks: make(logrus.LevelHooks),
-			Level: logrus.DebugLevel,
+			Out:       os.Stdout,
+			Formatter: format,
+			Hooks:     make(logrus.LevelHooks),
+			Level:     logrus.DebugLevel,
 		},
 	}
 

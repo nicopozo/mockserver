@@ -3,13 +3,11 @@ package controller
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
+	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	ruleserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/service"
-
-	"github.com/gin-gonic/gin"
-	newrelic "github.com/newrelic/go-agent"
-	"github.com/newrelic/go-agent/_integrations/nrgin/v1"
 )
 
 type RuleController struct {
@@ -17,7 +15,8 @@ type RuleController struct {
 }
 
 func (controller *RuleController) Create(c *gin.Context) {
-	logger := GetLogger(c)
+	reqContext := mockscontext.New(c)
+	logger := mockscontext.Logger(reqContext)
 	logger.Debug(controller, nil, "Entering RuleController Save()")
 
 	rule, err := model.UnmarshalRule(c.Request.Body)
@@ -29,12 +28,7 @@ func (controller *RuleController) Create(c *gin.Context) {
 		return
 	}
 
-	txn := nrgin.Transaction(c)
-	segment := newrelic.StartSegment(txn, "ControllerSend")
-
-	defer endSegment(controller, segment, logger)
-
-	err = controller.RuleService.Save(rule, txn, logger)
+	err = controller.RuleService.Save(reqContext, rule)
 
 	if err != nil {
 		errorResult := model.NewError(model.InternalError, "Error occurred when saving rule. %s", err.Error())
@@ -49,17 +43,14 @@ func (controller *RuleController) Create(c *gin.Context) {
 }
 
 func (controller *RuleController) Get(context *gin.Context) {
-	logger := GetLogger(context)
+	reqContext := mockscontext.New(context)
+	logger := mockscontext.Logger(reqContext)
+
 	logger.Debug(controller, nil, "Entering RuleController Get()")
 
 	key := context.Param("key")
 
-	txn := nrgin.Transaction(context)
-	segment := newrelic.StartSegment(txn, "ControllerGet")
-
-	defer endSegment(controller, segment, logger)
-
-	task, err := controller.RuleService.Get(key, txn, logger)
+	task, err := controller.RuleService.Get(reqContext, key)
 
 	if err != nil {
 		switch err.(type) {
@@ -80,4 +71,35 @@ func (controller *RuleController) Get(context *gin.Context) {
 	}
 
 	context.JSON(http.StatusOK, task)
+}
+
+func (controller *RuleController) Search(context *gin.Context) {
+	reqContext := mockscontext.New(context)
+	logger := mockscontext.Logger(reqContext)
+
+	logger.Debug(controller, nil, "Entering RuleController Search()")
+
+	paging, err := getPagingFromRequest(context.Request)
+	if err != nil {
+		logger.Error(controller, nil, err, "Error searching rules. Error parsing pagination params")
+		errorResult := model.NewError(model.ValidationError, "Error parsing pagination params: %s", err.Error())
+		context.JSON(http.StatusBadRequest, errorResult)
+
+		return
+	}
+
+	params := getParametersFromRequest(context.Request)
+
+	ruleList, err := controller.RuleService.Search(reqContext, params, *paging)
+
+	if err != nil {
+		logger.Error(controller, nil, err, "Failed to search rules")
+
+		errorResult := model.NewError(model.InternalError, "Error occurred when searching rules. %s", err.Error())
+		context.JSON(http.StatusInternalServerError, errorResult)
+
+		return
+	}
+
+	context.JSON(http.StatusOK, ruleList)
 }

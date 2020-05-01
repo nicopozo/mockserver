@@ -4,14 +4,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	ruleserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/service"
-
-	newrelic "github.com/newrelic/go-agent"
-	"github.com/newrelic/go-agent/_integrations/nrgin/v1"
-
-	"github.com/gin-gonic/gin"
 )
 
 type MockController struct {
@@ -19,18 +16,15 @@ type MockController struct {
 }
 
 func (controller *MockController) Execute(context *gin.Context) {
-	logger := GetLogger(context)
+	reqContext := mockscontext.New(context)
+	logger := mockscontext.Logger(reqContext)
+
 	logger.Debug(controller, nil, "Entering RuleController Get()")
-
-	txn := nrgin.Transaction(context)
-	segment := newrelic.StartSegment(txn, "ControllerGet")
-
-	defer endSegment(controller, segment, logger)
 
 	method := strings.ToLower(context.Request.Method)
 	path := context.Param("rule")
 
-	response, err := controller.MockService.SearchResponseForMethodAndPath(method, path, txn, logger)
+	response, err := controller.MockService.SearchResponseForMethodAndPath(reqContext, method, path)
 
 	if err != nil {
 		switch err.(type) {

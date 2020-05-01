@@ -7,6 +7,8 @@ require (
 	github.com/gin-gonic/gin v1.6.2
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/mercadolibre/fury_recon-commons-go v0.0.0-20200422134939-a4bc27f9acf0
+	github.com/mercadolibre/go-meli-toolkit v0.0.0-20200401143855-ce7291b2edf9
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/newrelic/go-agent v3.4.0+incompatible

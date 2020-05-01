@@ -11,11 +11,12 @@ import (
 
 func mapRoutes(router *gin.Engine) {
 	ruleController := newRuleController()
-	router.POST("/reconciliations/mocks/rules", ruleController.Create)
-	router.GET("/reconciliations/mocks/rules/:key", ruleController.Get)
+	router.POST("/mock-server/rules", ruleController.Create)
+	router.GET("/mock-server/rules/:key", ruleController.Get)
+	router.GET("/mock-server/rules", ruleController.Search)
 
 	mockController := newMockController()
-	router.Any("/reconciliations/mocks/mock/*rule", mockController.Execute)
+	router.Any("/mock-server/mock/*rule", mockController.Execute)
 
 	router.GET("/ping", ping())
 }

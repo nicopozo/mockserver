@@ -26,6 +26,19 @@ type ESRule struct {
 	Source *Rule `json:"_source"`
 }
 
+type ESSearchResult struct {
+	Hits *ESHits `json:"hits"`
+}
+
+type ESHits struct {
+	Total *ESTotal  `json:"total"`
+	Hits  []*ESRule `json:"hits"`
+}
+
+type ESTotal struct {
+	Value int `json:"value"`
+}
+
 func UnmarshalRule(body io.Reader) (*Rule, error) {
 	rule := &Rule{}
 	err := jsonutils.Unmarshal(body, rule)
@@ -38,4 +51,11 @@ func UnmarshalESRule(body io.Reader) (*Rule, error) {
 	err := jsonutils.Unmarshal(body, rule)
 
 	return rule.Source, err
+}
+
+func UnmarshalSearchESRule(body io.Reader) (*ESSearchResult, error) {
+	result := &ESSearchResult{}
+	err := jsonutils.Unmarshal(body, result)
+
+	return result, err
 }

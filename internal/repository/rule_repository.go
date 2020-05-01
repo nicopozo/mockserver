@@ -3,49 +3,45 @@ package repository
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
 
-	ruleserrors "github.com/nicopozo/mockserver/internal/errors"
-
-	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
-
-	"github.com/elastic/go-elasticsearch/v7/esapi"
-
-	stringutils "github.com/nicopozo/mockserver/internal/utils/string"
-
 	"github.com/elastic/go-elasticsearch/v7"
-	newrelic "github.com/newrelic/go-agent"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
+	mockscontext "github.com/nicopozo/mockserver/internal/context"
+	ruleserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
-	"github.com/nicopozo/mockserver/internal/utils/log"
+	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
+	stringutils "github.com/nicopozo/mockserver/internal/utils/string"
 )
 
 //nolint:lll
 //go:generate mockgen -destination=../utils/test/mocks/rule_repository_mock.go -package=mocks -source=./rule_repository.go
 
 type IRuleRepository interface {
-	Save(rule *model.Rule, txn newrelic.Transaction, logger log.ILogger) error
-	Get(key string, txn newrelic.Transaction, logger log.ILogger) (*model.Rule, error)
-	Search(params map[string]interface{}, paging model.Paging, txn newrelic.Transaction,
-		logger log.ILogger) (*model.RuleList, error)
-	SearchByMethodAndPath(method string, path string, txn newrelic.Transaction,
-		logger log.ILogger) (*model.Rule, error)
+	Save(ctx context.Context, rule *model.Rule) error
+	Get(ctx context.Context, key string) (*model.Rule, error)
+	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error)
+	SearchByMethodAndPath(ctx context.Context, method string, path string) (*model.Rule, error)
 }
 
 type RuleElasticRepository struct {
 	client *elasticsearch.Client
 }
 
-func (repository *RuleElasticRepository) Save(rule *model.Rule, txn newrelic.Transaction, logger log.ILogger) error {
+func (repository *RuleElasticRepository) Save(ctx context.Context, rule *model.Rule) error {
+	logger := mockscontext.Logger(ctx)
+
 	var err error
 
 	rule.Key = getKey(rule)
 
-	_, err = repository.createPatterns(rule, txn, logger)
+	_, err = repository.createPatterns(ctx, rule)
 	if err != nil {
 		return err
 	}
@@ -76,8 +72,9 @@ func (repository *RuleElasticRepository) Save(rule *model.Rule, txn newrelic.Tra
 	return nil
 }
 
-func (repository *RuleElasticRepository) Get(key string, txn newrelic.Transaction,
-	logger log.ILogger) (*model.Rule, error) {
+func (repository *RuleElasticRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
+	logger := mockscontext.Logger(ctx)
+
 	var err error
 	getRuleReq := esapi.GetRequest{
 		DocumentID: strings.ToLower(key),
@@ -120,53 +117,89 @@ func (repository *RuleElasticRepository) Get(key string, txn newrelic.Transactio
 	return rule, err
 }
 
-func (repository *RuleElasticRepository) Search(params map[string]interface{}, paging model.Paging, txn newrelic.Transaction,
-	logger log.ILogger) (*model.RuleList, error) {
-	return nil, nil
-	/*	var err error
+func (repository *RuleElasticRepository) Search(ctx context.Context, params map[string]interface{},
+	paging model.Paging) (*model.RuleList, error) {
+	logger := mockscontext.Logger(ctx)
 
-		var response *godsclient.SearchResponse
+	// Build the request body.
+	var buf bytes.Buffer
 
-		queryBuilder := &querybuilders.AndQueryBuilder{}
-		for key, value := range params {
-			queryBuilder = queryBuilder.And(querybuilders.Eq(key, value))
+	terms := make([]map[string]interface{}, len(params))
+
+	for key, value := range params {
+		term := map[string]interface{}{
+			"term": map[string]interface{}{
+				key: value,
+			},
 		}
+		terms = append(terms, term)
+	}
 
-		gorelic.WrapDatastoreSegment("DS", "SEARCH", txn, func() {
-			response, err = repository.getDSClient().
-				SearchBuilder().
-				AddSort(sortbuilders.Field("id", fieldtype.Number).Order(sortorder.Desc)).
-				WithQuery(queryBuilder).
-				WithOffset(paging.Offset).
-				WithSize(paging.Limit).
-				Execute()
-		})
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"filter": terms,
+			},
+		},
+	}
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		log.Fatalf("Error encoding query: %s", err)
+	}
 
-		if err != nil {
-			logger.Error(repository, nil, err, "error executing Document Search query")
-			return nil, err
+	// Perform the search request.
+	client := repository.getElasticClient()
+	searchRuleResp, err := client.Search(
+		client.Search.WithContext(context.Background()),
+		client.Search.WithIndex("rules"),
+		client.Search.WithSize(int(paging.Limit)),
+		client.Search.WithFrom(int(paging.Offset)),
+		client.Search.WithBody(&buf),
+		client.Search.WithTrackTotalHits(true),
+		client.Search.WithPretty(),
+	)
+
+	if searchRuleResp != nil {
+		defer closeBody(searchRuleResp.Body, repository, logger)
+	}
+
+	if err != nil {
+		logger.Error(repository, nil, err, "error getting rule from Elastic Search")
+		return nil, err
+	}
+
+	if searchRuleResp.IsError() {
+		logger.Error(repository, nil, errors.New("http status != 200: Actual: "+searchRuleResp.String()),
+			"error getting rules from Elastic Search")
+		buf := new(bytes.Buffer)
+		_, _ = buf.ReadFrom(searchRuleResp.Body)
+		newStr := buf.String()
+
+		return nil, errors.New("error searching rules from Elastic Search - " + newStr)
+	}
+
+	var esResponse *model.ESSearchResult
+
+	esResponse, err = model.UnmarshalSearchESRule(searchRuleResp.Body)
+	if err != nil {
+		logger.Error(repository, nil, err, "error unmarshalling results from Elastic Search")
+		return nil, err
+	}
+
+	result := &model.RuleList{}
+	if esResponse.Hits != nil {
+		paging.Total = int64(esResponse.Hits.Total.Value)
+		result.Paging = paging
+		for _, esRule := range esResponse.Hits.Hits {
+			result.Results = append(result.Results, esRule.Source)
 		}
+	}
 
-		results := make([]*model.Rule, 0, len(response.Documents))
-
-		for _, dsItem := range response.Documents {
-			repository := bytes.NewReader(dsItem)
-			rule := &model.Rule{}
-
-			if err := jsonutils.Unmarshal(repository, rule); err != nil {
-				logger.Error(repository, nil, err, "error parsing reconcilable from Document Search")
-				return nil, err
-			}
-
-			results = append(results, rule)
-		}
-
-		paging.Total = response.Total
-
-		return &model.RuleList{Paging: paging, Results: results}, nil*/
+	return result, nil
 }
 
-func (repository *RuleElasticRepository) Delete(application, name string, txn newrelic.Transaction, logger log.ILogger) error {
+func (repository *RuleElasticRepository) Delete(ctx context.Context, application, name string) error {
+	//logger := mockscontext.Logger(ctx)
+
 	/*var err error
 
 	gorelic.WrapDatastoreSegment("KVS", "DELETE", txn, func() {
@@ -181,8 +214,10 @@ func (repository *RuleElasticRepository) Delete(application, name string, txn ne
 	return nil
 }
 
-func (repository *RuleElasticRepository) SearchByMethodAndPath(method string, path string, txn newrelic.Transaction,
-	logger log.ILogger) (*model.Rule, error) {
+func (repository *RuleElasticRepository) SearchByMethodAndPath(ctx context.Context, method string,
+	path string) (*model.Rule, error) {
+	logger := mockscontext.Logger(ctx)
+
 	var err error
 
 	getExprReq := esapi.GetRequest{
@@ -278,8 +313,9 @@ func (repository *RuleElasticRepository) SearchByMethodAndPath(method string, pa
 	return rule, err
 }
 
-func (repository *RuleElasticRepository) createPatterns(rule *model.Rule, txn newrelic.Transaction,
-	logger log.ILogger) (*model.Pattern, error) {
+func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rule *model.Rule) (*model.Pattern, error) {
+	logger := mockscontext.Logger(ctx)
+
 	var err error
 
 	getReq := esapi.GetRequest{
@@ -423,11 +459,4 @@ func (repository *RuleElasticRepository) getElasticClient() *elasticsearch.Clien
 	}
 
 	return repository.client
-}
-
-func closeBody(body io.ReadCloser, repository *RuleElasticRepository, logger log.ILogger) {
-	err := body.Close()
-	if err != nil {
-		logger.Error(repository, nil, err, "error closing response body")
-	}
 }

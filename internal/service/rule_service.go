@@ -1,27 +1,28 @@
 package service
 
 import (
+	"context"
 	"strings"
 
-	newrelic "github.com/newrelic/go-agent"
+	fwdcontext "github.com/nicopozo/mockserver/internal/context"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/repository"
-	log "github.com/nicopozo/mockserver/internal/utils/log"
 )
 
 type IRuleService interface {
-	Save(rule *model.Rule, txn newrelic.Transaction, logger log.ILogger) error
-	Get(key string, txn newrelic.Transaction, logger log.ILogger) (*model.Rule, error)
-	Search(params map[string]interface{}, paging model.Paging, txn newrelic.Transaction,
-		logger log.ILogger) (*model.RuleList, error)
-	SearchByMethodAndPath(method, path string, txn newrelic.Transaction, logger log.ILogger) (*model.Rule, error)
+	Save(ctx context.Context, rule *model.Rule) error
+	Get(ctx context.Context, key string) (*model.Rule, error)
+	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error)
+	SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error)
 }
 
 type RuleService struct {
 	RuleRepository repository.IRuleRepository
 }
 
-func (service *RuleService) Save(rule *model.Rule, txn newrelic.Transaction, logger log.ILogger) error {
+func (service *RuleService) Save(ctx context.Context, rule *model.Rule) error {
+	logger := fwdcontext.Logger(ctx)
+
 	logger.Debug(service, nil, "Entering RuleService Save()")
 
 	if err := service.validateRule(rule); err != nil {
@@ -30,14 +31,15 @@ func (service *RuleService) Save(rule *model.Rule, txn newrelic.Transaction, log
 
 	rule = service.formatRule(rule)
 
-	return service.RuleRepository.Save(rule, txn, logger)
+	return service.RuleRepository.Save(ctx, rule)
 }
 
-func (service *RuleService) Get(key string, txn newrelic.Transaction,
-	logger log.ILogger) (*model.Rule, error) {
+func (service *RuleService) Get(ctx context.Context, key string) (*model.Rule, error) {
+	logger := fwdcontext.Logger(ctx)
+
 	logger.Debug(service, nil, "Entering TaskService Get()")
 
-	result, err := service.RuleRepository.Get(key, txn, logger)
+	result, err := service.RuleRepository.Get(ctx, key)
 	if err != nil {
 		logger.Error(service, nil, err, "error getting task")
 		return nil, err
@@ -46,16 +48,21 @@ func (service *RuleService) Get(key string, txn newrelic.Transaction,
 	return result, nil
 }
 
-func (service *RuleService) Search(params map[string]interface{}, paging model.Paging, txn newrelic.Transaction,
-	logger log.ILogger) (*model.RuleList, error) {
-	panic("implement me")
-}
+func (service *RuleService) Search(ctx context.Context, params map[string]interface{},
+	paging model.Paging) (*model.RuleList, error) {
+	logger := fwdcontext.Logger(ctx)
 
-func (service *RuleService) SearchByMethodAndPath(method, path string, txn newrelic.Transaction,
-	logger log.ILogger) (*model.Rule, error) {
 	logger.Debug(service, nil, "Entering RuleService Search()")
 
-	result, err := service.RuleRepository.SearchByMethodAndPath(method, path, txn, logger)
+	return service.RuleRepository.Search(ctx, params, paging)
+}
+
+func (service *RuleService) SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error) {
+	logger := fwdcontext.Logger(ctx)
+
+	logger.Debug(service, nil, "Entering RuleService Search()")
+
+	result, err := service.RuleRepository.SearchByMethodAndPath(ctx, method, path)
 	if err != nil {
 		logger.Error(service, nil, err, "error searching rules")
 		return nil, err
