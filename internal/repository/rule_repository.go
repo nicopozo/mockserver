@@ -28,6 +28,7 @@ type IRuleRepository interface {
 	Get(ctx context.Context, key string) (*model.Rule, error)
 	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error)
 	SearchByMethodAndPath(ctx context.Context, method string, path string) (*model.Rule, error)
+	Delete(ctx context.Context, key string) error
 }
 
 type RuleElasticRepository struct {
@@ -57,15 +58,18 @@ func (repository *RuleElasticRepository) Save(ctx context.Context, rule *model.R
 	if err != nil {
 		logger.Error(repository, nil, err, "Error getting response: %s", err)
 	}
+
 	if res != nil {
 		defer closeBody(res.Body, repository, logger)
 	}
 
 	if res.IsError() {
 		logger.Error(repository, nil, nil, "[%s] Error indexing document Key: %v", res.Status(), stringutils.Hash(rule.Key))
+
 		buf := new(bytes.Buffer)
 		_, _ = buf.ReadFrom(res.Body)
 		newStr := buf.String()
+
 		return errors.New("error saving rule - " + newStr)
 	}
 
@@ -76,6 +80,7 @@ func (repository *RuleElasticRepository) Get(ctx context.Context, key string) (*
 	logger := mockscontext.Logger(ctx)
 
 	var err error
+
 	getRuleReq := esapi.GetRequest{
 		DocumentID: strings.ToLower(key),
 		Index:      "rules",
@@ -98,8 +103,10 @@ func (repository *RuleElasticRepository) Get(ctx context.Context, key string) (*
 
 			return nil, ruleserrors.RuleNotFoundError{Message: msg}
 		}
+
 		logger.Error(repository, nil, errors.New("http status != 200: Actual: "+getRuleResp.String()),
 			"error getting expression from Elastic Search")
+
 		buf := new(bytes.Buffer)
 		_, _ = buf.ReadFrom(getRuleResp.Body)
 		newStr := buf.String()
@@ -124,7 +131,7 @@ func (repository *RuleElasticRepository) Search(ctx context.Context, params map[
 	// Build the request body.
 	var buf bytes.Buffer
 
-	terms := make([]map[string]interface{}, len(params))
+	terms := make([]map[string]interface{}, 0)
 
 	for key, value := range params {
 		term := map[string]interface{}{
@@ -170,6 +177,7 @@ func (repository *RuleElasticRepository) Search(ctx context.Context, params map[
 	if searchRuleResp.IsError() {
 		logger.Error(repository, nil, errors.New("http status != 200: Actual: "+searchRuleResp.String()),
 			"error getting rules from Elastic Search")
+
 		buf := new(bytes.Buffer)
 		_, _ = buf.ReadFrom(searchRuleResp.Body)
 		newStr := buf.String()
@@ -186,9 +194,12 @@ func (repository *RuleElasticRepository) Search(ctx context.Context, params map[
 	}
 
 	result := &model.RuleList{}
+	result.Results = []*model.Rule{}
+
 	if esResponse.Hits != nil {
 		paging.Total = int64(esResponse.Hits.Total.Value)
 		result.Paging = paging
+
 		for _, esRule := range esResponse.Hits.Hits {
 			result.Results = append(result.Results, esRule.Source)
 		}
@@ -197,25 +208,100 @@ func (repository *RuleElasticRepository) Search(ctx context.Context, params map[
 	return result, nil
 }
 
-func (repository *RuleElasticRepository) Delete(ctx context.Context, application, name string) error {
-	//logger := mockscontext.Logger(ctx)
+func (repository *RuleElasticRepository) Delete(ctx context.Context, key string) error {
+	logger := mockscontext.Logger(ctx)
 
-	/*var err error
-
-	gorelic.WrapDatastoreSegment("KVS", "DELETE", txn, func() {
-		err = repository.getRulesKvsClient().Delete("getKey(application, name)")
-	})
-
+	rule, err := repository.Get(ctx, key)
 	if err != nil {
-		logger.Error(repository, nil, err, "error deleting rule from KVS")
 		return err
 	}
-	*/
+
+	patternList, err := repository.getExpressionsByMethod(ctx, rule.Method)
+	if err != nil {
+		return err
+	}
+
+	for _, pattern := range patternList.Patterns {
+		var regex = regexp.MustCompile(pattern.PathExpression)
+		if regex.MatchString(rule.Path) {
+			for i, ruleKey := range pattern.RuleKeys {
+				if ruleKey == key {
+					pattern.RuleKeys = append(pattern.RuleKeys[:i], pattern.RuleKeys[i+1:]...)
+
+					break
+				}
+			}
+
+			break
+		}
+	}
+
+	if err = repository.saveExpression(ctx, rule.Method, patternList); err != nil {
+		return err
+	}
+
+	req := esapi.DeleteRequest{
+		Index:      "rules",
+		DocumentID: key,
+		Refresh:    "true",
+	}
+
+	res, err := req.Do(context.Background(), repository.getElasticClient())
+	if err != nil {
+		logger.Error(repository, nil, err, "Error getting response: %s", err)
+	}
+
+	if res != nil {
+		defer closeBody(res.Body, repository, logger)
+	}
+
+	if res.StatusCode == http.StatusNotFound || res.StatusCode == http.StatusOK {
+		return nil
+	}
+
+	if res.IsError() {
+		logger.Error(repository, nil, nil, "[%s] Error document document Key: %v", res.Status(), stringutils.Hash(key))
+
+		buf := new(bytes.Buffer)
+		_, _ = buf.ReadFrom(res.Body)
+		newStr := buf.String()
+
+		return errors.New("error deleting rule - " + newStr)
+	}
+
 	return nil
 }
 
 func (repository *RuleElasticRepository) SearchByMethodAndPath(ctx context.Context, method string,
 	path string) (*model.Rule, error) {
+	var err error
+
+	patternList, err := repository.getExpressionsByMethod(ctx, method)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, pattern := range patternList.Patterns {
+		var regex = regexp.MustCompile(pattern.PathExpression)
+		if regex.MatchString(path) {
+			for _, ruleKey := range pattern.RuleKeys {
+				rule, _ := repository.Get(ctx, ruleKey)
+				if rule != nil && rule.Status == model.RuleStatusEnabled {
+					return rule, nil
+				}
+			}
+
+			break
+		}
+	}
+
+	return nil, ruleserrors.RuleNotFoundError{
+		Message: fmt.Sprintf("no rule found for path: %s and method %s", path, method),
+	}
+}
+
+func (repository *RuleElasticRepository) getExpressionsByMethod(ctx context.Context,
+	method string) (*model.PatternList, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
@@ -239,9 +325,12 @@ func (repository *RuleElasticRepository) SearchByMethodAndPath(ctx context.Conte
 		if getExprResp.StatusCode == http.StatusNotFound {
 			msg := fmt.Sprintf("no expression found for method: %v", method)
 			logger.Debug(repository, nil, msg)
+
 			return nil, ruleserrors.RuleNotFoundError{Message: msg}
 		}
+
 		logger.Error(repository, nil, nil, "error getting expressions from Elastic Search")
+
 		buf := new(bytes.Buffer)
 		_, _ = buf.ReadFrom(getExprResp.Body)
 		newStr := buf.String()
@@ -256,61 +345,7 @@ func (repository *RuleElasticRepository) SearchByMethodAndPath(ctx context.Conte
 		return nil, err
 	}
 
-	var ruleKey string
-
-	for _, pattern := range patternList.Patterns {
-		var regex = regexp.MustCompile(pattern.PathExpression)
-		if regex.MatchString(path) {
-			ruleKey = pattern.RuleKeys[0]
-			break
-		}
-	}
-
-	if ruleKey == "" {
-		return nil, ruleserrors.RuleNotFoundError{
-			Message: "no rule found for path: " + path,
-		}
-	}
-
-	getRuleReq := esapi.GetRequest{
-		DocumentID: strings.ToLower(ruleKey),
-		Index:      "rules",
-	}
-
-	getRuleResp, err := getRuleReq.Do(context.Background(), repository.getElasticClient())
-	if getRuleResp != nil {
-		defer closeBody(getRuleResp.Body, repository, logger)
-	}
-
-	if err != nil {
-		logger.Error(repository, nil, err, "error getting rule from Elastic Search")
-		return nil, err
-	}
-
-	if getRuleResp.IsError() {
-		if getRuleResp.StatusCode == http.StatusNotFound {
-			msg := fmt.Sprintf("no rule found for key: %v", ruleKey)
-			logger.Debug(repository, nil, msg)
-
-			return nil, ruleserrors.RuleNotFoundError{Message: msg}
-		}
-		logger.Error(repository, nil, errors.New("http status != 200: Actual: "+getRuleResp.String()),
-			"error getting expressions from Elastic Search")
-		buf := new(bytes.Buffer)
-		_, _ = buf.ReadFrom(getRuleResp.Body)
-		newStr := buf.String()
-
-		return nil, errors.New("error getting expressions from Elastic Search - " + newStr)
-	}
-
-	var rule *model.Rule
-
-	rule, err = model.UnmarshalESRule(getRuleResp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return rule, err
+	return patternList, nil
 }
 
 func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rule *model.Rule) (*model.Pattern, error) {
@@ -336,9 +371,11 @@ func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rul
 	if getResp.IsError() {
 		if getResp.StatusCode != http.StatusNotFound {
 			logger.Error(repository, nil, nil, "error getting expressions from Elastic Search")
+
 			buf := new(bytes.Buffer)
 			_, _ = buf.ReadFrom(getResp.Body)
 			newStr := buf.String()
+
 			return nil, errors.New("error getting expressions from Elastic Search - " + newStr)
 		}
 	}
@@ -350,13 +387,13 @@ func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rul
 		if err != nil {
 			return nil, err
 		}
-		list = *l
 
+		list = *l
 	} else {
 		list.Patterns = make([]*model.Pattern, 0)
 	}
 
-	expression := createExpression(rule.Path)
+	expression := CreateExpression(rule.Path)
 
 	var pattern *model.Pattern
 
@@ -394,9 +431,21 @@ func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rul
 		list.Patterns = append(list.Patterns, pattern)
 	}
 
+	err = repository.saveExpression(ctx, rule.Method, &list)
+	if err != nil {
+		return nil, err
+	}
+
+	return pattern, nil
+}
+
+func (repository *RuleElasticRepository) saveExpression(ctx context.Context, method string,
+	list *model.PatternList) error {
+	logger := mockscontext.Logger(ctx)
+
 	saveReq := esapi.IndexRequest{
 		Index:      "expressions",
-		DocumentID: rule.Method,
+		DocumentID: method,
 		Body:       strings.NewReader(jsonutils.Marshal(list)),
 		Refresh:    "true",
 	}
@@ -405,41 +454,22 @@ func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rul
 	if err != nil {
 		logger.Error(repository, nil, err, "error saving Pattern in Elastic Search")
 	}
+
 	if saveResp != nil {
 		defer closeBody(saveResp.Body, repository, logger)
 	}
 
 	if saveResp.IsError() {
 		logger.Error(repository, nil, nil, "error saving Pattern in Elastic Search")
+
 		buf := new(bytes.Buffer)
 		_, _ = buf.ReadFrom(saveResp.Body)
 		newStr := buf.String()
-		return nil, errors.New("error saving Pattern - " + newStr)
+
+		return errors.New("error saving Pattern - " + newStr)
 	}
 
-	return pattern, nil
-}
-
-func createExpression(path string) string {
-	var paramRegex = regexp.MustCompile("{.+?}/")
-	params := paramRegex.FindAllString(path, -1)
-
-	for _, param := range params {
-		path = strings.ReplaceAll(path, param, "[^/]+?/")
-	}
-
-	paramRegex = regexp.MustCompile("{.+?}")
-	params = paramRegex.FindAllString(path, -1)
-
-	for _, param := range params {
-		path = strings.ReplaceAll(path, param, "[^/]+")
-	}
-
-	return fmt.Sprintf("^%s$", path)
-}
-
-func getKey(rule *model.Rule) string {
-	return fmt.Sprintf("%v_%v_%v", rule.Application, rule.Method, stringutils.Hash(rule.Name))
+	return nil
 }
 
 func (repository *RuleElasticRepository) getElasticClient() *elasticsearch.Client {
@@ -459,4 +489,26 @@ func (repository *RuleElasticRepository) getElasticClient() *elasticsearch.Clien
 	}
 
 	return repository.client
+}
+
+func CreateExpression(path string) string {
+	var paramRegex = regexp.MustCompile("{.+?}/")
+	params := paramRegex.FindAllString(path, -1)
+
+	for _, param := range params {
+		path = strings.ReplaceAll(path, param, "[^/]+?/")
+	}
+
+	paramRegex = regexp.MustCompile("{.+?}")
+	params = paramRegex.FindAllString(path, -1)
+
+	for _, param := range params {
+		path = strings.ReplaceAll(path, param, "[^/]+")
+	}
+
+	return fmt.Sprintf("^%s$", path)
+}
+
+func getKey(rule *model.Rule) string {
+	return fmt.Sprintf("%v_%v_%v", rule.Application, rule.Method, stringutils.Hash(rule.Name))
 }

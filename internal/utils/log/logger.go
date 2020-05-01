@@ -20,6 +20,7 @@ type ILogger interface {
 	Error(source interface{}, tags map[string]string, err error, message string, args ...interface{})
 	Debug(source interface{}, tags map[string]string, message string, args ...interface{})
 	GetTrackingID() string
+	GetMessage(message string, args ...interface{}) string
 }
 
 type log struct {
@@ -62,28 +63,28 @@ func NewLogger(trackingID string) ILogger {
 }
 
 func (theLogger *log) Info(source interface{}, tags map[string]string, message string, args ...interface{}) {
-	theLogger.logrus.Infof("%s - %v", theLogger.getMessage(message, args...), theLogger.getTags(source, tags))
+	theLogger.logrus.Infof("%s - %v", theLogger.GetMessage(message, args...), theLogger.getTags(source, tags))
 }
 
 func (theLogger *log) Warn(source interface{}, tags map[string]string, message string, args ...interface{}) {
-	theLogger.logrus.Warnf("%s - %v", theLogger.getMessage(message, args...), theLogger.getTags(source, tags))
+	theLogger.logrus.Warnf("%s - %v", theLogger.GetMessage(message, args...), theLogger.getTags(source, tags))
 }
 
 func (theLogger *log) Error(source interface{}, tags map[string]string, err error,
 	message string, args ...interface{}) {
-	theLogger.logrus.Errorf("%s - error: %s - %v", theLogger.getMessage(message, args...), err.Error(),
+	theLogger.logrus.Errorf("%s - error: %s - %v", theLogger.GetMessage(message, args...), err.Error(),
 		theLogger.getTags(source, tags))
 }
 
 func (theLogger *log) Debug(source interface{}, tags map[string]string, message string, args ...interface{}) {
-	theLogger.logrus.Debugf("%s - %v", theLogger.getMessage(message, args...), theLogger.getTags(source, tags))
+	theLogger.logrus.Debugf("%s - %v", theLogger.GetMessage(message, args...), theLogger.getTags(source, tags))
 }
 
 func (theLogger *log) GetTrackingID() string {
 	return theLogger.trackingID
 }
 
-func (theLogger *log) getMessage(message string, args ...interface{}) string {
+func (theLogger *log) GetMessage(message string, args ...interface{}) string {
 	if len(args) > 0 {
 		return fmt.Sprintf(message, args...)
 	}

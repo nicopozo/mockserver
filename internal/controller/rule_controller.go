@@ -103,3 +103,31 @@ func (controller *RuleController) Search(context *gin.Context) {
 
 	context.JSON(http.StatusOK, ruleList)
 }
+
+func (controller *RuleController) Delete(context *gin.Context) {
+	reqContext := mockscontext.New(context)
+	logger := mockscontext.Logger(reqContext)
+
+	logger.Debug(controller, nil, "Entering RuleController Delete()")
+
+	key := context.Param("key")
+
+	err := controller.RuleService.Delete(reqContext, key)
+
+	if err != nil {
+		switch err.(type) {
+		case ruleserrors.RuleNotFoundError:
+			context.Status(http.StatusNoContent)
+		default:
+			logger.Error(controller, nil, err,
+				"Failed to delete rule with key: %v", key)
+
+			errorResult := model.NewError(model.InternalError, "Error occurred when deleting rule. %s", err.Error())
+			context.JSON(http.StatusInternalServerError, errorResult)
+		}
+
+		return
+	}
+
+	context.Status(http.StatusNoContent)
+}

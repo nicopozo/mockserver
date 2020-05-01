@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	fwdcontext "github.com/nicopozo/mockserver/internal/context"
+	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/repository"
 )
@@ -14,6 +14,7 @@ type IRuleService interface {
 	Get(ctx context.Context, key string) (*model.Rule, error)
 	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error)
 	SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error)
+	Delete(ctx context.Context, key string) error
 }
 
 type RuleService struct {
@@ -21,7 +22,7 @@ type RuleService struct {
 }
 
 func (service *RuleService) Save(ctx context.Context, rule *model.Rule) error {
-	logger := fwdcontext.Logger(ctx)
+	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(service, nil, "Entering RuleService Save()")
 
@@ -35,7 +36,7 @@ func (service *RuleService) Save(ctx context.Context, rule *model.Rule) error {
 }
 
 func (service *RuleService) Get(ctx context.Context, key string) (*model.Rule, error) {
-	logger := fwdcontext.Logger(ctx)
+	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(service, nil, "Entering TaskService Get()")
 
@@ -50,7 +51,7 @@ func (service *RuleService) Get(ctx context.Context, key string) (*model.Rule, e
 
 func (service *RuleService) Search(ctx context.Context, params map[string]interface{},
 	paging model.Paging) (*model.RuleList, error) {
-	logger := fwdcontext.Logger(ctx)
+	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(service, nil, "Entering RuleService Search()")
 
@@ -58,7 +59,7 @@ func (service *RuleService) Search(ctx context.Context, params map[string]interf
 }
 
 func (service *RuleService) SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error) {
-	logger := fwdcontext.Logger(ctx)
+	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(service, nil, "Entering RuleService Search()")
 
@@ -71,11 +72,23 @@ func (service *RuleService) SearchByMethodAndPath(ctx context.Context, method, p
 	return result, nil
 }
 
+func (service *RuleService) Delete(ctx context.Context, key string) error {
+	logger := mockscontext.Logger(ctx)
+
+	logger.Debug(service, nil, "Entering TaskService Get()")
+
+	return service.RuleRepository.Delete(ctx, key)
+}
+
 func (service *RuleService) validateRule(rule *model.Rule) error {
 	return nil
 }
 
 func (service *RuleService) formatRule(rule *model.Rule) *model.Rule {
 	rule.Method = strings.ToLower(rule.Method)
+	if rule.Status == "" {
+		rule.Status = model.RuleStatusEnabled
+	}
+
 	return rule
 }

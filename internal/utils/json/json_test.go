@@ -1,10 +1,12 @@
-package jsonutils
+package jsonutils_test
 
 import (
 	"io"
 	"reflect"
 	"strings"
 	"testing"
+
+	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 )
 
 type dto struct {
@@ -35,7 +37,7 @@ func TestUnmarshal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := &dto{}
 
-			if err := Unmarshal(tt.args.body, result); (err != nil) != tt.wantErr { //nolint
+			if err := jsonutils.Unmarshal(tt.args.body, result); (err != nil) != tt.wantErr { //nolint
 				t.Errorf("Unmarshal() error = %v, wantErr %v", err, tt.wantErr) //nolint
 			}
 
@@ -65,7 +67,7 @@ func TestMarshal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Marshal(tt.args.model); got != tt.want { //nolint:scopelint
+			if got := jsonutils.Marshal(tt.args.model); got != tt.want { //nolint:scopelint
 				t.Errorf("Marshal() = %v, want %v", got, tt.want) //nolint:scopelint
 			}
 		})

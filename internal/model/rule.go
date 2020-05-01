@@ -6,6 +6,11 @@ import (
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 )
 
+const (
+	RuleStatusEnabled  = "enabled"
+	RuleStatusDisabled = "disabled"
+)
+
 type Rule struct {
 	Key         string     `json:"key"`
 	Application string     `json:"application"`

@@ -1,0 +1,15 @@
+linters-settings:
+  lll:
+    line-length: 120
+
+run:
+  tests: true # run linter on test files
+  deadline: 5m
+  skip-dirs:
+    - internal/utils/test/mocks
+
+linters:
+  enable-all: true
+  disable:
+    - unused
+    - funlen

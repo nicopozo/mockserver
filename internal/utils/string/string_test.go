@@ -1,7 +1,9 @@
-package stringutils
+package stringutils_test
 
 import (
 	"testing"
+
+	stringutils "github.com/nicopozo/mockserver/internal/utils/string"
 )
 
 func TestArrayContains(t *testing.T) {
@@ -34,7 +36,7 @@ func TestArrayContains(t *testing.T) {
 	}
 	for _, tt := range tests { //nolint
 		t.Run(tt.name, func(t *testing.T) { //nolint
-			if got := ArraysContains(tt.args.array, tt.args.str); got != tt.want { //nolint
+			if got := stringutils.ArraysContains(tt.args.array, tt.args.str); got != tt.want { //nolint
 				t.Errorf("Contains() = %v, want %v", got, tt.want) //nolint
 			}
 		})
@@ -65,8 +67,8 @@ func TestHash(t *testing.T) {
 
 	for _, tt := range tests { //nolint
 		t.Run(tt.name, func(t *testing.T) { //nolint
-			got := Hash(tt.args.s) //nolint
-			if got != tt.want {    //nolint
+			got := stringutils.Hash(tt.args.s) //nolint
+			if got != tt.want {                //nolint
 				t.Errorf("Hash() = %v, want %v", got, tt.want) //nolint
 			}
 		})

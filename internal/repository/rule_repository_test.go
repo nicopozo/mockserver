@@ -1,7 +1,9 @@
-package repository
+package repository_test
 
 import (
 	"testing"
+
+	"github.com/nicopozo/mockserver/internal/repository"
 )
 
 func Test_createExpression(t *testing.T) {
@@ -39,8 +41,8 @@ func Test_createExpression(t *testing.T) {
 
 	for _, tt := range tests { //nolint
 		t.Run(tt.name, func(t *testing.T) { //nolint
-			if got := createExpression(tt.args.path); got != tt.want { //nolint
-				t.Errorf("createExpression() = %v, want %v", got, tt.want) //nolint
+			if got := repository.CreateExpression(tt.args.path); got != tt.want { //nolint
+				t.Errorf("CreateExpression() = %v, want %v", got, tt.want) //nolint
 			}
 		})
 	}

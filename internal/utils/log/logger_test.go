@@ -1,6 +1,10 @@
-package log
+package log_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/nicopozo/mockserver/internal/utils/log"
+)
 
 func Test_log_getMessage(t *testing.T) {
 	type fields struct {
@@ -56,12 +60,11 @@ func Test_log_getMessage(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			theLogger := &log{
-				trackingID: tt.fields.trackingID, //nolint
-			}
-			if got := theLogger.getMessage(tt.args.message, tt.args.args...); got != tt.want { //nolint
-				t.Errorf("log.getMessage() = %v, want %v", got, tt.want) //nolint
+		t.Run(tt.name, func(t *testing.T) { //nolint
+
+			theLogger := log.NewLogger(tt.fields.trackingID)                                   //nolint
+			if got := theLogger.GetMessage(tt.args.message, tt.args.args...); got != tt.want { //nolint
+				t.Errorf("log.GetMessage() = %v, want %v", got, tt.want) //nolint
 			}
 		})
 	}

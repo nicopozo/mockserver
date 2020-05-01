@@ -14,6 +14,7 @@ func mapRoutes(router *gin.Engine) {
 	router.POST("/mock-server/rules", ruleController.Create)
 	router.GET("/mock-server/rules/:key", ruleController.Get)
 	router.GET("/mock-server/rules", ruleController.Search)
+	router.DELETE("/mock-server/rules/:key", ruleController.Delete)
 
 	mockController := newMockController()
 	router.Any("/mock-server/mock/*rule", mockController.Execute)

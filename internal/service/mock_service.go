@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	fwdcontext "github.com/nicopozo/mockserver/internal/context"
+	mockscontext "github.com/nicopozo/mockserver/internal/context"
 
 	"github.com/nicopozo/mockserver/internal/model"
 )
@@ -16,8 +16,9 @@ type MockService struct {
 	RuleService IRuleService
 }
 
-func (service MockService) SearchResponseForMethodAndPath(ctx context.Context, method, path string) (*model.Response, error) {
-	logger := fwdcontext.Logger(ctx)
+func (service MockService) SearchResponseForMethodAndPath(ctx context.Context,
+	method, path string) (*model.Response, error) {
+	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(service, nil, "Entering MockService Execute()")
 
