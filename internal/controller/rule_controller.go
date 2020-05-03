@@ -30,7 +30,7 @@ func (controller *RuleController) Create(context *gin.Context) {
 		return
 	}
 
-	err = controller.RuleService.Save(reqContext, rule)
+	rule, err = controller.RuleService.Save(reqContext, rule)
 
 	if err != nil {
 		switch err.(type) {

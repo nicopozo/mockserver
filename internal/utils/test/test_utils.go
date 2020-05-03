@@ -80,3 +80,17 @@ func getGinContext() (*gin.Context, *mocks.MockGinResponseWriter) {
 
 	return &context, &responseWriter
 }
+
+func GetRuleFromResponse(response []byte) (*model.Rule, error) {
+	rule := &model.Rule{}
+	err := json.Unmarshal(response, &rule)
+
+	return rule, err
+}
+
+func GetRuleListFromResponse(response []byte) (*model.RuleList, error) {
+	list := &model.RuleList{}
+	err := json.Unmarshal(response, &list)
+
+	return list, err
+}

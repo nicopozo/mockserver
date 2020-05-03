@@ -24,7 +24,7 @@ import (
 //go:generate mockgen -destination=../utils/test/mocks/rule_repository_mock.go -package=mocks -source=./rule_repository.go
 
 type IRuleRepository interface {
-	Save(ctx context.Context, rule *model.Rule) error
+	Save(ctx context.Context, rule *model.Rule) (*model.Rule, error)
 	Get(ctx context.Context, key string) (*model.Rule, error)
 	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error)
 	SearchByMethodAndPath(ctx context.Context, method string, path string) (*model.Rule, error)
@@ -35,7 +35,7 @@ type RuleElasticRepository struct {
 	client *elasticsearch.Client
 }
 
-func (repository *RuleElasticRepository) Save(ctx context.Context, rule *model.Rule) error {
+func (repository *RuleElasticRepository) Save(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
@@ -44,7 +44,7 @@ func (repository *RuleElasticRepository) Save(ctx context.Context, rule *model.R
 
 	_, err = repository.createPatterns(ctx, rule)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req := esapi.IndexRequest{
@@ -70,10 +70,10 @@ func (repository *RuleElasticRepository) Save(ctx context.Context, rule *model.R
 		_, _ = buf.ReadFrom(res.Body)
 		newStr := buf.String()
 
-		return errors.New("error saving rule - " + newStr)
+		return nil, errors.New("error saving rule - " + newStr)
 	}
 
-	return nil
+	return rule, nil
 }
 
 func (repository *RuleElasticRepository) Get(ctx context.Context, key string) (*model.Rule, error) {

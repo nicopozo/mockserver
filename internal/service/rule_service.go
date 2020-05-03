@@ -12,8 +12,11 @@ import (
 	"github.com/nicopozo/mockserver/internal/repository"
 )
 
+//nolint:lll
+//go:generate mockgen -destination=../utils/test/mocks/rule_service_mock.go -package=mocks -source=./rule_service.go
+
 type IRuleService interface {
-	Save(ctx context.Context, rule *model.Rule) error
+	Save(ctx context.Context, rule *model.Rule) (*model.Rule, error)
 	Get(ctx context.Context, key string) (*model.Rule, error)
 	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error)
 	SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error)
@@ -24,14 +27,14 @@ type RuleService struct {
 	RuleRepository repository.IRuleRepository
 }
 
-func (service *RuleService) Save(ctx context.Context, rule *model.Rule) error {
+func (service *RuleService) Save(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(service, nil, "Entering RuleService Save()")
 
 	if err := validateRule(rule); err != nil {
 		logger.Error(service, nil, err, "Rule Validation failed")
-		return err
+		return nil, err
 	}
 
 	rule = formatRule(rule)
@@ -113,7 +116,7 @@ func validateRule(rule *model.Rule) error {
 		return err
 	}
 
-	if rule.Strategy != model.RuleStrategyNormal && rule.Strategy != model.RuleStrategyRandom &&
+	if rule.Strategy != "" && rule.Strategy != model.RuleStrategyNormal && rule.Strategy != model.RuleStrategyRandom &&
 		rule.Strategy != model.RuleStrategySequential {
 		return mockserrors.InvalidRulesErrorError{
 			Message: fmt.Sprintf("invalid rule strategy - only '%s', '%s' or '%s' are valid valud fields",
@@ -162,6 +165,7 @@ func validateHTTPMethod(method string) error {
 
 func formatRule(rule *model.Rule) *model.Rule {
 	rule.Method = strings.ToUpper(rule.Method)
+
 	if rule.Status == "" {
 		rule.Status = model.RuleStatusEnabled
 	}
