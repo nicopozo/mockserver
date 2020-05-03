@@ -9,6 +9,10 @@ import (
 const (
 	RuleStatusEnabled  = "enabled"
 	RuleStatusDisabled = "disabled"
+
+	RuleStrategyNormal     = "normal"
+	RuleStrategySequential = "sequential"
+	RuleStrategyRandom     = "random"
 )
 
 type Rule struct {

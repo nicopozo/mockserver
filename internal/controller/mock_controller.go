@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
@@ -21,7 +22,7 @@ func (controller *MockController) Execute(context *gin.Context) {
 
 	logger.Debug(controller, nil, "Entering RuleController Get()")
 
-	method := strings.ToLower(context.Request.Method)
+	method := strings.ToUpper(context.Request.Method)
 	path := context.Param("rule")
 
 	response, err := controller.MockService.SearchResponseForMethodAndPath(reqContext, method, path)
@@ -46,5 +47,7 @@ func (controller *MockController) Execute(context *gin.Context) {
 	}
 
 	context.Header("content-type", response.ContentType)
+
+	time.Sleep(time.Duration(response.Delay) * time.Millisecond)
 	context.String(response.HTTPStatus, response.Body)
 }

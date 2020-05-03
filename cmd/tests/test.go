@@ -6,7 +6,6 @@ import (
 )
 
 func main() {
-
 	/*	s := ""
 
 		u, err := url.Parse(s)

@@ -82,7 +82,7 @@ func (repository *RuleElasticRepository) Get(ctx context.Context, key string) (*
 	var err error
 
 	getRuleReq := esapi.GetRequest{
-		DocumentID: strings.ToLower(key),
+		DocumentID: strings.ToUpper(key),
 		Index:      "rules",
 	}
 
@@ -221,12 +221,13 @@ func (repository *RuleElasticRepository) Delete(ctx context.Context, key string)
 		return err
 	}
 
-	for _, pattern := range patternList.Patterns {
+	for index, pattern := range patternList.Patterns {
 		var regex = regexp.MustCompile(pattern.PathExpression)
 		if regex.MatchString(rule.Path) {
 			for i, ruleKey := range pattern.RuleKeys {
 				if ruleKey == key {
 					pattern.RuleKeys = append(pattern.RuleKeys[:i], pattern.RuleKeys[i+1:]...)
+					patternList.Patterns[index] = pattern
 
 					break
 				}
@@ -307,7 +308,7 @@ func (repository *RuleElasticRepository) getExpressionsByMethod(ctx context.Cont
 	var err error
 
 	getExprReq := esapi.GetRequest{
-		DocumentID: strings.ToLower(method),
+		DocumentID: strings.ToUpper(method),
 		Index:      "expressions",
 	}
 
@@ -510,5 +511,6 @@ func CreateExpression(path string) string {
 }
 
 func getKey(rule *model.Rule) string {
-	return fmt.Sprintf("%v_%v_%v", rule.Application, rule.Method, stringutils.Hash(rule.Name))
+	return fmt.Sprintf("%v_%v_%v", strings.ToLower(rule.Application), strings.ToLower(rule.Method),
+		stringutils.Hash(rule.Name))
 }

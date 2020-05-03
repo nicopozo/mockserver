@@ -3,6 +3,8 @@ package controller
 import (
 	"net/http"
 
+	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
+
 	"github.com/gin-gonic/gin"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	ruleserrors "github.com/nicopozo/mockserver/internal/errors"
@@ -14,16 +16,16 @@ type RuleController struct {
 	RuleService service.IRuleService
 }
 
-func (controller *RuleController) Create(c *gin.Context) {
-	reqContext := mockscontext.New(c)
+func (controller *RuleController) Create(context *gin.Context) {
+	reqContext := mockscontext.New(context)
 	logger := mockscontext.Logger(reqContext)
 	logger.Debug(controller, nil, "Entering RuleController Save()")
 
-	rule, err := model.UnmarshalRule(c.Request.Body)
+	rule, err := model.UnmarshalRule(context.Request.Body)
 	if err != nil {
 		errorResult := model.NewError(model.ValidationError, "Invalid JSON. %s", err.Error())
 		logger.Error(controller, nil, err, "Error unmarshalling Rule JSON")
-		c.JSON(http.StatusBadRequest, errorResult)
+		context.JSON(http.StatusBadRequest, errorResult)
 
 		return
 	}
@@ -31,15 +33,25 @@ func (controller *RuleController) Create(c *gin.Context) {
 	err = controller.RuleService.Save(reqContext, rule)
 
 	if err != nil {
-		errorResult := model.NewError(model.InternalError, "Error occurred when saving rule. %s", err.Error())
+		switch err.(type) {
+		case ruleserrors.InvalidRulesErrorError:
+			logger.Error(controller, nil, err, "Invalid rule: %v", jsonutils.Marshal(rule))
 
-		logger.Error(controller, nil, err, "Error occurred when saving rule")
-		c.JSON(http.StatusInternalServerError, errorResult)
+			errorResult := model.NewError(model.ValidationError, "%s", err.Error())
+			context.JSON(http.StatusBadRequest, errorResult)
+		default:
+			errorResult := model.NewError(model.InternalError, "Error occurred when saving rule. %s", err.Error())
+
+			logger.Error(controller, nil, err, "Error occurred when saving rule")
+			context.JSON(http.StatusInternalServerError, errorResult)
+
+			return
+		}
 
 		return
 	}
 
-	c.JSON(http.StatusCreated, rule)
+	context.JSON(http.StatusCreated, rule)
 }
 
 func (controller *RuleController) Get(context *gin.Context) {

@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"strings"
 
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
+	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/repository"
 )
@@ -26,11 +29,12 @@ func (service *RuleService) Save(ctx context.Context, rule *model.Rule) error {
 
 	logger.Debug(service, nil, "Entering RuleService Save()")
 
-	if err := service.validateRule(rule); err != nil {
+	if err := validateRule(rule); err != nil {
+		logger.Error(service, nil, err, "Rule Validation failed")
 		return err
 	}
 
-	rule = service.formatRule(rule)
+	rule = formatRule(rule)
 
 	return service.RuleRepository.Save(ctx, rule)
 }
@@ -80,12 +84,84 @@ func (service *RuleService) Delete(ctx context.Context, key string) error {
 	return service.RuleRepository.Delete(ctx, key)
 }
 
-func (service *RuleService) validateRule(rule *model.Rule) error {
+func validateRule(rule *model.Rule) error {
+	if rule == nil {
+		return mockserrors.InvalidRulesErrorError{
+			Message: "rule cannot be nil",
+		}
+	}
+
+	if rule.Name == "" {
+		return mockserrors.InvalidRulesErrorError{
+			Message: "name cannot be empty",
+		}
+	}
+
+	if rule.Path == "" {
+		return mockserrors.InvalidRulesErrorError{
+			Message: "path cannot be empty",
+		}
+	}
+
+	if rule.Status != model.RuleStatusEnabled && rule.Status != model.RuleStatusDisabled {
+		return mockserrors.InvalidRulesErrorError{
+			Message: "invalid status - only 'enabled' or 'disabled' are valid values",
+		}
+	}
+
+	if err := validateHTTPMethod(rule.Method); err != nil {
+		return err
+	}
+
+	if rule.Strategy != model.RuleStrategyNormal && rule.Strategy != model.RuleStrategyRandom &&
+		rule.Strategy != model.RuleStrategySequential {
+		return mockserrors.InvalidRulesErrorError{
+			Message: fmt.Sprintf("invalid rule strategy - only '%s', '%s' or '%s' are valid valud fields",
+				model.RuleStrategyNormal, model.RuleStrategyRandom, model.RuleStrategySequential),
+		}
+	}
+
+	return validateResponses(rule.Responses)
+}
+
+func validateResponses(responses []model.Response) error {
+	if len(responses) == 0 {
+		return mockserrors.InvalidRulesErrorError{
+			Message: "at least one response required",
+		}
+	}
+
+	for _, response := range responses {
+		if response.HTTPStatus < http.StatusOK || response.HTTPStatus > 599 {
+			return mockserrors.InvalidRulesErrorError{
+				Message: fmt.Sprintf("%v is not a valid HTTP Status", response.HTTPStatus),
+			}
+		}
+	}
+
 	return nil
 }
 
-func (service *RuleService) formatRule(rule *model.Rule) *model.Rule {
-	rule.Method = strings.ToLower(rule.Method)
+func validateHTTPMethod(method string) error {
+	if method == "" {
+		return mockserrors.InvalidRulesErrorError{
+			Message: "method can not be empty",
+		}
+	}
+
+	switch strings.ToUpper(method) {
+	case http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete,
+		http.MethodConnect, http.MethodOptions, http.MethodTrace:
+		return nil
+	default:
+		return mockserrors.InvalidRulesErrorError{
+			Message: fmt.Sprintf("%s is not a valid HTTP Method", method),
+		}
+	}
+}
+
+func formatRule(rule *model.Rule) *model.Rule {
+	rule.Method = strings.ToUpper(rule.Method)
 	if rule.Status == "" {
 		rule.Status = model.RuleStatusEnabled
 	}
