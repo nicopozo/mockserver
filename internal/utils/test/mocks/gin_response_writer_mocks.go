@@ -21,7 +21,8 @@ func (mr *MockGinResponseWriter) Status() int {
 func (mr *MockGinResponseWriter) Size() int {
 	return int(0)
 }
-func (mr *MockGinResponseWriter) WriteString(string) (int, error) {
+func (mr *MockGinResponseWriter) WriteString(s string) (int, error) {
+	mr.Bytes = []byte(s)
 	return int(0), nil
 }
 func (mr *MockGinResponseWriter) Written() bool {
