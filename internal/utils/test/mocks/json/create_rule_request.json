@@ -1,0 +1,16 @@
+{
+  "application": "myapp",
+  "name": "get balance",
+  "path": "/myapp/{user}/balance",
+  "strategy": "normal",
+  "method": "get",
+  "status": "enabled",
+  "responses": [
+    {
+      "body": "{\"balance\":5000}",
+      "content_type": "application/json",
+      "http_status": 200,
+      "delay": 100
+    }
+  ]
+}

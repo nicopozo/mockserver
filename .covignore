@@ -1,0 +1,4 @@
+cmd/mocks/*
+configs/*
+internal/utils/test/*
+#melicove ignore the last line, dont remove this comment
