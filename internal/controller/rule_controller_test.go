@@ -280,8 +280,8 @@ func TestRuleController_Get(t *testing.T) {
 				}).Times(tt.serviceCallTimes) //nolint
 
 			ginContext, response := testutils.GetGinContext()
-			rechargeID := gin.Param{Key: "key", Value: tt.key} //nolint
-			ginContext.Params = []gin.Param{rechargeID}
+			ruleKey := gin.Param{Key: "key", Value: tt.key} //nolint
+			ginContext.Params = []gin.Param{ruleKey}
 
 			rc := &controller.RuleController{
 				RuleService: ruleServiceMock, //nolint
@@ -584,6 +584,87 @@ func TestRuleController_Search(t *testing.T) { //nolint
 
 			if !reflect.DeepEqual(tt.want, rules) { //nolint
 				t.Errorf("RuleList response is not the expected. Expected: %v - Actual: %v", tt.want, rules) //nolint
+			}
+		})
+	}
+}
+
+func TestRuleController_Delete(t *testing.T) {
+	tests := []struct {
+		name             string
+		serviceErr       error
+		wantStatus       int
+		wantedErr        *model.Error
+		serviceCallTimes int
+		key              string
+	}{
+		{
+			name:             "Delete Reconcilable successfully",
+			serviceErr:       nil,
+			wantStatus:       http.StatusNoContent,
+			wantedErr:        nil,
+			serviceCallTimes: 1, //nolint
+			key:              "myapp_get_4016913947",
+		},
+
+		{
+			name:       "Should return 500 when service returns error",
+			serviceErr: errors.New("error in service"),
+			wantStatus: http.StatusInternalServerError,
+			wantedErr: &model.Error{
+				Status:  http.StatusInternalServerError,
+				Error:   "Internal Server Error",
+				Message: "Error occurred when deleting rule. error in service",
+				ErrorCause: []model.ErrorCause{
+					{
+						Code:        1999,
+						Description: "Internal server error",
+					},
+				},
+			},
+			serviceCallTimes: 1, //nolint
+			key:              "myapp_get_4016913947",
+		},
+		{
+			name:             "Should return 204 when service returns RuleNotFoundError",
+			serviceErr:       mockserrors.RuleNotFoundError{Message: "item not found in KVS"},
+			wantStatus:       http.StatusNoContent,
+			wantedErr:        nil,
+			serviceCallTimes: 1, //nolint
+			key:              "myapp_get_4016913947",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
+			defer mockCtrl.Finish()
+
+			ruleServiceMock.EXPECT().Delete(gomock.Any(), tt.key).Return(tt.serviceErr).Times(tt.serviceCallTimes) //nolint
+
+			ginContext, response := testutils.GetGinContext()
+			ruleKey := gin.Param{Key: "key", Value: tt.key} //nolint
+			ginContext.Params = []gin.Param{ruleKey}
+
+			rc := &controller.RuleController{
+				RuleService: ruleServiceMock, //nolint
+			}
+			rc.Delete(ginContext)
+
+			if tt.wantStatus != response.Status() { //nolint
+				t.Errorf("Response status code is not the expected. Expected: %v - Actual: %v",
+					tt.wantStatus, response.Status()) //nolint
+			}
+
+			if tt.wantedErr != nil { //nolint
+				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
+				if err != nil {
+					t.Fatalf("Unexpected error occurred getting error from response")
+				}
+				if !reflect.DeepEqual(tt.wantedErr, errorResponse) { //nolint
+					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse) //nolint
+				}
+				return
 			}
 		})
 	}

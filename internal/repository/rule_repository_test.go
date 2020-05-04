@@ -6,7 +6,7 @@ import (
 	"github.com/nicopozo/mockserver/internal/repository"
 )
 
-func Test_createExpression(t *testing.T) {
+func Test_CreateExpression(t *testing.T) {
 	type args struct {
 		path string
 	}
