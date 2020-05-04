@@ -22,3 +22,7 @@ func Logger(ctx context.Context) log.ILogger {
 	u, _ := ctx.Value(loggerKey{}).(log.ILogger)
 	return u
 }
+
+func Background() context.Context {
+	return context.WithValue(context.Background(), loggerKey{}, log.DefaultLogger())
+}

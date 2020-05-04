@@ -106,7 +106,7 @@ func validateRule(rule *model.Rule) error {
 		}
 	}
 
-	if rule.Status != model.RuleStatusEnabled && rule.Status != model.RuleStatusDisabled {
+	if rule.Status != "" && rule.Status != model.RuleStatusEnabled && rule.Status != model.RuleStatusDisabled {
 		return mockserrors.InvalidRulesErrorError{
 			Message: "invalid status - only 'enabled' or 'disabled' are valid values",
 		}
@@ -119,7 +119,7 @@ func validateRule(rule *model.Rule) error {
 	if rule.Strategy != "" && rule.Strategy != model.RuleStrategyNormal && rule.Strategy != model.RuleStrategyRandom &&
 		rule.Strategy != model.RuleStrategySequential {
 		return mockserrors.InvalidRulesErrorError{
-			Message: fmt.Sprintf("invalid rule strategy - only '%s', '%s' or '%s' are valid valud fields",
+			Message: fmt.Sprintf("invalid rule strategy - only '%s', '%s' or '%s' are valid values",
 				model.RuleStrategyNormal, model.RuleStrategyRandom, model.RuleStrategySequential),
 		}
 	}
@@ -148,7 +148,7 @@ func validateResponses(responses []model.Response) error {
 func validateHTTPMethod(method string) error {
 	if method == "" {
 		return mockserrors.InvalidRulesErrorError{
-			Message: "method can not be empty",
+			Message: "method cannot be empty",
 		}
 	}
 
@@ -168,6 +168,10 @@ func formatRule(rule *model.Rule) *model.Rule {
 
 	if rule.Status == "" {
 		rule.Status = model.RuleStatusEnabled
+	}
+
+	if rule.Strategy == "" {
+		rule.Strategy = model.RuleStrategyNormal
 	}
 
 	return rule

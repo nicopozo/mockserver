@@ -37,11 +37,11 @@ func GetGinContext() (*gin.Context, *mocks.MockGinResponseWriter) {
 	theURL := url.URL{RawQuery: "callback:thecallback.com"}
 
 	request.URL = &theURL
-	context := gin.Context{Request: &request}
+	ginContext := gin.Context{Request: &request}
 	responseWriter := mocks.MockGinResponseWriter{}
-	context.Writer = &responseWriter
+	ginContext.Writer = &responseWriter
 
-	return &context, &responseWriter
+	return &ginContext, &responseWriter
 }
 
 func GetGinContextWithBody(requestBodyFile string) (*gin.Context, *mocks.MockGinResponseWriter, error) {
@@ -51,13 +51,13 @@ func GetGinContextWithBody(requestBodyFile string) (*gin.Context, *mocks.MockGin
 	}
 
 	body := Body{bytes.NewBufferString(bodyStr)}
-	url := url.URL{RawQuery: "callback:thecallback.com"}
+	u := url.URL{RawQuery: "callback:thecallback.com"}
 
-	context, response := getGinContext()
-	context.Request.Body = body
-	context.Request.URL = &url
+	ginContext, response := getGinContext()
+	ginContext.Request.Body = body
+	ginContext.Request.URL = &u
 
-	return context, response, nil
+	return ginContext, response, nil
 }
 
 func GetErrorFromResponse(response []byte) (*model.Error, error) {
@@ -74,11 +74,11 @@ func getGinContext() (*gin.Context, *mocks.MockGinResponseWriter) {
 
 	request.URL = &theURL
 
-	context := gin.Context{Request: &request}
+	ginContext := gin.Context{Request: &request}
 	responseWriter := mocks.MockGinResponseWriter{}
-	context.Writer = &responseWriter
+	ginContext.Writer = &responseWriter
 
-	return &context, &responseWriter
+	return &ginContext, &responseWriter
 }
 
 func GetRuleFromResponse(response []byte) (*model.Rule, error) {
