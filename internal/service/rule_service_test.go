@@ -420,7 +420,7 @@ func TestRuleService_Save(t *testing.T) {
 
 			got, err := ruleService.Save(tt.args.ctx, tt.args.rule) //nolint
 			if (err != nil) != (tt.wantedErr != nil) {              //nolint
-				t.Errorf("Save() error = %v, wantErr %v", err, tt.wantedErr != nil) //nolint
+				t.Errorf("Save() error = %v, wantedErr %v", err, tt.wantedErr != nil) //nolint
 				return
 			}
 
@@ -525,7 +525,7 @@ func TestRuleService_Get(t *testing.T) {
 
 			got, err := ruleService.Get(tt.args.ctx, tt.args.key) //nolint
 			if (err != nil) != (tt.wantedErr != nil) {            //nolint
-				t.Errorf("Save() error = %v, wantErr %v", err, tt.wantedErr != nil) //nolint
+				t.Errorf("Save() error = %v, wantedErr %v", err, tt.wantedErr != nil) //nolint
 				return
 			}
 
@@ -609,7 +609,7 @@ func TestRuleService_Delete(t *testing.T) {
 
 			err := ruleService.Delete(tt.args.ctx, tt.args.key) //nolint
 			if (err != nil) != (tt.wantedErr != nil) {          //nolint
-				t.Errorf("Save() error = %v, wantErr %v", err, tt.wantedErr != nil) //nolint
+				t.Errorf("Save() error = %v, wantedErr %v", err, tt.wantedErr != nil) //nolint
 				return
 			}
 
