@@ -291,8 +291,6 @@ func (repository *RuleElasticRepository) SearchByMethodAndPath(ctx context.Conte
 					return rule, nil
 				}
 			}
-
-			break
 		}
 	}
 
