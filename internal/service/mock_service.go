@@ -7,7 +7,6 @@ import (
 	"github.com/nicopozo/mockserver/internal/model"
 )
 
-//nolint:lll
 //go:generate mockgen -destination=../utils/test/mocks/mock_service_mock.go -package=mocks -source=./mock_service.go
 
 type IMockService interface {

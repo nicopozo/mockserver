@@ -60,11 +60,10 @@ func Test_log_getMessage(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) { //nolint
-
-			theLogger := log.NewLogger(tt.fields.trackingID)                                   //nolint
-			if got := theLogger.GetMessage(tt.args.message, tt.args.args...); got != tt.want { //nolint
-				t.Errorf("log.GetMessage() = %v, want %v", got, tt.want) //nolint
+		t.Run(tt.name, func(t *testing.T) {
+			theLogger := log.NewLogger(tt.fields.trackingID)
+			if got := theLogger.GetMessage(tt.args.message, tt.args.args...); got != tt.want {
+				t.Errorf("log.GetMessage() = %v, want %v", got, tt.want)
 			}
 		})
 	}

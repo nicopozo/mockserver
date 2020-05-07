@@ -13,3 +13,15 @@ linters:
   disable:
     - unused
     - funlen
+    - goerr113
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - dupl
+        - scopelint
+        - gomnd
+        - goerr113

@@ -4,14 +4,18 @@ go 1.14
 
 require (
 	github.com/elastic/go-elasticsearch/v7 v7.6.0
-	github.com/gin-gonic/gin v1.6.2
+	github.com/gin-gonic/gin v1.6.3
+	github.com/go-openapi/spec v0.19.7 // indirect
+	github.com/go-openapi/swag v0.19.9 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/golang/mock v1.4.3
-	github.com/kr/pretty v0.1.0 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/newrelic/go-agent v3.4.0+incompatible
+	github.com/golang/protobuf v1.4.1 // indirect
+	github.com/mailru/easyjson v0.7.1 // indirect
 	github.com/sirupsen/logrus v1.4.2
-	github.com/stretchr/testify v1.5.1
-	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
+	github.com/stretchr/testify v1.5.1 // indirect
+	github.com/swaggo/gin-swagger v1.2.0
+	github.com/swaggo/swag v1.6.5 // indirect
+	golang.org/x/net v0.0.0-20200505041828-1ed23360d12c // indirect
+	golang.org/x/sys v0.0.0-20200501145240-bc7a7d42d5c3 // indirect
+	golang.org/x/tools v0.0.0-20200505023115-26f46d2f7ef8 // indirect
 )

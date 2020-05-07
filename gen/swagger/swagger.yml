@@ -1,0 +1,230 @@
+basePath: /
+consumes:
+- application/json
+definitions:
+  Error:
+    properties:
+      cause:
+        items:
+          $ref: '#/definitions/ErrorCause'
+        type: array
+        x-go-name: ErrorCause
+      error:
+        type: string
+        x-go-name: Error
+      message:
+        type: string
+        x-go-name: Message
+      status:
+        format: int64
+        type: integer
+        x-go-name: Status
+    type: object
+    x-go-package: github.com/nicopozo/mockserver/internal/model
+  ErrorCause:
+    properties:
+      code:
+        format: int64
+        type: integer
+        x-go-name: Code
+      description:
+        type: string
+        x-go-name: Description
+    type: object
+    x-go-package: github.com/nicopozo/mockserver/internal/model
+  Paging:
+    properties:
+      limit:
+        format: int32
+        type: integer
+        x-go-name: Limit
+      offset:
+        format: int32
+        type: integer
+        x-go-name: Offset
+      total:
+        format: int64
+        type: integer
+        x-go-name: Total
+    type: object
+    x-go-package: github.com/nicopozo/mockserver/internal/model
+  Response:
+    properties:
+      body:
+        type: string
+        x-go-name: Body
+      content_type:
+        type: string
+        x-go-name: ContentType
+      delay:
+        format: int64
+        type: integer
+        x-go-name: Delay
+      http_status:
+        format: int64
+        type: integer
+        x-go-name: HTTPStatus
+    type: object
+    x-go-package: github.com/nicopozo/mockserver/internal/model
+  Rule:
+    properties:
+      application:
+        type: string
+        x-go-name: Application
+      key:
+        type: string
+        x-go-name: Key
+      method:
+        type: string
+        x-go-name: Method
+      name:
+        type: string
+        x-go-name: Name
+      path:
+        type: string
+        x-go-name: Path
+      responses:
+        items:
+          $ref: '#/definitions/Response'
+        type: array
+        x-go-name: Responses
+      status:
+        type: string
+        x-go-name: Status
+      strategy:
+        type: string
+        x-go-name: Strategy
+    type: object
+    x-go-package: github.com/nicopozo/mockserver/internal/model
+  RuleList:
+    properties:
+      Paging:
+        $ref: '#/definitions/Paging'
+      Results:
+        items:
+          $ref: '#/definitions/Rule'
+        type: array
+    type: object
+    x-go-package: github.com/nicopozo/mockserver/internal/model
+host: api.mp.internal.ml.com
+info:
+  description: |-
+    Mock Service is intended to serve mocks for different APIs during development process. We need to create rules
+    containing the response we expect for a given endpoint
+  title: Reconciliations Mock Service.
+  version: 1.0.0
+paths:
+  /rules:
+    get:
+      description: If no rule is found returns an empty result.
+      operationId: ruleListResponse
+      parameters:
+      - description: key of the rule
+        in: query
+        name: key
+        type: string
+      - description: application name
+        in: query
+        name: application
+        type: string
+      - description: method to be mocked
+        in: query
+        name: method
+        type: string
+      - description: status of the rule (enabled/disabled)
+        in: query
+        name: status
+        type: string
+      - default: 30
+        description: max expected number of results
+        in: query
+        name: limit
+        type: number
+      - default: 0
+        description: number of results to be skipped
+        in: query
+        name: offset
+        type: number
+      responses:
+        "200":
+          $ref: '#/responses/rulesResponse'
+        "500":
+          $ref: '#/responses/errorResponse'
+      summary: Search rules.
+      tags:
+      - Search-Rules
+    post:
+      description: At the moment it allows to update an existing rule, it will change
+        when PUT method is implemented.
+      operationId: createRules
+      parameters:
+      - description: Rule body
+        in: body
+        name: Body
+        schema:
+          $ref: '#/definitions/Rule'
+      responses:
+        "201":
+          $ref: '#/responses/rulesResponse'
+        "400":
+          $ref: '#/responses/errorResponse'
+        "500":
+          $ref: '#/responses/errorResponse'
+      summary: Create a rule for mocking and endpoint.
+      tags:
+      - Create-Rules
+  /rules/{key}:
+    delete:
+      description: If no rule found returns 404.
+      operationId: emptyResponse
+      parameters:
+      - description: key of the rule
+        in: path
+        name: key
+        required: true
+        type: string
+      responses:
+        "204":
+          $ref: '#/responses/errorResponse'
+        "500":
+          $ref: '#/responses/errorResponse'
+      summary: Deletes a previously created rule.
+      tags:
+      - Delete-Rule
+    get:
+      description: If no rule found returns 404.
+      operationId: getRule
+      parameters:
+      - description: key of the rule
+        in: path
+        name: key
+        required: true
+        type: string
+      responses:
+        "200":
+          $ref: '#/responses/rulesResponse'
+        "404":
+          $ref: '#/responses/errorResponse'
+        "500":
+          $ref: '#/responses/errorResponse'
+      summary: Returns a previously created rule.
+      tags:
+      - Get-Rule
+produces:
+- application/json
+responses:
+  errorResponse:
+    description: Error body
+    schema:
+      $ref: '#/definitions/Error'
+  ruleListResponse:
+    description: RuleList body
+    schema:
+      $ref: '#/definitions/RuleList'
+  rulesResponse:
+    description: Rule body
+    schema:
+      $ref: '#/definitions/Rule'
+schemes:
+- http
+swagger: "2.0"

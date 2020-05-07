@@ -12,7 +12,6 @@ import (
 	"github.com/nicopozo/mockserver/internal/repository"
 )
 
-//nolint:lll
 //go:generate mockgen -destination=../utils/test/mocks/rule_service_mock.go -package=mocks -source=./rule_service.go
 
 type IRuleService interface {

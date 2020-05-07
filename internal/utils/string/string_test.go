@@ -34,10 +34,10 @@ func TestArrayContains(t *testing.T) {
 			want: false,
 		},
 	}
-	for _, tt := range tests { //nolint
-		t.Run(tt.name, func(t *testing.T) { //nolint
-			if got := stringutils.ArraysContains(tt.args.array, tt.args.str); got != tt.want { //nolint
-				t.Errorf("Contains() = %v, want %v", got, tt.want) //nolint
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := stringutils.ArraysContains(tt.args.array, tt.args.str); got != tt.want {
+				t.Errorf("Contains() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -56,20 +56,20 @@ func TestHash(t *testing.T) {
 		{
 			name: "Hash should generate correctly for string",
 			args: args{s: "hello"},
-			want: uint32(1335831723), //nolint
+			want: uint32(1335831723),
 		},
 		{
 			name: "Hash should generate correctly for long string",
 			args: args{s: "Lorem ipsum dolor sit amet, consectetur adipiscing elit"},
-			want: uint32(2580452767), //nolint
+			want: uint32(2580452767),
 		},
 	}
 
-	for _, tt := range tests { //nolint
-		t.Run(tt.name, func(t *testing.T) { //nolint
-			got := stringutils.Hash(tt.args.s) //nolint
-			if got != tt.want {                //nolint
-				t.Errorf("Hash() = %v, want %v", got, tt.want) //nolint
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := stringutils.Hash(tt.args.s)
+			if got != tt.want {
+				t.Errorf("Hash() = %v, want %v", got, tt.want)
 			}
 		})
 	}

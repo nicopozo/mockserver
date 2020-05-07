@@ -39,10 +39,10 @@ func Test_CreateExpression(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests { //nolint
-		t.Run(tt.name, func(t *testing.T) { //nolint
-			if got := repository.CreateExpression(tt.args.path); got != tt.want { //nolint
-				t.Errorf("CreateExpression() = %v, want %v", got, tt.want) //nolint
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := repository.CreateExpression(tt.args.path); got != tt.want {
+				t.Errorf("CreateExpression() = %v, want %v", got, tt.want)
 			}
 		})
 	}

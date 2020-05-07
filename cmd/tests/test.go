@@ -26,7 +26,6 @@ func main() {
 	var re = regexp.MustCompile(`^/test/[^/]+?/[^/]+?/[^/]+$`)
 	res := re.MatchString("/test/1/2")
 	fmt.Println(res)
-
 }
 
 /*

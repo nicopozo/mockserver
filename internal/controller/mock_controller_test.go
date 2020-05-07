@@ -37,7 +37,7 @@ func TestMockController_Execute(t *testing.T) {
 				HTTPStatus:  http.StatusOK,
 				Delay:       0,
 			},
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 		},
 		{
 			name:       "Should return 404 when no response found",
@@ -58,7 +58,7 @@ func TestMockController_Execute(t *testing.T) {
 				Message: "no rule found for path",
 			},
 			serviceResponse:  nil,
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 		},
 		{
 			name:       "Should return 500 when service returns error",
@@ -77,7 +77,7 @@ func TestMockController_Execute(t *testing.T) {
 			},
 			serviceErr:       errors.New("service error"),
 			serviceResponse:  nil,
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 		},
 	}
 	for _, tt := range tests {
@@ -87,38 +87,38 @@ func TestMockController_Execute(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			mockServiceMock.EXPECT().SearchResponseForMethodAndPath(gomock.Any(), "GET", "/test").
-				Return(tt.serviceResponse, tt.serviceErr).Times(tt.serviceCallTimes) //nolint
+				Return(tt.serviceResponse, tt.serviceErr).Times(tt.serviceCallTimes)
 
 			ginContext, response := testutils.GetGinContext()
-			path := gin.Param{Key: "rule", Value: "/test"} //nolint
+			path := gin.Param{Key: "rule", Value: "/test"}
 			ginContext.Params = []gin.Param{path}
 			ginContext.Request.Method = "get"
 
 			mc := &controller.MockController{
-				MockService: mockServiceMock, //nolint
+				MockService: mockServiceMock,
 			}
 			mc.Execute(ginContext)
 
-			if tt.wantStatus != response.Status() { //nolint
+			if tt.wantStatus != response.Status() {
 				t.Errorf("Response status code is not the expected. Expected: %v - Actual: %v",
-					tt.wantStatus, response.Status()) //nolint
+					tt.wantStatus, response.Status())
 			}
 
-			if tt.wantedErr != nil { //nolint
+			if tt.wantedErr != nil {
 				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
 				if err != nil {
 					t.Fatalf("Unexpected error occurred getting error from response")
 				}
-				if !reflect.DeepEqual(tt.wantedErr, errorResponse) { //nolint
-					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse) //nolint
+				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
+					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
 				}
 				return
 			}
 
 			res := string(response.Bytes)
 
-			if !reflect.DeepEqual(tt.want, res) { //nolint
-				t.Errorf("Rule response is not the expected. Expected: %v - Actual: %v", tt.want, res) //nolint
+			if !reflect.DeepEqual(tt.want, res) {
+				t.Errorf("Rule response is not the expected. Expected: %v - Actual: %v", tt.want, res)
 			}
 		})
 	}

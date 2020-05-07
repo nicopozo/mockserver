@@ -7,6 +7,8 @@ import (
 	"github.com/nicopozo/mockserver/internal/controller"
 	"github.com/nicopozo/mockserver/internal/repository"
 	"github.com/nicopozo/mockserver/internal/service"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
 func mapRoutes(router *gin.Engine) {
@@ -19,7 +21,9 @@ func mapRoutes(router *gin.Engine) {
 	mockController := newMockController()
 	router.Any("/mock-server/mock/*rule", mockController.Execute)
 
-	router.GET("/ping", ping())
+	router.GET("/ping", ping)
+
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }
 
 func newRuleController() controller.RuleController {
@@ -49,8 +53,6 @@ func newMockController() controller.MockController {
 	return mockController
 }
 
-func ping() func(c *gin.Context) {
-	return func(c *gin.Context) {
-		c.String(http.StatusOK, "pong")
-	}
+func ping(c *gin.Context) {
+	c.String(http.StatusOK, "pong")
 }

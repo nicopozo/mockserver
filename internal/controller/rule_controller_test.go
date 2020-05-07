@@ -54,7 +54,7 @@ func TestRuleController_Create(t *testing.T) {
 				},
 			},
 			wantedErr:        nil,
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 		},
 		{
 			name:        "Should fail when body in invalid",
@@ -73,7 +73,7 @@ func TestRuleController_Create(t *testing.T) {
 					},
 				},
 			},
-			serviceCallTimes: 0, //nolint
+			serviceCallTimes: 0,
 		},
 		{
 			name:        "Should return 400 when service returns InvalidRulesErrorError",
@@ -92,7 +92,7 @@ func TestRuleController_Create(t *testing.T) {
 					},
 				},
 			},
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 		},
 		{
 			name:        "Should return 500 when service returns unexpected error",
@@ -111,7 +111,7 @@ func TestRuleController_Create(t *testing.T) {
 					},
 				},
 			},
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 		},
 	}
 	for _, tt := range tests {
@@ -121,9 +121,9 @@ func TestRuleController_Create(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Save(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(ctx context.Context, rule *model.Rule) (*model.Rule, error) { //nolint
-					if tt.serviceErr != nil { //nolint
-						return nil, tt.serviceErr //nolint
+				DoAndReturn(func(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+					if tt.serviceErr != nil {
+						return nil, tt.serviceErr
 					}
 
 					rule.Method = strings.ToUpper(rule.Method)
@@ -131,30 +131,30 @@ func TestRuleController_Create(t *testing.T) {
 						strings.ToLower(rule.Method), stringutils.Hash(rule.Name))
 
 					return rule, nil
-				}).Times(tt.serviceCallTimes) //nolint
+				}).Times(tt.serviceCallTimes)
 
-			ctx, response, err := testutils.GetGinContextWithBody(tt.requestFile) //nolint
+			ctx, response, err := testutils.GetGinContextWithBody(tt.requestFile)
 			if err != nil {
 				t.Fatalf("Error reading file: %s", err.Error())
 			}
 
 			rc := &controller.RuleController{
-				RuleService: ruleServiceMock, //nolint
+				RuleService: ruleServiceMock,
 			}
 			rc.Create(ctx)
 
-			if tt.wantStatus != response.Status() { //nolint
+			if tt.wantStatus != response.Status() {
 				t.Errorf("Response status code is not the expected. Expected: %v - Actual: %v",
-					tt.wantStatus, response.Status()) //nolint
+					tt.wantStatus, response.Status())
 			}
 
-			if tt.wantedErr != nil { //nolint
+			if tt.wantedErr != nil {
 				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
 				if err != nil {
 					t.Fatalf("Unexpected error occurred getting error from response")
 				}
-				if !reflect.DeepEqual(tt.wantedErr, errorResponse) { //nolint
-					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse) //nolint
+				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
+					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
 				}
 				return
 			}
@@ -164,8 +164,8 @@ func TestRuleController_Create(t *testing.T) {
 				t.Fatalf("Unexpected error occurred getting rule from response")
 			}
 
-			if !reflect.DeepEqual(tt.want, rule) { //nolint
-				t.Errorf("Rule response is not the expected. Expected: %v - Actual: %v", tt.want, rule) //nolint
+			if !reflect.DeepEqual(tt.want, rule) {
+				t.Errorf("Rule response is not the expected. Expected: %v - Actual: %v", tt.want, rule)
 			}
 		})
 	}
@@ -203,7 +203,7 @@ func TestRuleController_Get(t *testing.T) {
 			},
 			wantStatus:       http.StatusOK,
 			wantedErr:        nil,
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 			key:              "myapp_get_4016913947",
 		},
 
@@ -223,7 +223,7 @@ func TestRuleController_Get(t *testing.T) {
 					},
 				},
 			},
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 			key:              "myapp_get_4016913947",
 		},
 		{
@@ -242,7 +242,7 @@ func TestRuleController_Get(t *testing.T) {
 					},
 				},
 			},
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 			key:              "myapp_get_4016913947",
 		},
 	}
@@ -252,10 +252,10 @@ func TestRuleController_Get(t *testing.T) {
 			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
-			ruleServiceMock.EXPECT().Get(gomock.Any(), tt.key). //nolint
-										DoAndReturn(func(ctx context.Context, key string) (*model.Rule, error) { //nolint
-					if tt.serviceErr != nil { //nolint
-						return nil, tt.serviceErr //nolint
+			ruleServiceMock.EXPECT().Get(gomock.Any(), tt.key).
+				DoAndReturn(func(ctx context.Context, key string) (*model.Rule, error) {
+					if tt.serviceErr != nil {
+						return nil, tt.serviceErr
 					}
 
 					result := &model.Rule{
@@ -277,29 +277,29 @@ func TestRuleController_Get(t *testing.T) {
 					}
 
 					return result, nil
-				}).Times(tt.serviceCallTimes) //nolint
+				}).Times(tt.serviceCallTimes)
 
 			ginContext, response := testutils.GetGinContext()
-			ruleKey := gin.Param{Key: "key", Value: tt.key} //nolint
+			ruleKey := gin.Param{Key: "key", Value: tt.key}
 			ginContext.Params = []gin.Param{ruleKey}
 
 			rc := &controller.RuleController{
-				RuleService: ruleServiceMock, //nolint
+				RuleService: ruleServiceMock,
 			}
 			rc.Get(ginContext)
 
-			if tt.wantStatus != response.Status() { //nolint
+			if tt.wantStatus != response.Status() {
 				t.Errorf("Response status code is not the expected. Expected: %v - Actual: %v",
-					tt.wantStatus, response.Status()) //nolint
+					tt.wantStatus, response.Status())
 			}
 
-			if tt.wantedErr != nil { //nolint
+			if tt.wantedErr != nil {
 				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
 				if err != nil {
 					t.Fatalf("Unexpected error occurred getting error from response")
 				}
-				if !reflect.DeepEqual(tt.wantedErr, errorResponse) { //nolint
-					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse) //nolint
+				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
+					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
 				}
 				return
 			}
@@ -309,14 +309,15 @@ func TestRuleController_Get(t *testing.T) {
 				t.Fatalf("Unexpected error occurred getting rule from response")
 			}
 
-			if !reflect.DeepEqual(tt.want, rule) { //nolint
-				t.Errorf("Rule response is not the expected. Expected: %v - Actual: %v", tt.want, rule) //nolint
+			if !reflect.DeepEqual(tt.want, rule) {
+				t.Errorf("Rule response is not the expected. Expected: %v - Actual: %v", tt.want, rule)
 			}
 		})
 	}
 }
 
-func TestRuleController_Search(t *testing.T) { //nolint
+//nolint
+func TestRuleController_Search(t *testing.T) {
 	tests := []struct {
 		name             string
 		wantStatus       int
@@ -375,7 +376,7 @@ func TestRuleController_Search(t *testing.T) { //nolint
 			wantedErr:        nil,
 			serviceErr:       nil,
 			queries:          map[string]string{"status": "enabled"},
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 		},
 		{
 			name:       "Search Reconcilables successfully with custom paging",
@@ -426,7 +427,7 @@ func TestRuleController_Search(t *testing.T) { //nolint
 			wantedErr:        nil,
 			serviceErr:       nil,
 			queries:          map[string]string{"status": "enabled", "offset": "1", "limit": "3"},
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 		},
 		{
 			name:       "Search Rules returns 400 when invalid offset",
@@ -445,7 +446,7 @@ func TestRuleController_Search(t *testing.T) { //nolint
 			},
 			serviceErr:       nil,
 			queries:          map[string]string{"status": "enabled", "offset": "invalid"},
-			serviceCallTimes: 0, //nolint
+			serviceCallTimes: 0,
 		},
 		{
 			name:       "Search Rules returns 400 when invalid limit",
@@ -464,7 +465,7 @@ func TestRuleController_Search(t *testing.T) { //nolint
 			},
 			serviceErr:       nil,
 			queries:          map[string]string{"status": "enabled", "limit": "invalid"},
-			serviceCallTimes: 0, //nolint
+			serviceCallTimes: 0,
 		},
 		{
 			name:       "Search Rules returns 500 when service returns error",
@@ -483,7 +484,7 @@ func TestRuleController_Search(t *testing.T) { //nolint
 			},
 			serviceErr:       errors.New("error when calling service.Search()"),
 			queries:          map[string]string{"status": "enabled"},
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 		},
 	}
 	for _, tt := range tests {
@@ -492,16 +493,15 @@ func TestRuleController_Search(t *testing.T) { //nolint
 			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
-			//nolint
 			ruleServiceMock.EXPECT().Search(gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error) { //nolint
-					if tt.serviceErr != nil { //nolint
-						return nil, tt.serviceErr //nolint
+				DoAndReturn(func(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error) {
+					if tt.serviceErr != nil {
+						return nil, tt.serviceErr
 					}
 
 					expectedPaging := model.Paging{Limit: tt.want.Paging.Limit, Offset: tt.want.Paging.Offset}
-					if !reflect.DeepEqual(expectedPaging, paging) { //nolint
-						t.Errorf("Request Paging is not the expected. Expected: %v - Actual: %v", expectedPaging, paging) //nolint
+					if !reflect.DeepEqual(expectedPaging, paging) {
+						t.Errorf("Request Paging is not the expected. Expected: %v - Actual: %v", expectedPaging, paging)
 					}
 					return &model.RuleList{
 						Paging: model.Paging{
@@ -546,33 +546,33 @@ func TestRuleController_Search(t *testing.T) { //nolint
 							},
 						},
 					}, nil
-				}).Times(tt.serviceCallTimes) //nolint
+				}).Times(tt.serviceCallTimes)
 
 			ginContext, response := testutils.GetGinContext()
 			values := ginContext.Request.URL.Query()
-			for key, value := range tt.queries { //nolint
+			for key, value := range tt.queries {
 				values.Add(key, value)
 			}
 
 			ginContext.Request.URL.RawQuery = values.Encode()
 
 			rc := &controller.RuleController{
-				RuleService: ruleServiceMock, //nolint
+				RuleService: ruleServiceMock,
 			}
 			rc.Search(ginContext)
 
-			if tt.wantStatus != response.Status() { //nolint
+			if tt.wantStatus != response.Status() {
 				t.Errorf("Response status code is not the expected. Expected: %v - Actual: %v",
-					tt.wantStatus, response.Status()) //nolint
+					tt.wantStatus, response.Status())
 			}
 
-			if tt.wantedErr != nil { //nolint
+			if tt.wantedErr != nil {
 				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
 				if err != nil {
 					t.Fatalf("Unexpected error occurred getting error from response")
 				}
-				if !reflect.DeepEqual(tt.wantedErr, errorResponse) { //nolint
-					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse) //nolint
+				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
+					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
 				}
 				return
 			}
@@ -582,8 +582,8 @@ func TestRuleController_Search(t *testing.T) { //nolint
 				t.Fatalf("Unexpected error occurred getting ruleList from response")
 			}
 
-			if !reflect.DeepEqual(tt.want, rules) { //nolint
-				t.Errorf("RuleList response is not the expected. Expected: %v - Actual: %v", tt.want, rules) //nolint
+			if !reflect.DeepEqual(tt.want, rules) {
+				t.Errorf("RuleList response is not the expected. Expected: %v - Actual: %v", tt.want, rules)
 			}
 		})
 	}
@@ -603,7 +603,7 @@ func TestRuleController_Delete(t *testing.T) {
 			serviceErr:       nil,
 			wantStatus:       http.StatusNoContent,
 			wantedErr:        nil,
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 			key:              "myapp_get_4016913947",
 		},
 
@@ -622,7 +622,7 @@ func TestRuleController_Delete(t *testing.T) {
 					},
 				},
 			},
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 			key:              "myapp_get_4016913947",
 		},
 		{
@@ -630,7 +630,7 @@ func TestRuleController_Delete(t *testing.T) {
 			serviceErr:       mockserrors.RuleNotFoundError{Message: "item not found in KVS"},
 			wantStatus:       http.StatusNoContent,
 			wantedErr:        nil,
-			serviceCallTimes: 1, //nolint
+			serviceCallTimes: 1,
 			key:              "myapp_get_4016913947",
 		},
 	}
@@ -640,29 +640,29 @@ func TestRuleController_Delete(t *testing.T) {
 			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
-			ruleServiceMock.EXPECT().Delete(gomock.Any(), tt.key).Return(tt.serviceErr).Times(tt.serviceCallTimes) //nolint
+			ruleServiceMock.EXPECT().Delete(gomock.Any(), tt.key).Return(tt.serviceErr).Times(tt.serviceCallTimes)
 
 			ginContext, response := testutils.GetGinContext()
-			ruleKey := gin.Param{Key: "key", Value: tt.key} //nolint
+			ruleKey := gin.Param{Key: "key", Value: tt.key}
 			ginContext.Params = []gin.Param{ruleKey}
 
 			rc := &controller.RuleController{
-				RuleService: ruleServiceMock, //nolint
+				RuleService: ruleServiceMock,
 			}
 			rc.Delete(ginContext)
 
-			if tt.wantStatus != response.Status() { //nolint
+			if tt.wantStatus != response.Status() {
 				t.Errorf("Response status code is not the expected. Expected: %v - Actual: %v",
-					tt.wantStatus, response.Status()) //nolint
+					tt.wantStatus, response.Status())
 			}
 
-			if tt.wantedErr != nil { //nolint
+			if tt.wantedErr != nil {
 				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
 				if err != nil {
 					t.Fatalf("Unexpected error occurred getting error from response")
 				}
-				if !reflect.DeepEqual(tt.wantedErr, errorResponse) { //nolint
-					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse) //nolint
+				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
+					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
 				}
 				return
 			}
