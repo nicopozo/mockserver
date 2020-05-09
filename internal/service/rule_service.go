@@ -16,6 +16,7 @@ import (
 
 type IRuleService interface {
 	Save(ctx context.Context, rule *model.Rule) (*model.Rule, error)
+	Update(ctx context.Context, key string, rule *model.Rule) (*model.Rule, error)
 	Get(ctx context.Context, key string) (*model.Rule, error)
 	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error)
 	SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error)
@@ -26,87 +27,105 @@ type RuleService struct {
 	RuleRepository repository.IRuleRepository
 }
 
-func (service *RuleService) Save(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (ruleService *RuleService) Save(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
-	logger.Debug(service, nil, "Entering RuleService Save()")
+	logger.Debug(ruleService, nil, "Entering RuleService Save()")
 
 	if err := validateRule(rule); err != nil {
-		logger.Error(service, nil, err, "Rule Validation failed")
+		logger.Error(ruleService, nil, err, "Rule Validation failed")
 		return nil, err
 	}
 
-	rule = formatRule(rule)
-
-	return service.RuleRepository.Save(ctx, rule)
+	return ruleService.RuleRepository.Save(ctx, formatRule(rule), false)
 }
 
-func (service *RuleService) Get(ctx context.Context, key string) (*model.Rule, error) {
+func (ruleService *RuleService) Update(ctx context.Context, key string, rule *model.Rule) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
-	logger.Debug(service, nil, "Entering TaskService Get()")
+	logger.Debug(ruleService, nil, "Entering RuleService Update()")
 
-	result, err := service.RuleRepository.Get(ctx, key)
+	_, err := ruleService.Get(ctx, key)
 	if err != nil {
-		logger.Error(service, nil, err, "error getting task")
+		return nil, err
+	}
+
+	err = ruleService.Delete(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	rule.Key = key
+
+	return ruleService.RuleRepository.Save(ctx, formatRule(rule), true)
+}
+
+func (ruleService *RuleService) Get(ctx context.Context, key string) (*model.Rule, error) {
+	logger := mockscontext.Logger(ctx)
+
+	logger.Debug(ruleService, nil, "Entering TaskService Get()")
+
+	result, err := ruleService.RuleRepository.Get(ctx, key)
+	if err != nil {
+		logger.Error(ruleService, nil, err, "error getting task")
 		return nil, err
 	}
 
 	return result, nil
 }
 
-func (service *RuleService) Search(ctx context.Context, params map[string]interface{},
+func (ruleService *RuleService) Search(ctx context.Context, params map[string]interface{},
 	paging model.Paging) (*model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)
 
-	logger.Debug(service, nil, "Entering RuleService Search()")
+	logger.Debug(ruleService, nil, "Entering RuleService Search()")
 
-	return service.RuleRepository.Search(ctx, params, paging)
+	return ruleService.RuleRepository.Search(ctx, params, paging)
 }
 
-func (service *RuleService) SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error) {
+func (ruleService *RuleService) SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
-	logger.Debug(service, nil, "Entering RuleService Search()")
+	logger.Debug(ruleService, nil, "Entering RuleService Search()")
 
-	result, err := service.RuleRepository.SearchByMethodAndPath(ctx, method, path)
+	result, err := ruleService.RuleRepository.SearchByMethodAndPath(ctx, method, path)
 	if err != nil {
-		logger.Error(service, nil, err, "error searching rules")
+		logger.Error(ruleService, nil, err, "error searching rules")
 		return nil, err
 	}
 
 	return result, nil
 }
 
-func (service *RuleService) Delete(ctx context.Context, key string) error {
+func (ruleService *RuleService) Delete(ctx context.Context, key string) error {
 	logger := mockscontext.Logger(ctx)
 
-	logger.Debug(service, nil, "Entering TaskService Get()")
+	logger.Debug(ruleService, nil, "Entering TaskService Get()")
 
-	return service.RuleRepository.Delete(ctx, key)
+	return ruleService.RuleRepository.Delete(ctx, key)
 }
 
 func validateRule(rule *model.Rule) error {
 	if rule == nil {
-		return mockserrors.InvalidRulesErrorError{
+		return mockserrors.InvalidRulesError{
 			Message: "rule cannot be nil",
 		}
 	}
 
 	if rule.Name == "" {
-		return mockserrors.InvalidRulesErrorError{
+		return mockserrors.InvalidRulesError{
 			Message: "name cannot be empty",
 		}
 	}
 
 	if rule.Path == "" {
-		return mockserrors.InvalidRulesErrorError{
+		return mockserrors.InvalidRulesError{
 			Message: "path cannot be empty",
 		}
 	}
 
 	if rule.Status != "" && rule.Status != model.RuleStatusEnabled && rule.Status != model.RuleStatusDisabled {
-		return mockserrors.InvalidRulesErrorError{
+		return mockserrors.InvalidRulesError{
 			Message: "invalid status - only 'enabled' or 'disabled' are valid values",
 		}
 	}
@@ -117,7 +136,7 @@ func validateRule(rule *model.Rule) error {
 
 	if rule.Strategy != "" && rule.Strategy != model.RuleStrategyNormal && rule.Strategy != model.RuleStrategyRandom &&
 		rule.Strategy != model.RuleStrategySequential {
-		return mockserrors.InvalidRulesErrorError{
+		return mockserrors.InvalidRulesError{
 			Message: fmt.Sprintf("invalid rule strategy - only '%s', '%s' or '%s' are valid values",
 				model.RuleStrategyNormal, model.RuleStrategyRandom, model.RuleStrategySequential),
 		}
@@ -128,14 +147,14 @@ func validateRule(rule *model.Rule) error {
 
 func validateResponses(responses []model.Response) error {
 	if len(responses) == 0 {
-		return mockserrors.InvalidRulesErrorError{
+		return mockserrors.InvalidRulesError{
 			Message: "at least one response required",
 		}
 	}
 
 	for _, response := range responses {
 		if response.HTTPStatus < http.StatusOK || response.HTTPStatus > 599 {
-			return mockserrors.InvalidRulesErrorError{
+			return mockserrors.InvalidRulesError{
 				Message: fmt.Sprintf("%v is not a valid HTTP Status", response.HTTPStatus),
 			}
 		}
@@ -146,7 +165,7 @@ func validateResponses(responses []model.Response) error {
 
 func validateHTTPMethod(method string) error {
 	if method == "" {
-		return mockserrors.InvalidRulesErrorError{
+		return mockserrors.InvalidRulesError{
 			Message: "method cannot be empty",
 		}
 	}
@@ -156,7 +175,7 @@ func validateHTTPMethod(method string) error {
 		http.MethodConnect, http.MethodOptions, http.MethodTrace:
 		return nil
 	default:
-		return mockserrors.InvalidRulesErrorError{
+		return mockserrors.InvalidRulesError{
 			Message: fmt.Sprintf("%s is not a valid HTTP Method", method),
 		}
 	}

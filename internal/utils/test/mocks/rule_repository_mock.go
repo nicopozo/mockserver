@@ -35,18 +35,18 @@ func (m *MockIRuleRepository) EXPECT() *MockIRuleRepositoryMockRecorder {
 }
 
 // Save mocks base method
-func (m *MockIRuleRepository) Save(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (m *MockIRuleRepository) Save(ctx context.Context, rule *model.Rule, isUpdate bool) (*model.Rule, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Save", ctx, rule)
+	ret := m.ctrl.Call(m, "Save", ctx, rule, isUpdate)
 	ret0, _ := ret[0].(*model.Rule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Save indicates an expected call of Save
-func (mr *MockIRuleRepositoryMockRecorder) Save(ctx, rule interface{}) *gomock.Call {
+func (mr *MockIRuleRepositoryMockRecorder) Save(ctx, rule, isUpdate interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockIRuleRepository)(nil).Save), ctx, rule)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockIRuleRepository)(nil).Save), ctx, rule, isUpdate)
 }
 
 // Get mocks base method

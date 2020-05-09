@@ -8,10 +8,18 @@ func (e RuleNotFoundError) Error() string {
 	return e.Message
 }
 
-type InvalidRulesErrorError struct {
+type InvalidRulesError struct {
 	Message string
 }
 
-func (e InvalidRulesErrorError) Error() string {
+func (e InvalidRulesError) Error() string {
+	return e.Message
+}
+
+type RuleAlreadyCreatedError struct {
+	Message string
+}
+
+func (e RuleAlreadyCreatedError) Error() string {
 	return e.Message
 }

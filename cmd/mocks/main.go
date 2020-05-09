@@ -7,6 +7,16 @@ import (
 	"github.com/nicopozo/mockserver/internal/model"
 )
 
+// @Title Mock Server
+// @Description Mock Server is intended to serve mocks for different APIs during development process.
+// We need to create rules containing the response we expect for a given endpoint
+// @Version 1.0
+// @Host localhost:8080
+// @BasePath /mock-server
+// @Schemes http
+// @contact.name Nicolas Pozo
+// @contact.email nicopozo@gmail.com
+//Main.
 func main() {
 	router := gin.New()
 	router.NoRoute(noRouteHandler)

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/nicopozo/mockserver/docs"
 	"github.com/nicopozo/mockserver/internal/controller"
 	"github.com/nicopozo/mockserver/internal/repository"
 	"github.com/nicopozo/mockserver/internal/service"
@@ -17,6 +18,7 @@ func mapRoutes(router *gin.Engine) {
 	router.GET("/mock-server/rules/:key", ruleController.Get)
 	router.GET("/mock-server/rules", ruleController.Search)
 	router.DELETE("/mock-server/rules/:key", ruleController.Delete)
+	router.PUT("/mock-server/rules/:key", ruleController.Update)
 
 	mockController := newMockController()
 	router.Any("/mock-server/mock/*rule", mockController.Execute)

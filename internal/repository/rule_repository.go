@@ -14,7 +14,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
-	ruleserrors "github.com/nicopozo/mockserver/internal/errors"
+	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 	stringutils "github.com/nicopozo/mockserver/internal/utils/string"
@@ -24,7 +24,7 @@ import (
 //go:generate mockgen -destination=../utils/test/mocks/rule_repository_mock.go -package=mocks -source=./rule_repository.go
 
 type IRuleRepository interface {
-	Save(ctx context.Context, rule *model.Rule) (*model.Rule, error)
+	Save(ctx context.Context, rule *model.Rule, isUpdate bool) (*model.Rule, error)
 	Get(ctx context.Context, key string) (*model.Rule, error)
 	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error)
 	SearchByMethodAndPath(ctx context.Context, method string, path string) (*model.Rule, error)
@@ -35,12 +35,26 @@ type RuleElasticRepository struct {
 	client *elasticsearch.Client
 }
 
-func (repository *RuleElasticRepository) Save(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (repository *RuleElasticRepository) Save(ctx context.Context, rule *model.Rule,
+	isUpdate bool) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
 
-	rule.Key = getKey(rule)
+	if !isUpdate {
+		rule.Key = getKey(rule)
+
+		exists, err := repository.Exists(ctx, rule.Key)
+		if err != nil {
+			return nil, err
+		}
+
+		if exists {
+			return nil, mockserrors.RuleAlreadyCreatedError{
+				Message: fmt.Sprintf("Rule with key %v already exists", rule.Key),
+			}
+		}
+	}
 
 	_, err = repository.createPatterns(ctx, rule)
 	if err != nil {
@@ -82,7 +96,7 @@ func (repository *RuleElasticRepository) Get(ctx context.Context, key string) (*
 	var err error
 
 	getRuleReq := esapi.GetRequest{
-		DocumentID: strings.ToUpper(key),
+		DocumentID: strings.ToLower(key),
 		Index:      "rules",
 	}
 
@@ -101,7 +115,7 @@ func (repository *RuleElasticRepository) Get(ctx context.Context, key string) (*
 			msg := fmt.Sprintf("no rule found for key: %v", key)
 			logger.Debug(repository, nil, msg)
 
-			return nil, ruleserrors.RuleNotFoundError{Message: msg}
+			return nil, mockserrors.RuleNotFoundError{Message: msg}
 		}
 
 		logger.Error(repository, nil, errors.New("http status != 200: Actual: "+getRuleResp.String()),
@@ -291,12 +305,10 @@ func (repository *RuleElasticRepository) SearchByMethodAndPath(ctx context.Conte
 					return rule, nil
 				}
 			}
-
-			break
 		}
 	}
 
-	return nil, ruleserrors.RuleNotFoundError{
+	return nil, mockserrors.RuleNotFoundError{
 		Message: fmt.Sprintf("no rule found for path: %s and method %s", path, method),
 	}
 }
@@ -327,7 +339,7 @@ func (repository *RuleElasticRepository) getExpressionsByMethod(ctx context.Cont
 			msg := fmt.Sprintf("no expression found for method: %v", method)
 			logger.Debug(repository, nil, msg)
 
-			return nil, ruleserrors.RuleNotFoundError{Message: msg}
+			return nil, mockserrors.RuleNotFoundError{Message: msg}
 		}
 
 		logger.Error(repository, nil, nil, "error getting expressions from Elastic Search")
@@ -490,6 +502,19 @@ func (repository *RuleElasticRepository) getElasticClient() *elasticsearch.Clien
 	}
 
 	return repository.client
+}
+
+func (repository *RuleElasticRepository) Exists(ctx context.Context, id string) (bool, error) {
+	item, err := repository.Get(ctx, id)
+	if err != nil {
+		if errors.As(err, &mockserrors.RuleNotFoundError{}) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return item != nil, nil
 }
 
 func CreateExpression(path string) string {

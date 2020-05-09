@@ -9,6 +9,7 @@ const (
 	InternalError             = 1999
 	ValidationError           = 1001
 	TransactionInProcessError = 1015
+	Conflict                  = 1016
 	InvalidUserError          = 1018
 	ServiceUnavailableError   = 1021
 	ResourceNotFoundError     = 1030
@@ -21,6 +22,7 @@ var (
 		InternalError:             {status: http.StatusInternalServerError, message: "Internal server error"},
 		ValidationError:           {status: http.StatusBadRequest, message: "Request validation failed"},
 		TransactionInProcessError: {status: http.StatusBadRequest, message: "Transaction in process"},
+		Conflict:                  {status: http.StatusBadRequest, message: "Resource in conflict"},
 		InvalidUserError:          {status: http.StatusBadRequest, message: "Invalid user"},
 		ServiceUnavailableError:   {status: http.StatusBadGateway, message: "Service Unavailable"},
 		ResourceNotFoundError:     {status: http.StatusNotFound, message: "Resource Not Found"},
@@ -29,14 +31,14 @@ var (
 )
 
 type ErrorCause struct {
-	Code        int64  `json:"code"`
-	Description string `json:"description"`
+	Code        int64  `json:"code" example:"1030"`
+	Description string `json:"description" example:"Resource Not Found"`
 }
 
 type Error struct {
-	Message    string       `json:"message"`
-	Error      string       `json:"error"`
-	Status     int          `json:"status"`
+	Message    string       `json:"message" example:"no rule found with key: banks_get_55603295"`
+	Error      string       `json:"error" example:"Not Found"`
+	Status     int          `json:"status" example:"404"`
 	ErrorCause []ErrorCause `json:"cause"`
 }
 

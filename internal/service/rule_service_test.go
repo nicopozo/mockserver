@@ -7,10 +7,9 @@ import (
 	"reflect"
 	"testing"
 
-	mockserrors "github.com/nicopozo/mockserver/internal/errors"
-
 	"github.com/golang/mock/gomock"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
+	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/service"
 	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
@@ -18,8 +17,9 @@ import (
 
 func TestRuleService_Save(t *testing.T) {
 	type args struct {
-		rule *model.Rule
-		ctx  context.Context
+		rule     *model.Rule
+		ctx      context.Context
+		isUpdate bool
 	}
 
 	tests := []struct {
@@ -33,7 +33,8 @@ func TestRuleService_Save(t *testing.T) {
 		{
 			name: "Should save rule correctly",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 				rule: &model.Rule{
 					Application: "myapp",
 					Name:        "test_mock",
@@ -75,7 +76,8 @@ func TestRuleService_Save(t *testing.T) {
 		{
 			name: "Should save rule correctly with default strategy",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 				rule: &model.Rule{
 					Application: "myapp",
 					Name:        "test_mock",
@@ -116,7 +118,8 @@ func TestRuleService_Save(t *testing.T) {
 		{
 			name: "Should save rule correctly with default status",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 				rule: &model.Rule{
 					Application: "myapp",
 					Name:        "test_mock",
@@ -157,7 +160,8 @@ func TestRuleService_Save(t *testing.T) {
 		{
 			name: "Should return error when repository returns error",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 				rule: &model.Rule{
 					Application: "myapp",
 					Name:        "test_mock",
@@ -183,17 +187,19 @@ func TestRuleService_Save(t *testing.T) {
 		{
 			name: "Should return InvalidRuleError rule is nil",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 			},
 			want:             nil,
-			wantedErr:        mockserrors.InvalidRulesErrorError{Message: "rule cannot be nil"},
+			wantedErr:        mockserrors.InvalidRulesError{Message: "rule cannot be nil"},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
 		},
 		{
 			name: "Should return InvalidRuleError rule when name is empty",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 				rule: &model.Rule{
 					Application: "myapp",
 					Name:        "",
@@ -212,14 +218,15 @@ func TestRuleService_Save(t *testing.T) {
 				},
 			},
 			want:             nil,
-			wantedErr:        mockserrors.InvalidRulesErrorError{Message: "name cannot be empty"},
+			wantedErr:        mockserrors.InvalidRulesError{Message: "name cannot be empty"},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
 		},
 		{
 			name: "Should return InvalidRuleError rule when path is empty",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 				rule: &model.Rule{
 					Application: "myapp",
 					Name:        "test_mock",
@@ -238,14 +245,15 @@ func TestRuleService_Save(t *testing.T) {
 				},
 			},
 			want:             nil,
-			wantedErr:        mockserrors.InvalidRulesErrorError{Message: "path cannot be empty"},
+			wantedErr:        mockserrors.InvalidRulesError{Message: "path cannot be empty"},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
 		},
 		{
 			name: "Should return InvalidRuleError rule when status",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 				rule: &model.Rule{
 					Application: "myapp",
 					Name:        "test_mock",
@@ -264,7 +272,7 @@ func TestRuleService_Save(t *testing.T) {
 				},
 			},
 			want: nil,
-			wantedErr: mockserrors.InvalidRulesErrorError{
+			wantedErr: mockserrors.InvalidRulesError{
 				Message: "invalid status - only 'enabled' or 'disabled' are valid values"},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
@@ -272,7 +280,8 @@ func TestRuleService_Save(t *testing.T) {
 		{
 			name: "Should return InvalidRuleError rule when invalid method",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 				rule: &model.Rule{
 					Application: "myapp",
 					Name:        "test_mock",
@@ -291,7 +300,7 @@ func TestRuleService_Save(t *testing.T) {
 				},
 			},
 			want: nil,
-			wantedErr: mockserrors.InvalidRulesErrorError{
+			wantedErr: mockserrors.InvalidRulesError{
 				Message: "invalid is not a valid HTTP Method"},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
@@ -299,7 +308,8 @@ func TestRuleService_Save(t *testing.T) {
 		{
 			name: "Should return InvalidRuleError rule when method is empty",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 				rule: &model.Rule{
 					Application: "myapp",
 					Name:        "test_mock",
@@ -318,7 +328,7 @@ func TestRuleService_Save(t *testing.T) {
 				},
 			},
 			want: nil,
-			wantedErr: mockserrors.InvalidRulesErrorError{
+			wantedErr: mockserrors.InvalidRulesError{
 				Message: "method cannot be empty"},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
@@ -326,7 +336,8 @@ func TestRuleService_Save(t *testing.T) {
 		{
 			name: "Should return InvalidRuleError rule when method is empty",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 				rule: &model.Rule{
 					Application: "myapp",
 					Name:        "test_mock",
@@ -345,7 +356,7 @@ func TestRuleService_Save(t *testing.T) {
 				},
 			},
 			want: nil,
-			wantedErr: mockserrors.InvalidRulesErrorError{
+			wantedErr: mockserrors.InvalidRulesError{
 				Message: "invalid rule strategy - only 'normal', 'random' or 'sequential' are valid values"},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
@@ -353,7 +364,8 @@ func TestRuleService_Save(t *testing.T) {
 		{
 			name: "Should return InvalidRuleError rule when response is empty",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 				rule: &model.Rule{
 					Application: "myapp",
 					Name:        "test_mock",
@@ -365,7 +377,7 @@ func TestRuleService_Save(t *testing.T) {
 				},
 			},
 			want: nil,
-			wantedErr: mockserrors.InvalidRulesErrorError{
+			wantedErr: mockserrors.InvalidRulesError{
 				Message: "at least one response required"},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
@@ -373,7 +385,8 @@ func TestRuleService_Save(t *testing.T) {
 		{
 			name: "Should return InvalidRuleError rule when response has invalid http status",
 			args: args{
-				ctx: mockscontext.Background(),
+				isUpdate: false,
+				ctx:      mockscontext.Background(),
 				rule: &model.Rule{
 					Application: "myapp",
 					Name:        "test_mock",
@@ -392,7 +405,7 @@ func TestRuleService_Save(t *testing.T) {
 				},
 			},
 			want: nil,
-			wantedErr: mockserrors.InvalidRulesErrorError{
+			wantedErr: mockserrors.InvalidRulesError{
 				Message: "100 is not a valid HTTP Status"},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
@@ -405,8 +418,8 @@ func TestRuleService_Save(t *testing.T) {
 			ruleRepositoryMock := mocks.NewMockIRuleRepository(mockCtrl)
 			defer mockCtrl.Finish()
 
-			ruleRepositoryMock.EXPECT().Save(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+			ruleRepositoryMock.EXPECT().Save(gomock.Any(), gomock.Any(), tt.args.isUpdate).
+				DoAndReturn(func(ctx context.Context, rule *model.Rule, isUpdate bool) (*model.Rule, error) {
 					if tt.repositoryErr != nil {
 						return nil, tt.repositoryErr
 					}

@@ -16,13 +16,13 @@ const (
 )
 
 type Rule struct {
-	Key         string     `json:"key"`
-	Application string     `json:"application"`
-	Name        string     `json:"name"`
-	Path        string     `json:"path"`
-	Strategy    string     `json:"strategy"`
-	Method      string     `json:"method"`
-	Status      string     `json:"status"`
+	Key         string     `json:"key" example:"payments_get_556032950"`
+	Application string     `json:"application" example:"payments"`
+	Name        string     `json:"name" example:"get payment"`
+	Path        string     `json:"path" example:"/v1/payments/{payment_id}"`
+	Strategy    string     `json:"strategy" example:"normal"`
+	Method      string     `json:"method" example:"GET"`
+	Status      string     `json:"status" example:"enabled"`
 	Responses   []Response `json:"responses"`
 }
 

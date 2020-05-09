@@ -10,11 +10,9 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	mockserrors "github.com/nicopozo/mockserver/internal/errors"
-
-	"github.com/nicopozo/mockserver/internal/controller"
-
 	"github.com/golang/mock/gomock"
+	"github.com/nicopozo/mockserver/internal/controller"
+	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	stringutils "github.com/nicopozo/mockserver/internal/utils/string"
 	testutils "github.com/nicopozo/mockserver/internal/utils/test"
@@ -76,9 +74,9 @@ func TestRuleController_Create(t *testing.T) {
 			serviceCallTimes: 0,
 		},
 		{
-			name:        "Should return 400 when service returns InvalidRulesErrorError",
+			name:        "Should return 400 when service returns InvalidRulesError",
 			requestFile: "../utils/test/mocks/json/create_rule_request.json",
-			serviceErr:  mockserrors.InvalidRulesErrorError{Message: "invalid rule"},
+			serviceErr:  mockserrors.InvalidRulesError{Message: "invalid rule"},
 			wantStatus:  http.StatusBadRequest,
 			want:        nil,
 			wantedErr: &model.Error{

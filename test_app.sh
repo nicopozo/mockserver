@@ -1,5 +1,7 @@
 #!/bin/bash
 
+swag init -g cmd/mocks/main.go
+
 go mod tidy
 
 echo "###################################"
