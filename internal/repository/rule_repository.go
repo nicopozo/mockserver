@@ -444,7 +444,7 @@ func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rul
 		list.Patterns = append(list.Patterns, pattern)
 	}
 
-	err = repository.saveExpression(ctx, rule.Method, &list)
+	err = repository.saveExpression(ctx, strings.ToUpper(rule.Method), &list)
 	if err != nil {
 		return nil, err
 	}
