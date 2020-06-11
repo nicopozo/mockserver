@@ -127,6 +127,62 @@ func (controller *RuleController) Update(context *gin.Context) {
 }
 
 // @Tags Rules
+// @Summary Update a Rule Status
+// @Description Update an existing Rule for serving a mock response
+// @ID update-rule
+// @Accept  json
+// @Produce  json
+// @Param key path string true "Key of rule to update"
+// @Param rule body model.RuleStatus true "The rule to be updated"
+// @Success 200 {object} model.Rule "Rule successfully updated"
+// @Failure 400 {object} model.Error "Validation of the rule failed"
+// @Failure 500 {object} model.Error "Internal server error"
+// @Router /rules/{key} [put]
+// Update a Rule.
+func (controller *RuleController) UpdateStatus(context *gin.Context) {
+	reqContext := mockscontext.New(context)
+	logger := mockscontext.Logger(reqContext)
+	logger.Debug(controller, nil, "Entering RuleController Save()")
+
+	key := context.Param("key")
+
+	ruleStatus, err := model.UnmarshalRuleStatus(context.Request.Body)
+	if err != nil {
+		errorResult := model.NewError(model.ValidationError, "Invalid JSON. %s", err.Error())
+		logger.Error(controller, nil, err, "Error unmarshalling Rule JSON")
+		context.JSON(http.StatusBadRequest, errorResult)
+
+		return
+	}
+
+	rule, err := controller.RuleService.UpdateStatus(reqContext, key, ruleStatus)
+
+	if err != nil {
+		switch err.(type) {
+		case ruleserrors.RuleNotFoundError:
+			logger.Debug(controller, nil, "No rule found with key: %v", key)
+
+			errorResult := model.NewError(model.ResourceNotFoundError, "%s", err.Error())
+			context.JSON(http.StatusNotFound, errorResult)
+		case ruleserrors.InvalidRulesError:
+			logger.Error(controller, nil, err, "Invalid status: %v", ruleStatus.Status)
+
+			errorResult := model.NewError(model.ValidationError, "%s", err.Error())
+			context.JSON(http.StatusBadRequest, errorResult)
+		default:
+			errorResult := model.NewError(model.InternalError, "Error occurred when saving rule. %s", err.Error())
+
+			logger.Error(controller, nil, err, "Error occurred when saving rule")
+			context.JSON(http.StatusInternalServerError, errorResult)
+		}
+
+		return
+	}
+
+	context.JSON(http.StatusCreated, rule)
+}
+
+// @Tags Rules
 // @Summary Get Rule by Key
 // @Description Get a Rule, if not found return 404
 // @ID get-rule

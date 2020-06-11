@@ -17,6 +17,7 @@ import (
 type IRuleService interface {
 	Save(ctx context.Context, rule *model.Rule) (*model.Rule, error)
 	Update(ctx context.Context, key string, rule *model.Rule) (*model.Rule, error)
+	UpdateStatus(ctx context.Context, key string, rule *model.RuleStatus) (*model.Rule, error)
 	Get(ctx context.Context, key string) (*model.Rule, error)
 	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error)
 	SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error)
@@ -56,6 +57,26 @@ func (ruleService *RuleService) Update(ctx context.Context, key string, rule *mo
 	}
 
 	rule.Key = key
+
+	return ruleService.RuleRepository.Save(ctx, formatRule(rule), true)
+}
+
+func (ruleService *RuleService) UpdateStatus(ctx context.Context, key string,
+	ruleStatus *model.RuleStatus) (*model.Rule, error) {
+	logger := mockscontext.Logger(ctx)
+
+	logger.Debug(ruleService, nil, "Entering RuleService Update()")
+
+	if err := ruleStatus.Validate(); err != nil {
+		return nil, err
+	}
+
+	rule, err := ruleService.Get(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	rule.Status = ruleStatus.Status
 
 	return ruleService.RuleRepository.Save(ctx, formatRule(rule), true)
 }

@@ -19,6 +19,7 @@ func mapRoutes(router *gin.Engine) {
 	router.GET("/mock-server/rules", ruleController.Search)
 	router.DELETE("/mock-server/rules/:key", ruleController.Delete)
 	router.PUT("/mock-server/rules/:key", ruleController.Update)
+	router.PUT("/mock-server/rules/:key/status", ruleController.UpdateStatus)
 
 	mockController := newMockController()
 	router.Any("/mock-server/mock/*rule", mockController.Execute)

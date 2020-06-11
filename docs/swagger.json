@@ -204,7 +204,7 @@
                 "tags": [
                     "Rules"
                 ],
-                "summary": "Update a Rule",
+                "summary": "Update a Rule Status",
                 "operationId": "update-rule",
                 "parameters": [
                     {
@@ -220,7 +220,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Rule"
+                            "$ref": "#/definitions/model.RuleStatus"
                         }
                     }
                 ],
@@ -405,6 +405,15 @@
                     "items": {
                         "$ref": "#/definitions/model.Rule"
                     }
+                }
+            }
+        },
+        "model.RuleStatus": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "enabled"
                 }
             }
         }

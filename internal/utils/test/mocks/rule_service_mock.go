@@ -64,6 +64,21 @@ func (mr *MockIRuleServiceMockRecorder) Update(ctx, key, rule interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockIRuleService)(nil).Update), ctx, key, rule)
 }
 
+// UpdateStatus mocks base method
+func (m *MockIRuleService) UpdateStatus(ctx context.Context, key string, rule *model.RuleStatus) (*model.Rule, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateStatus", ctx, key, rule)
+	ret0, _ := ret[0].(*model.Rule)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateStatus indicates an expected call of UpdateStatus
+func (mr *MockIRuleServiceMockRecorder) UpdateStatus(ctx, key, rule interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateStatus", reflect.TypeOf((*MockIRuleService)(nil).UpdateStatus), ctx, key, rule)
+}
+
 // Get mocks base method
 func (m *MockIRuleService) Get(ctx context.Context, key string) (*model.Rule, error) {
 	m.ctrl.T.Helper()

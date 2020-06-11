@@ -3,6 +3,7 @@ package model
 import (
 	"io"
 
+	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 )
 
@@ -31,6 +32,10 @@ type RuleList struct {
 	Results []*Rule
 }
 
+type RuleStatus struct {
+	Status string `json:"status" example:"enabled"`
+}
+
 type ESRule struct {
 	Source *Rule `json:"_source"`
 }
@@ -53,6 +58,23 @@ func UnmarshalRule(body io.Reader) (*Rule, error) {
 	err := jsonutils.Unmarshal(body, rule)
 
 	return rule, err
+}
+
+func UnmarshalRuleStatus(body io.Reader) (*RuleStatus, error) {
+	status := &RuleStatus{}
+	err := jsonutils.Unmarshal(body, status)
+
+	return status, err
+}
+
+func (status *RuleStatus) Validate() error {
+	if status.Status != RuleStatusEnabled && status.Status != RuleStatusDisabled {
+		return mockserrors.InvalidRulesError{
+			Message: "invalid status: %s, only 'enabled' and 'disabled' are allowed",
+		}
+	}
+
+	return nil
 }
 
 func UnmarshalESRule(body io.Reader) (*Rule, error) {

@@ -93,6 +93,12 @@ definitions:
           $ref: '#/definitions/model.Rule'
         type: array
     type: object
+  model.RuleStatus:
+    properties:
+      status:
+        example: enabled
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -259,7 +265,7 @@ paths:
         name: rule
         required: true
         schema:
-          $ref: '#/definitions/model.Rule'
+          $ref: '#/definitions/model.RuleStatus'
       produces:
       - application/json
       responses:
@@ -275,7 +281,7 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/model.Error'
-      summary: Update a Rule
+      summary: Update a Rule Status
       tags:
       - Rules
 schemes:
