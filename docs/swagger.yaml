@@ -265,6 +265,42 @@ paths:
         name: rule
         required: true
         schema:
+          $ref: '#/definitions/model.Rule'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Rule successfully updated
+          schema:
+            $ref: '#/definitions/model.Rule'
+        "400":
+          description: Validation of the rule failed
+          schema:
+            $ref: '#/definitions/model.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.Error'
+      summary: Update a Rule
+      tags:
+      - Rules
+  /rules/{key}/status:
+    put:
+      consumes:
+      - application/json
+      description: Update an existing Rule for serving a mock response
+      operationId: update-rule
+      parameters:
+      - description: Key of rule to update
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: The rule to be updated
+        in: body
+        name: rule
+        required: true
+        schema:
           $ref: '#/definitions/model.RuleStatus'
       produces:
       - application/json

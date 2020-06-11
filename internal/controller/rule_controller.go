@@ -137,7 +137,7 @@ func (controller *RuleController) Update(context *gin.Context) {
 // @Success 200 {object} model.Rule "Rule successfully updated"
 // @Failure 400 {object} model.Error "Validation of the rule failed"
 // @Failure 500 {object} model.Error "Internal server error"
-// @Router /rules/{key} [put]
+// @Router /rules/{key}/status [put]
 // Update a Rule.
 func (controller *RuleController) UpdateStatus(context *gin.Context) {
 	reqContext := mockscontext.New(context)

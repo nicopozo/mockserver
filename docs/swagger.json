@@ -204,7 +204,7 @@
                 "tags": [
                     "Rules"
                 ],
-                "summary": "Update a Rule Status",
+                "summary": "Update a Rule",
                 "operationId": "update-rule",
                 "parameters": [
                     {
@@ -220,7 +220,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.RuleStatus"
+                            "$ref": "#/definitions/model.Rule"
                         }
                     }
                 ],
@@ -268,6 +268,60 @@
                     "204": {},
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/rules/{key}/status": {
+            "put": {
+                "description": "Update an existing Rule for serving a mock response",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rules"
+                ],
+                "summary": "Update a Rule Status",
+                "operationId": "update-rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Key of rule to update",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "The rule to be updated",
+                        "name": "rule",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.RuleStatus"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rule successfully updated",
+                        "schema": {
+                            "$ref": "#/definitions/model.Rule"
+                        }
+                    },
+                    "400": {
+                        "description": "Validation of the rule failed",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/model.Error"
                         }
