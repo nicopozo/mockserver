@@ -17,14 +17,15 @@ const (
 )
 
 type Rule struct {
-	Key         string     `json:"key" example:"payments_get_556032950"`
-	Application string     `json:"application" example:"payments"`
-	Name        string     `json:"name" example:"get payment"`
-	Path        string     `json:"path" example:"/v1/payments/{payment_id}"`
-	Strategy    string     `json:"strategy" example:"normal"`
-	Method      string     `json:"method" example:"GET"`
-	Status      string     `json:"status" example:"enabled"`
-	Responses   []Response `json:"responses"`
+	Key         string      `json:"key" example:"payments_get_556032950"`
+	Application string      `json:"application" example:"payments"`
+	Name        string      `json:"name" example:"get payment"`
+	Path        string      `json:"path" example:"/v1/payments/{payment_id}"`
+	Strategy    string      `json:"strategy" example:"normal"`
+	Method      string      `json:"method" example:"GET"`
+	Status      string      `json:"status" example:"enabled"`
+	Responses   []Response  `json:"responses"`
+	Variables   []*Variable `json:"variables"`
 }
 
 type RuleList struct {

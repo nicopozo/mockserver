@@ -82,6 +82,10 @@ definitions:
       strategy:
         example: normal
         type: string
+      variables:
+        items:
+          $ref: '#/definitions/model.Variable'
+        type: array
     type: object
   model.RuleList:
     properties:
@@ -97,6 +101,18 @@ definitions:
     properties:
       status:
         example: enabled
+        type: string
+    type: object
+  model.Variable:
+    properties:
+      key:
+        example: $.nickname
+        type: string
+      name:
+        example: nickname
+        type: string
+      type:
+        example: body
         type: string
     type: object
 host: localhost:8080

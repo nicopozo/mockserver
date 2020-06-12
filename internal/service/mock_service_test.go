@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -15,10 +16,12 @@ import (
 )
 
 func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
+	requestMock, _ := http.NewRequest("PUT", "url", strings.NewReader("body"))
+
 	type args struct {
-		ctx    context.Context
-		method string
-		path   string
+		ctx     context.Context
+		request *http.Request
+		path    string
 	}
 
 	tests := []struct {
@@ -33,9 +36,9 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 		{
 			name: "Should search response successfully",
 			args: args{
-				ctx:    mockscontext.Background(),
-				method: "PUT",
-				path:   "/test",
+				ctx:     mockscontext.Background(),
+				request: requestMock,
+				path:    "/test",
 			},
 			want: &model.Response{
 				Body:        "{\"balance\":5000}",
@@ -67,9 +70,9 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 		{
 			name: "Should return error when service returns error",
 			args: args{
-				ctx:    mockscontext.Background(),
-				method: "PUT",
-				path:   "/test",
+				ctx:     mockscontext.Background(),
+				request: requestMock,
+				path:    "/test",
 			},
 			want:             nil,
 			wantedErr:        errors.New("error in service"),
@@ -85,13 +88,14 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
-			ruleServiceMock.EXPECT().SearchByMethodAndPath(tt.args.ctx, tt.args.method, tt.args.path).
+			ruleServiceMock.EXPECT().SearchByMethodAndPath(tt.args.ctx, tt.args.request.Method, tt.args.path).
 				Return(tt.ruleServiceRule, tt.ruleServiceErr).Times(tt.ruleServiceTimes)
 
 			srv := service.MockService{
 				RuleService: ruleServiceMock,
 			}
-			got, err := srv.SearchResponseForMethodAndPath(tt.args.ctx, tt.args.method, tt.args.path)
+
+			got, err := srv.SearchResponseForRequest(tt.args.ctx, tt.args.request, tt.args.path)
 			if (err != nil) != (tt.wantedErr != nil) {
 				t.Errorf("SearchResponseForMethodAndPath() error = %v, wantedErr %v", err, tt.wantedErr != nil)
 				return

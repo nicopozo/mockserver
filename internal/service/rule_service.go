@@ -46,6 +46,11 @@ func (ruleService *RuleService) Update(ctx context.Context, key string, rule *mo
 
 	logger.Debug(ruleService, nil, "Entering RuleService Update()")
 
+	if err := validateRule(rule); err != nil {
+		logger.Error(ruleService, nil, err, "Rule Validation failed")
+		return nil, err
+	}
+
 	_, err := ruleService.Get(ctx, key)
 	if err != nil {
 		return nil, err
@@ -163,6 +168,10 @@ func validateRule(rule *model.Rule) error {
 		}
 	}
 
+	if err := validateVariables(rule.Variables); err != nil {
+		return err
+	}
+
 	return validateResponses(rule.Responses)
 }
 
@@ -178,6 +187,20 @@ func validateResponses(responses []model.Response) error {
 			return mockserrors.InvalidRulesError{
 				Message: fmt.Sprintf("%v is not a valid HTTP Status", response.HTTPStatus),
 			}
+		}
+	}
+
+	return nil
+}
+
+func validateVariables(variables []*model.Variable) error {
+	if variables == nil {
+		return nil
+	}
+
+	for _, response := range variables {
+		if err := response.Validate(); err != nil {
+			return err
 		}
 	}
 

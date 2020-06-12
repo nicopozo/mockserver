@@ -2,7 +2,6 @@ package controller
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -22,22 +21,22 @@ func (controller *MockController) Execute(context *gin.Context) {
 
 	logger.Debug(controller, nil, "Entering RuleController Get()")
 
-	method := strings.ToUpper(context.Request.Method)
 	path := context.Param("rule")
 
-	response, err := controller.MockService.SearchResponseForMethodAndPath(reqContext, method, path)
+	response, err := controller.MockService.SearchResponseForRequest(reqContext, context.Request, path)
 
 	if err != nil {
 		switch err.(type) {
 		case ruleserrors.RuleNotFoundError:
-			logger.Debug(controller, nil, "No rule found for path: %v and method: %s", path, method)
+			logger.Debug(controller, nil, "No rule found for path: %v and method: %s",
+				path, context.Request.Method)
 
 			errorResult := model.NewError(model.ResourceNotFoundError,
-				"No rule found for path: %v and method: %s. %v", path, method, err.Error())
+				"No rule found for path: %v and method: %s. %v", path, context.Request.Method, err.Error())
 			context.JSON(http.StatusNotFound, errorResult)
 		default:
 			logger.Error(controller, nil, err,
-				"Failed to execute rule for method %v: and path %v", method, path)
+				"Failed to execute rule for method %v: and path %v", context.Request.Method, path)
 
 			errorResult := model.NewError(model.InternalError, "Error occurred when getting rule. %s", err.Error())
 			context.JSON(http.StatusInternalServerError, errorResult)

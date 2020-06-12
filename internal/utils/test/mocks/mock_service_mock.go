@@ -8,6 +8,7 @@ import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/nicopozo/mockserver/internal/model"
+	http "net/http"
 	reflect "reflect"
 )
 
@@ -34,17 +35,17 @@ func (m *MockIMockService) EXPECT() *MockIMockServiceMockRecorder {
 	return m.recorder
 }
 
-// SearchResponseForMethodAndPath mocks base method
-func (m *MockIMockService) SearchResponseForMethodAndPath(ctx context.Context, method, path string) (*model.Response, error) {
+// SearchResponseForRequest mocks base method
+func (m *MockIMockService) SearchResponseForRequest(ctx context.Context, request *http.Request, path string) (*model.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchResponseForMethodAndPath", ctx, method, path)
+	ret := m.ctrl.Call(m, "SearchResponseForRequest", ctx, request, path)
 	ret0, _ := ret[0].(*model.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// SearchResponseForMethodAndPath indicates an expected call of SearchResponseForMethodAndPath
-func (mr *MockIMockServiceMockRecorder) SearchResponseForMethodAndPath(ctx, method, path interface{}) *gomock.Call {
+// SearchResponseForRequest indicates an expected call of SearchResponseForRequest
+func (mr *MockIMockServiceMockRecorder) SearchResponseForRequest(ctx, request, path interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchResponseForMethodAndPath", reflect.TypeOf((*MockIMockService)(nil).SearchResponseForMethodAndPath), ctx, method, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchResponseForRequest", reflect.TypeOf((*MockIMockService)(nil).SearchResponseForRequest), ctx, request, path)
 }

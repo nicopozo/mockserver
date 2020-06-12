@@ -44,7 +44,7 @@ func TestMockController_Execute(t *testing.T) {
 			want:       "",
 			wantStatus: http.StatusNotFound,
 			wantedErr: &model.Error{
-				Message: "No rule found for path: /test and method: GET. no rule found for path",
+				Message: "No rule found for path: /test and method: get. no rule found for path",
 				Error:   "Not Found",
 				Status:  http.StatusNotFound,
 				ErrorCause: []model.ErrorCause{
@@ -86,7 +86,7 @@ func TestMockController_Execute(t *testing.T) {
 			mockServiceMock := mocks.NewMockIMockService(mockCtrl)
 			defer mockCtrl.Finish()
 
-			mockServiceMock.EXPECT().SearchResponseForMethodAndPath(gomock.Any(), "GET", "/test").
+			mockServiceMock.EXPECT().SearchResponseForRequest(gomock.Any(), gomock.Any(), "/test").
 				Return(tt.serviceResponse, tt.serviceErr).Times(tt.serviceCallTimes)
 
 			ginContext, response := testutils.GetGinContext()

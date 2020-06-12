@@ -444,6 +444,12 @@
                 "strategy": {
                     "type": "string",
                     "example": "normal"
+                },
+                "variables": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Variable"
+                    }
                 }
             }
         },
@@ -468,6 +474,23 @@
                 "status": {
                     "type": "string",
                     "example": "enabled"
+                }
+            }
+        },
+        "model.Variable": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "example": "$.nickname"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "nickname"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "body"
                 }
             }
         }
