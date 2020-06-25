@@ -46,8 +46,14 @@ func (service *MockService) SearchResponseForRequest(ctx context.Context,
 	}
 
 	response := result.Responses[0]
+	reqBody := new(strings.Builder)
 
-	body, err := service.applyVariables(request, response.Body, result.Variables)
+	_, err = io.Copy(reqBody, request.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := service.applyVariables(request, reqBody.String(), response.Body, result.Variables)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +93,7 @@ func (service *MockService) replacePathParam(responseBody, rulePath, reqPath str
 	return responseBody, nil
 }
 
-func (service *MockService) applyVariables(request *http.Request, respBody string,
+func (service *MockService) applyVariables(request *http.Request, reqBody, respBody string,
 	variables []*model.Variable) (string, error) {
 	var err error
 
@@ -96,7 +102,7 @@ func (service *MockService) applyVariables(request *http.Request, respBody strin
 		case model.VariableTypeHeader:
 			respBody = service.applyHeaderVariables(request, respBody, v.Name, v.Key)
 		case model.VariableTypeBody:
-			respBody, err = service.applyBodyVariables(request, respBody, v.Name, v.Key)
+			respBody, err = service.applyBodyVariables(reqBody, respBody, v.Name, v.Key)
 			if err != nil {
 				break
 			}
@@ -115,19 +121,15 @@ func (service *MockService) applyVariables(request *http.Request, respBody strin
 	return respBody, err
 }
 
-func (service *MockService) applyBodyVariables(request *http.Request, respBody string, name string,
+func (service *MockService) applyBodyVariables(reqBody, respBody string, name string,
 	key string) (string, error) {
-	reqBody := new(strings.Builder)
-
-	_, err := io.Copy(reqBody, request.Body)
+	apply, err := jsonpath.Prepare(key)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("invalid JSON path for key %s - %w", key, err)
 	}
 
-	apply, _ := jsonpath.Prepare(key)
-
 	var reqMap interface{}
-	if err := json.Unmarshal([]byte(reqBody.String()), &reqMap); err != nil {
+	if err := json.Unmarshal([]byte(reqBody), &reqMap); err != nil {
 		return "", err
 	}
 
