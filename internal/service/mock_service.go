@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
@@ -45,14 +46,8 @@ func (service *MockService) SearchResponseForRequest(ctx context.Context,
 	}
 
 	response := result.Responses[0]
-	reqBody := new(strings.Builder)
 
-	_, err = io.Copy(reqBody, request.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := service.applyVariables(reqBody.String(), response.Body, result.Variables)
+	body, err := service.applyVariables(request, response.Body, result.Variables)
 	if err != nil {
 		return nil, err
 	}
@@ -92,15 +87,16 @@ func (service *MockService) replacePathParam(responseBody, rulePath, reqPath str
 	return responseBody, nil
 }
 
-func (service *MockService) applyVariables(reqBody, respBody string, variables []*model.Variable) (string, error) {
+func (service *MockService) applyVariables(request *http.Request, respBody string,
+	variables []*model.Variable) (string, error) {
 	var err error
 
 	for _, v := range variables {
 		switch v.Type {
 		case model.VariableTypeHeader:
-			println(model.VariableTypeHeader)
+			respBody = service.applyHeaderVariables(request, respBody, v.Name, v.Key)
 		case model.VariableTypeBody:
-			respBody, err = service.applyBodyVariables(reqBody, respBody, v.Name, v.Key)
+			respBody, err = service.applyBodyVariables(request, respBody, v.Name, v.Key)
 			if err != nil {
 				break
 			}
@@ -108,17 +104,30 @@ func (service *MockService) applyVariables(reqBody, respBody string, variables [
 			respBody = service.applyHashVariables(respBody, v.Name)
 		case model.VariableTypeRandom:
 			respBody = service.applyRandomVariables(respBody, v.Name)
+		case model.VariableTypeQuery:
+			respBody, err = service.applyQueryVariables(request, respBody, v.Name, v.Key)
+			if err != nil {
+				break
+			}
 		}
 	}
 
 	return respBody, err
 }
 
-func (service *MockService) applyBodyVariables(reqBody, respBody string, name string, key string) (string, error) {
+func (service *MockService) applyBodyVariables(request *http.Request, respBody string, name string,
+	key string) (string, error) {
+	reqBody := new(strings.Builder)
+
+	_, err := io.Copy(reqBody, request.Body)
+	if err != nil {
+		return "", err
+	}
+
 	apply, _ := jsonpath.Prepare(key)
 
 	var reqMap interface{}
-	if err := json.Unmarshal([]byte(reqBody), &reqMap); err != nil {
+	if err := json.Unmarshal([]byte(reqBody.String()), &reqMap); err != nil {
 		return "", err
 	}
 
@@ -134,7 +143,7 @@ func (service *MockService) applyBodyVariables(reqBody, respBody string, name st
 
 func (service *MockService) applyRandomVariables(respBody string, name string) string {
 	n := rand.Int63n(max)
-	respBody = strings.Replace(respBody, fmt.Sprintf("{%s}", name), jsonutils.Marshal(n), -1)
+	respBody = strings.Replace(respBody, fmt.Sprintf("{%s}", name), strconv.FormatInt(n, 10), -1)
 
 	return respBody
 }
@@ -144,8 +153,33 @@ func (service *MockService) applyHashVariables(respBody string, name string) str
 	h := sha256.New()
 	h.Write([]byte(fmt.Sprintf("%v", n))) //nolint:errcheck
 	bs := h.Sum(nil)
-	respBody = strings.Replace(respBody, fmt.Sprintf("{%s}", name),
-		jsonutils.Marshal(fmt.Sprintf("%x", bs)), -1)
+	respBody = strings.Replace(respBody, fmt.Sprintf("{%s}", name), fmt.Sprintf("%x", bs), -1)
 
 	return respBody
+}
+
+func (service *MockService) applyQueryVariables(request *http.Request, body string, name string,
+	key string) (string, error) {
+	queries, err := url.ParseQuery(request.URL.RawQuery)
+	if err != nil {
+		return "", fmt.Errorf("error parsing queries %w", err)
+	}
+
+	for queryName, queryValue := range queries {
+		if queryName == key {
+			body = strings.Replace(body, fmt.Sprintf("{%s}", name), queryValue[0], -1)
+			break
+		}
+	}
+
+	return body, nil
+}
+
+func (service *MockService) applyHeaderVariables(request *http.Request, body string, name string, key string) string {
+	header := request.Header[key]
+	if len(header) > 0 {
+		body = strings.Replace(body, fmt.Sprintf("{%s}", name), header[0], -1)
+	}
+
+	return body
 }

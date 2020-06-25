@@ -51,16 +51,6 @@ func (ruleService *RuleService) Update(ctx context.Context, key string, rule *mo
 		return nil, err
 	}
 
-	_, err := ruleService.Get(ctx, key)
-	if err != nil {
-		return nil, err
-	}
-
-	err = ruleService.Delete(ctx, key)
-	if err != nil {
-		return nil, err
-	}
-
 	rule.Key = key
 
 	return ruleService.RuleRepository.Save(ctx, formatRule(rule), true)
@@ -198,8 +188,8 @@ func validateVariables(variables []*model.Variable) error {
 		return nil
 	}
 
-	for _, response := range variables {
-		if err := response.Validate(); err != nil {
+	for _, variable := range variables {
+		if err := variable.Validate(); err != nil {
 			return err
 		}
 	}
