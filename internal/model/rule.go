@@ -29,8 +29,8 @@ type Rule struct {
 }
 
 type RuleList struct {
-	Paging  Paging
-	Results []*Rule
+	Paging  Paging  `json:"paging"`
+	Results []*Rule `json:"results"`
 }
 
 type RuleStatus struct {

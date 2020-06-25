@@ -50,11 +50,6 @@ func (controller *RuleController) Create(context *gin.Context) {
 
 			errorResult := model.NewError(model.ValidationError, "%s", err.Error())
 			context.JSON(http.StatusBadRequest, errorResult)
-		case ruleserrors.RuleAlreadyCreatedError:
-			logger.Error(controller, nil, err, "Rule already exists", jsonutils.Marshal(rule))
-
-			errorResult := model.NewError(model.Conflict, "%s", err.Error())
-			context.JSON(http.StatusConflict, errorResult)
 		default:
 			errorResult := model.NewError(model.InternalError, "Error occurred when saving rule. %s", err.Error())
 

@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/nicopozo/mockserver/internal/model"
 )
@@ -20,6 +21,8 @@ import (
 func main() {
 	router := gin.New()
 	router.NoRoute(noRouteHandler)
+
+	router.Use(cors.Default())
 
 	mapRoutes(router)
 

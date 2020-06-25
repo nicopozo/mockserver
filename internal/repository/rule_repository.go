@@ -13,6 +13,7 @@ import (
 
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
+	guuid "github.com/google/uuid"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
@@ -42,18 +43,7 @@ func (repository *RuleElasticRepository) Save(ctx context.Context, rule *model.R
 	var err error
 
 	if !isUpdate {
-		rule.Key = getKey(rule)
-
-		exists, err := repository.Exists(ctx, rule.Key)
-		if err != nil {
-			return nil, err
-		}
-
-		if exists {
-			return nil, mockserrors.RuleAlreadyCreatedError{
-				Message: fmt.Sprintf("Rule with key %v already exists", rule.Key),
-			}
-		}
+		rule.Key = fmt.Sprintf("%v", guuid.New())
 	}
 
 	_, err = repository.createPatterns(ctx, rule)
@@ -148,9 +138,15 @@ func (repository *RuleElasticRepository) Search(ctx context.Context, params map[
 	terms := make([]map[string]interface{}, 0)
 
 	for key, value := range params {
+		if key == "method" {
+			value = strings.ToLower(value.(string))
+		}
+
 		term := map[string]interface{}{
-			"term": map[string]interface{}{
-				key: value,
+			"wildcard": map[string]interface{}{
+				key: map[string]interface{}{
+					"value": fmt.Sprintf("*%v*", value),
+				},
 			},
 		}
 		terms = append(terms, term)
@@ -159,7 +155,7 @@ func (repository *RuleElasticRepository) Search(ctx context.Context, params map[
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
-				"filter": terms,
+				"must": terms,
 			},
 		},
 	}
@@ -504,19 +500,6 @@ func (repository *RuleElasticRepository) getElasticClient() *elasticsearch.Clien
 	return repository.client
 }
 
-func (repository *RuleElasticRepository) Exists(ctx context.Context, id string) (bool, error) {
-	item, err := repository.Get(ctx, id)
-	if err != nil {
-		if errors.As(err, &mockserrors.RuleNotFoundError{}) {
-			return false, nil
-		}
-
-		return false, err
-	}
-
-	return item != nil, nil
-}
-
 func CreateExpression(path string) string {
 	var paramRegex = regexp.MustCompile("{.+?}/")
 	params := paramRegex.FindAllString(path, -1)
@@ -533,9 +516,4 @@ func CreateExpression(path string) string {
 	}
 
 	return fmt.Sprintf("^%s$", path)
-}
-
-func getKey(rule *model.Rule) string {
-	return fmt.Sprintf("%v_%v_%v", strings.ToLower(rule.Application), strings.ToLower(rule.Method),
-		stringutils.Hash(rule.Name))
 }

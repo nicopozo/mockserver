@@ -13,6 +13,8 @@ import (
 )
 
 func mapRoutes(router *gin.Engine) {
+	router.Static("/admin", "/Users/npozo/Proyectos/mocks-frontend/dist")
+
 	ruleController := newRuleController()
 	router.POST("/mock-server/rules", ruleController.Create)
 	router.GET("/mock-server/rules/:key", ruleController.Get)

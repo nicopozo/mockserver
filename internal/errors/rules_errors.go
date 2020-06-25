@@ -15,11 +15,3 @@ type InvalidRulesError struct {
 func (e InvalidRulesError) Error() string {
 	return e.Message
 }
-
-type RuleAlreadyCreatedError struct {
-	Message string
-}
-
-func (e RuleAlreadyCreatedError) Error() string {
-	return e.Message
-}
