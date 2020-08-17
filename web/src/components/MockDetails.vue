@@ -335,8 +335,7 @@ export default {
     },
     updateMock() {
       axios
-        .put("http://api.mp.internal.ml.com/reconciliations/mockservice/rules/" + this.theKey,
-        //.put("http://localhost:8081/mock-server/rules/" + this.theKey, 
+        .put("http://localhost:8081/mock-server/rules/" + this.theKey, 
         this.mock,
           {
             headers: {
@@ -369,8 +368,7 @@ export default {
     },
     createMock() {
       axios
-        .post("http://api.mp.internal.ml.com/reconciliations/mockservice/rules", this.mock, {
-        //.post("http://localhost:8081/mock-server/rules", this.mock, {
+        .post("http://localhost:8081/mock-server/rules", this.mock, {
           headers: {
             "Content-Type": "application/json"
           }
@@ -400,8 +398,7 @@ export default {
     },
     deleteMock() {
       axios
-        .delete("http://api.mp.internal.ml.com/reconciliations/mockservice/rules/" + this.theKey)
-        //.delete("http://localhost:8081/mock-server/rules/" + this.theKey)
+        .delete("http://localhost:8081/mock-server/rules/" + this.theKey)
         .then(res => {
           var msg = "Mock successfully deleted! ";
           var title = "Success!!";
@@ -490,8 +487,7 @@ export default {
     initialize() {
       if (this.theKey) {
         axios
-          .get("http://api.mp.internal.ml.com/reconciliations/mockservice/rules/" + this.theKey)
-          //.get("http://localhost:8081/mock-server/rules/" + this.theKey)
+          .get("http://localhost:8081/mock-server/rules/" + this.theKey)
           .then(res => {
             this.mock = res.data;
           })
