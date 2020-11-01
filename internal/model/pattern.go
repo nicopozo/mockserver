@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"io"
 
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
@@ -21,7 +22,11 @@ type ESPatternList struct {
 
 func UnmarshalESPatternList(body io.Reader) (*PatternList, error) {
 	patternList := &ESPatternList{}
-	err := jsonutils.Unmarshal(body, patternList)
 
-	return patternList.Source, err
+	err := jsonutils.Unmarshal(body, patternList)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling body, %w", err)
+	}
+
+	return patternList.Source, nil
 }

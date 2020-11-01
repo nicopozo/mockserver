@@ -14,6 +14,8 @@ linters:
     - unused
     - funlen
     - goerr113
+    - exhaustivestruct
+    - gofumpt
 
 issues:
   exclude-rules:
@@ -25,3 +27,4 @@ issues:
         - scopelint
         - gomnd
         - goerr113
+        - exhaustivestruct

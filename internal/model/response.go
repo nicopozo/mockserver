@@ -6,4 +6,5 @@ type Response struct {
 	ContentType string `json:"content_type" example:"application/json"`
 	HTTPStatus  int    `json:"http_status" example:"200"`
 	Delay       int    `json:"delay" example:"0"`
+	Scene       string `json:"scene" example:"normal"`
 }

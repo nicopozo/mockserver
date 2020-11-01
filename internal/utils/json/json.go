@@ -2,6 +2,7 @@ package jsonutils
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 )
@@ -11,7 +12,7 @@ func Unmarshal(body io.Reader, model interface{}) error {
 
 	var err error
 	if jsonReq, err = ioutil.ReadAll(body); err != nil {
-		return err
+		return fmt.Errorf("error reading body, %w", err)
 	}
 
 	return json.Unmarshal(jsonReq, &model)

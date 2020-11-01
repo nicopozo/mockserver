@@ -19,20 +19,25 @@ func (controller *MockController) Execute(context *gin.Context) {
 	reqContext := mockscontext.New(context)
 	logger := mockscontext.Logger(reqContext)
 
-	logger.Debug(controller, nil, "Entering RuleController Get()")
+	logger.Debug(controller, nil, "Entering MockController Execute()")
 
 	path := context.Param("rule")
 
 	response, err := controller.MockService.SearchResponseForRequest(reqContext, context.Request, path)
-
 	if err != nil {
-		switch err.(type) {
+		switch err.(type) { //nolint:errorlint
 		case ruleserrors.RuleNotFoundError:
 			logger.Debug(controller, nil, "No rule found for path: %v and method: %s",
 				path, context.Request.Method)
 
 			errorResult := model.NewError(model.ResourceNotFoundError,
 				"No rule found for path: %v and method: %s. %v", path, context.Request.Method, err.Error())
+			context.JSON(http.StatusNotFound, errorResult)
+		case ruleserrors.InvalidRulesError:
+			logger.Debug(controller, nil, "No rule found for path: %v and method: %s",
+				path, context.Request.Method)
+
+			errorResult := model.NewError(model.ValidationError, err.Error())
 			context.JSON(http.StatusNotFound, errorResult)
 		default:
 			logger.Error(controller, nil, err,

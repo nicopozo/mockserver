@@ -19,8 +19,12 @@ func New(c *gin.Context) context.Context {
 }
 
 func Logger(ctx context.Context) log.ILogger {
-	u, _ := ctx.Value(loggerKey{}).(log.ILogger)
-	return u
+	logger, ok := ctx.Value(loggerKey{}).(log.ILogger)
+	if !ok {
+		return log.DefaultLogger()
+	}
+
+	return logger
 }
 
 func Background() context.Context {

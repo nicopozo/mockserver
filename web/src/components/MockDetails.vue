@@ -13,7 +13,11 @@
           label-for="input-key"
           v-if="mock.key"
         >
-          <b-form-input id="input-key" v-model="mock.key" disabled></b-form-input>
+          <b-form-input
+            id="input-key"
+            v-model="mock.key"
+            disabled
+          ></b-form-input>
         </b-form-group>
 
         <!-- INPUT NAME -->
@@ -77,91 +81,147 @@
               v-for="httpMethod in httpMethods"
               :key="httpMethod.text"
               :value="httpMethod.value"
-            >{{ httpMethod.text }}</option>
+            >
+              {{ httpMethod.text }}
+            </option>
           </b-form-select>
         </b-form-group>
 
-        <!-- RESPONSE -->
-        <b-card class="mt-3" header="Response:">
-          <!-- RESPONSE CONTENT TYPE-->
-          <b-form-group
-            id="input-group-content-type"
-            label-cols="4"
-            label-cols-lg="2"
-            label="Content Type:"
-            label-for="input-content-type"
+        <!-- RESPONSES -->
+        <b-card class="mt-3" header="Responses:">
+          <!-- FOR EACH RESPONSE -->
+          <b-card
+            class="mt-3"
+            v-for="(response, index) in mock.responses"
+            v-bind:key="response"
           >
-            <b-form-input
-              id="input-content-type"
-              v-model="mock.responses[0].content_type"
-              required
-              placeholder="Example: application/json"
-            ></b-form-input>
-          </b-form-group>
+            <!-- RESPONSE CONTENT TYPE-->
+            <b-form-group
+              id="input-group-content-type"
+              label-cols="4"
+              label-cols-lg="2"
+              label="Content Type:"
+              label-for="input-content-type"
+            >
+              <b-form-input
+                id="input-content-type"
+                v-model="response.content_type"
+                required
+                placeholder="Example: application/json"
+              ></b-form-input>
+            </b-form-group>
 
-          <!-- RESPONSE HTTP STATUS-->
-          <b-form-group
-            id="input-group-status"
-            label-cols="4"
-            label-cols-lg="2"
-            label="HTTP Status:"
-            label-for="input-status"
-          >
-            <b-form-input
-              id="input-status"
-              type="number"
-              number
-              v-model="mock.responses[0].http_status"
-              required
-              placeholder="Examples: 200, 201, 400, 404, 500"
-            ></b-form-input>
-          </b-form-group>
+            <!-- RESPONSE HTTP STATUS-->
+            <b-form-group
+              id="input-group-status"
+              label-cols="4"
+              label-cols-lg="2"
+              label="HTTP Status:"
+              label-for="input-status"
+            >
+              <b-form-input
+                id="input-status"
+                type="number"
+                number
+                v-model="response.http_status"
+                required
+                placeholder="Examples: 200, 201, 400, 404, 500"
+              ></b-form-input>
+            </b-form-group>
 
-          <!-- RESPONSE DELAY-->
-          <b-form-group
-            id="input-group-delay"
-            label-cols="4"
-            label-cols-lg="2"
-            label="Delay Time:"
-            label-for="input-delay"
-          >
-            <b-form-input
-              id="input-delay"
-              type="number"
-              number
-              v-model="mock.responses[0].delay"
-              required
-              value="0"
-              placeholder="Time to delay the response from server in Miliseconds."
-            ></b-form-input>
-          </b-form-group>
+            <!-- RESPONSE DELAY-->
+            <b-form-group
+              id="input-group-delay"
+              label-cols="4"
+              label-cols-lg="2"
+              label="Delay Time:"
+              label-for="input-delay"
+            >
+              <b-form-input
+                id="input-delay"
+                type="number"
+                number
+                v-model="response.delay"
+                required
+                value="0"
+                placeholder="Time to delay the response from server in Miliseconds."
+              ></b-form-input>
+            </b-form-group>
 
-          <!-- RESPONSE BODY-->
-          <b-form-group
-            id="input-group-body"
-            label-cols="4"
-            label-cols-lg="2"
-            label="body:"
-            label-for="input-body"
-          >
-            <b-form-textarea
+            <!-- RESPONSE BODY-->
+            <b-form-group
               id="input-group-body"
-              v-model="mock.responses[0].body"
-              placeholder="Add a response body..."
-              rows="3"
-              max-rows="6"
-            ></b-form-textarea>
-          </b-form-group>
+              label-cols="4"
+              label-cols-lg="2"
+              label="body:"
+              label-for="input-body"
+            >
+              <b-form-textarea
+                id="input-group-body"
+                v-model="response.body"
+                placeholder="Add a response body..."
+                rows="3"
+                max-rows="6"
+              ></b-form-textarea>
+            </b-form-group>
+
+            <!-- RESPONSE SCENE-->
+            <b-form-group
+              id="input-group-scene"
+              label-cols="4"
+              label-cols-lg="2"
+              label="Scene:"
+              label-for="input-scene"
+            >
+              <b-form-input
+                id="input-scene"
+                v-model="response.scene"
+                required
+                placeholder="Example: name"
+              ></b-form-input>
+            </b-form-group>
+
+            <b-col cols="100">
+              <b-button
+                pill
+                variant="outline-danger"
+                v-on:click="removeResponse(index)"
+                >Remove</b-button
+              >
+            </b-col>
+          </b-card>
+
+          <br />
+
+          <!-- ADD NEW VARIABLE BUTTON-->
+          <b-container>
+            <b-row align-h="end">
+              <b-col cols="100">
+                <b-button
+                  pill
+                  variant="outline-primary"
+                  v-on:click="addResponse()"
+                  >New Response</b-button
+                >
+              </b-col>
+            </b-row>
+          </b-container>
         </b-card>
 
         <!-- V-CARD VARIABLES -->
         <b-card class="mt-3" header="Variables:">
           <!-- FOR EACH VARIABLE -->
-          <b-card class="mt-3" v-for="(variable, index) in mock.variables" v-bind:key="variable">
+          <b-card
+            class="mt-3"
+            v-for="(variable, index) in mock.variables"
+            v-bind:key="variable"
+          >
             <b-row align-h="between">
               <b-col cols="200">
                 <div class="form-inline">
-                  <label class="mr-sm-2" for="inline-form-custom-select-pref">Type:</label>
+                  <label class="mr-sm-2" for="inline-form-custom-select-pref"
+                    >Type:</label
+                  >
                   <b-form-select
                     v-model="variable.type"
                     @change="variable.key = null"
@@ -171,21 +231,44 @@
                       v-for="varType in varTypes"
                       :key="varType.text"
                       :value="varType.value"
-                    >{{ varType.text }}</option>
+                    >
+                      {{ varType.text }}
+                    </option>
                   </b-form-select>
-                  <label class="mr-sm-2" for="inline-form-custom-select-pref">Name:</label>
-                  <b-form-input class="mb-2 mr-sm-2 mb-sm-0" v-model="variable.name" required></b-form-input>
-                  <label class="mr-sm-2" for="inline-form-custom-select-pref">Value:</label>
+                  <label class="mr-sm-2" for="inline-form-custom-select-pref"
+                    >Name:</label
+                  >
                   <b-form-input
-                    :disabled="variable.type != 'body' && variable.type != 'query' && variable.type != 'header'"
-                    :required="variable.type === 'body' || variable.type === 'query' || variable.type === 'header'"
+                    class="mb-2 mr-sm-2 mb-sm-0"
+                    v-model="variable.name"
+                    required
+                  ></b-form-input>
+                  <label class="mr-sm-2" for="inline-form-custom-select-pref"
+                    >Value:</label
+                  >
+                  <b-form-input
+                    :disabled="
+                      variable.type != 'body' &&
+                      variable.type != 'query' &&
+                      variable.type != 'header'
+                    "
+                    :required="
+                      variable.type === 'body' ||
+                      variable.type === 'query' ||
+                      variable.type === 'header'
+                    "
                     class="mb-2 mr-sm-2 mb-sm-0"
                     v-model="variable.key"
                   ></b-form-input>
                 </div>
               </b-col>
               <b-col cols="100">
-                <b-button pill variant="outline-danger" v-on:click="removeVariable(index)">Remove</b-button>
+                <b-button
+                  pill
+                  variant="outline-danger"
+                  v-on:click="removeVariable(index)"
+                  >Remove</b-button
+                >
               </b-col>
             </b-row>
           </b-card>
@@ -196,7 +279,12 @@
           <b-container>
             <b-row align-h="end">
               <b-col cols="100">
-                <b-button pill variant="outline-primary" v-on:click="addVariable()">New Variable</b-button>
+                <b-button
+                  pill
+                  variant="outline-primary"
+                  v-on:click="addVariable()"
+                  >New Variable</b-button
+                >
               </b-col>
             </b-row>
           </b-container>
@@ -209,10 +297,24 @@
           <b-row align-h="end">
             <b-col cols="1000">
               <div class="form-inline">
-                <b-button variant="info" v-on:click="resetForm()">Reset</b-button>
-                <label class="mr-sm-2" for="inline-form-custom-select-pref"></label>
-                <b-button variant="danger" v-on:click="submitDelete()" v-if="theKey">Delete</b-button>
-                <label class="mr-sm-2" for="inline-form-custom-select-pref" v-if="theKey"></label>
+                <b-button variant="info" v-on:click="resetForm()"
+                  >Reset</b-button
+                >
+                <label
+                  class="mr-sm-2"
+                  for="inline-form-custom-select-pref"
+                ></label>
+                <b-button
+                  variant="danger"
+                  v-on:click="submitDelete()"
+                  v-if="theKey"
+                  >Delete</b-button
+                >
+                <label
+                  class="mr-sm-2"
+                  for="inline-form-custom-select-pref"
+                  v-if="theKey"
+                ></label>
                 <b-button type="submit" variant="primary">Submit</b-button>
               </div>
             </b-col>
@@ -233,8 +335,8 @@ export default {
   props: {
     theKey: {
       type: String,
-      required: false
-    }
+      required: false,
+    },
   },
   data() {
     return {
@@ -247,7 +349,7 @@ export default {
         { text: "PATCH", value: "PATCH" },
         { text: "DELETE", value: "DELETE" },
         { text: "OPTIONS", value: "OPTIONS" },
-        { text: "HEAD", value: "HEAD" }
+        { text: "HEAD", value: "HEAD" },
       ],
 
       varTypes: [
@@ -256,8 +358,9 @@ export default {
         { text: "HEADER", value: "header" },
         { text: "QUERY", value: "query" },
         { text: "RANDOM", value: "random" },
-        { text: "HASH", value: "hash" }
-      ]
+        { text: "HASH", value: "hash" },
+        { text: "PATH", value: "path" },
+      ],
     };
   },
   methods: {
@@ -277,9 +380,9 @@ export default {
           title: confirmTitle,
           okTitle: "OK",
           cancelTitle: "Cancel",
-          centered: true
+          centered: true,
         })
-        .then(ok => {
+        .then((ok) => {
           if (ok) {
             if (this.theKey) {
               this.updateMock();
@@ -288,7 +391,7 @@ export default {
             }
           }
         })
-        .catch(err => {
+        .catch((err) => {
           console.log(err);
         });
       ev.preventDefault();
@@ -302,14 +405,14 @@ export default {
           title: confirmTitle,
           okTitle: "OK",
           cancelTitle: "Cancel",
-          centered: true
+          centered: true,
         })
-        .then(ok => {
+        .then((ok) => {
           if (ok) {
             this.deleteMock();
           }
         })
-        .catch(err => {
+        .catch((err) => {
           console.log(err);
         });
     },
@@ -322,34 +425,35 @@ export default {
           title: confirmTitle,
           okTitle: "OK",
           cancelTitle: "Cancel",
-          centered: true
+          centered: true,
         })
-        .then(ok => {
+        .then((ok) => {
           if (ok) {
             this.initialize();
           }
         })
-        .catch(err => {
+        .catch((err) => {
           console.log(err);
         });
     },
     updateMock() {
       axios
-        .put("http://localhost:8081/mock-server/rules/" + this.theKey, 
-        this.mock,
+        .put(
+          "http://localhost:8081/mock-server/rules/" + this.theKey,
+          this.mock,
           {
             headers: {
-              "Content-Type": "application/json"
-            }
+              "Content-Type": "application/json",
+            },
           }
         )
-        .then(response => {
+        .then((response) => {
           var title = "Success!!";
           var msg = "Mock successfully updated!";
           this.showSuccessModal(title, msg, false);
           console.log(response);
         })
-        .catch(err => {
+        .catch((err) => {
           var msg = err.message;
           if (
             typeof err.response !== "undefined" &&
@@ -370,16 +474,16 @@ export default {
       axios
         .post("http://localhost:8081/mock-server/rules", this.mock, {
           headers: {
-            "Content-Type": "application/json"
-          }
+            "Content-Type": "application/json",
+          },
         })
-        .then(resp => {
+        .then((resp) => {
           var msg = "Mock successfully created!";
           var title = "Success!!";
           this.showSuccessModal(title, msg, true);
           console.log(resp);
         })
-        .catch(err => {
+        .catch((err) => {
           var msg = err.message;
           if (
             typeof err.response !== "undefined" &&
@@ -399,13 +503,13 @@ export default {
     deleteMock() {
       axios
         .delete("http://localhost:8081/mock-server/rules/" + this.theKey)
-        .then(res => {
+        .then((res) => {
           var msg = "Mock successfully deleted! ";
           var title = "Success!!";
           this.showSuccessModal(title, msg, true);
           console.log(res);
         })
-        .catch(err => {
+        .catch((err) => {
           var msg = err.message;
           if (
             typeof err.response !== "undefined" &&
@@ -430,15 +534,15 @@ export default {
         .msgBoxOk(msg, {
           title: title,
           okVariant: "success",
-          centered: true
+          centered: true,
         })
-        .then(value => {
+        .then((value) => {
           if (goHome) {
             router.push({ name: "ListMocks" });
           }
           console.log(value);
         })
-        .catch(err => {
+        .catch((err) => {
           console.log(err);
         });
     },
@@ -446,14 +550,14 @@ export default {
       this.$bvModal.msgBoxOk(msg, {
         title: title,
         okVariant: "danger",
-        centered: true
+        centered: true,
       });
     },
     addVariable() {
       var newVar = {
         type: "body",
         name: "",
-        key: ""
+        key: "",
       };
       if (!this.mock.variables) {
         this.mock.variables = [newVar];
@@ -463,6 +567,23 @@ export default {
     },
     removeVariable(i) {
       this.mock.variables.splice(i, 1);
+    },
+    addResponse() {
+      var newResponse = {
+        body: "",
+        content_type: "application/json",
+        http_status: 200,
+        delay: 0,
+        scene: "",
+      };
+      if (!this.mock.variables) {
+        this.mock.responses = [newResponse];
+      } else {
+        this.mock.responses.push(newResponse);
+      }
+    },
+    removeResponse(i) {
+      this.mock.responses.splice(i, 1);
     },
     newMock() {
       return {
@@ -478,20 +599,21 @@ export default {
             body: "",
             content_type: "",
             http_status: "",
-            delay: 0
-          }
+            delay: 0,
+            scene: "",
+          },
         ],
-        variables: []
+        variables: [],
       };
     },
     initialize() {
       if (this.theKey) {
         axios
           .get("http://localhost:8081/mock-server/rules/" + this.theKey)
-          .then(res => {
+          .then((res) => {
             this.mock = res.data;
           })
-          .catch(err => {
+          .catch((err) => {
             var msg = err.message;
             if (
               typeof err.response !== "undefined" &&
@@ -511,7 +633,7 @@ export default {
       } else {
         this.mock = this.newMock();
       }
-    }
+    },
   },
   async created() {
     this.initialize();
@@ -519,10 +641,10 @@ export default {
   watch: {
     // will fire on route changes
     //'$route.params.id': function(val, oldVal){ // Same
-    "$route.path": function(val, oldVal) {
+    "$route.path": function (val, oldVal) {
       console.log(val + oldVal);
       this.initialize();
-    }
-  }
+    },
+  },
 };
 </script>

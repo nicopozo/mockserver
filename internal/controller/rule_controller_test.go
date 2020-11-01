@@ -55,7 +55,7 @@ func TestRuleController_Create(t *testing.T) {
 			serviceCallTimes: 1,
 		},
 		{
-			name:        "Should fail when body in invalid",
+			name:        "Should fail when body is invalid",
 			requestFile: "../utils/test/mocks/json/create_rule_request_invalid.json",
 			serviceErr:  nil,
 			wantStatus:  http.StatusBadRequest,
@@ -63,7 +63,7 @@ func TestRuleController_Create(t *testing.T) {
 			wantedErr: &model.Error{
 				Status:  http.StatusBadRequest,
 				Error:   "Bad Request",
-				Message: "Invalid JSON. unexpected end of JSON input",
+				Message: "Invalid JSON. error unmarshalling body, unexpected end of JSON input",
 				ErrorCause: []model.ErrorCause{
 					{
 						Code:        1001,
@@ -154,6 +154,7 @@ func TestRuleController_Create(t *testing.T) {
 				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
 					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
 				}
+
 				return
 			}
 
@@ -299,6 +300,7 @@ func TestRuleController_Get(t *testing.T) {
 				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
 					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
 				}
+
 				return
 			}
 
@@ -432,9 +434,10 @@ func TestRuleController_Search(t *testing.T) {
 			wantStatus: http.StatusBadRequest,
 			want:       nil,
 			wantedErr: &model.Error{
-				Status:  http.StatusBadRequest,
-				Error:   "Bad Request",
-				Message: "Error parsing pagination params: strconv.ParseInt: parsing \"invalid\": invalid syntax",
+				Status: http.StatusBadRequest,
+				Error:  "Bad Request",
+				Message: "Error parsing pagination params: error parsing paging offset, " +
+					"strconv.ParseInt: parsing \"invalid\": invalid syntax",
 				ErrorCause: []model.ErrorCause{
 					{
 						Code:        1001,
@@ -451,9 +454,10 @@ func TestRuleController_Search(t *testing.T) {
 			wantStatus: http.StatusBadRequest,
 			want:       nil,
 			wantedErr: &model.Error{
-				Status:  http.StatusBadRequest,
-				Error:   "Bad Request",
-				Message: "Error parsing pagination params: strconv.ParseInt: parsing \"invalid\": invalid syntax",
+				Status: http.StatusBadRequest,
+				Error:  "Bad Request",
+				Message: "Error parsing pagination params: error parsing paging limit, " +
+					"strconv.ParseInt: parsing \"invalid\": invalid syntax",
 				ErrorCause: []model.ErrorCause{
 					{
 						Code:        1001,
@@ -662,6 +666,7 @@ func TestRuleController_Delete(t *testing.T) {
 				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
 					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
 				}
+
 				return
 			}
 		})

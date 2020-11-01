@@ -17,7 +17,7 @@ import (
 // @Schemes http
 // @contact.name Nicolas Pozo
 // @contact.email nicopozo@gmail.com
-//Main.
+// main.
 func main() {
 	router := gin.New()
 	router.NoRoute(noRouteHandler)

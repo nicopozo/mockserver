@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"reflect"
 	"testing"
@@ -273,7 +274,8 @@ func TestRuleService_Save(t *testing.T) {
 			},
 			want: nil,
 			wantedErr: mockserrors.InvalidRulesError{
-				Message: "invalid status - only 'enabled' or 'disabled' are valid values"},
+				Message: "invalid status - only 'enabled' or 'disabled' are valid values",
+			},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
 		},
@@ -301,7 +303,8 @@ func TestRuleService_Save(t *testing.T) {
 			},
 			want: nil,
 			wantedErr: mockserrors.InvalidRulesError{
-				Message: "invalid is not a valid HTTP Method"},
+				Message: "invalid is not a valid HTTP Method",
+			},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
 		},
@@ -329,12 +332,13 @@ func TestRuleService_Save(t *testing.T) {
 			},
 			want: nil,
 			wantedErr: mockserrors.InvalidRulesError{
-				Message: "method cannot be empty"},
+				Message: "method cannot be empty",
+			},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
 		},
 		{
-			name: "Should return InvalidRuleError rule when method is empty",
+			name: "Should return InvalidRuleError rule when strategy is invalid",
 			args: args{
 				isUpdate: false,
 				ctx:      mockscontext.Background(),
@@ -357,7 +361,8 @@ func TestRuleService_Save(t *testing.T) {
 			},
 			want: nil,
 			wantedErr: mockserrors.InvalidRulesError{
-				Message: "invalid rule strategy - only 'normal', 'random' or 'sequential' are valid values"},
+				Message: "invalid rule strategy - only 'normal', 'random', 'sequential' or 'scene' are valid values",
+			},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
 		},
@@ -378,7 +383,8 @@ func TestRuleService_Save(t *testing.T) {
 			},
 			want: nil,
 			wantedErr: mockserrors.InvalidRulesError{
-				Message: "at least one response required"},
+				Message: "at least one response required",
+			},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
 		},
@@ -406,7 +412,8 @@ func TestRuleService_Save(t *testing.T) {
 			},
 			want: nil,
 			wantedErr: mockserrors.InvalidRulesError{
-				Message: "100 is not a valid HTTP Status"},
+				Message: "100 is not a valid HTTP Status",
+			},
 			repositoryErr:    nil,
 			serviceCallTimes: 0,
 		},
@@ -434,6 +441,7 @@ func TestRuleService_Save(t *testing.T) {
 			got, err := ruleService.Save(tt.args.ctx, tt.args.rule)
 			if (err != nil) != (tt.wantedErr != nil) {
 				t.Errorf("Save() error = %v, wantErr %v", err, tt.wantedErr != nil)
+
 				return
 			}
 
@@ -441,6 +449,7 @@ func TestRuleService_Save(t *testing.T) {
 				if !reflect.DeepEqual(tt.wantedErr, err) {
 					t.Fatalf("Error is not the expected. Expected: %v - Actual: %v", tt.wantedErr, err)
 				}
+
 				return
 			}
 
@@ -517,7 +526,7 @@ func TestRuleService_Get(t *testing.T) {
 				key: "key123",
 			},
 			want:             nil,
-			wantedErr:        errors.New("error getting rule"),
+			wantedErr:        fmt.Errorf("error getting rule, %w", errors.New("error getting rule")),
 			repositoryErr:    errors.New("error getting rule"),
 			repositoryRule:   nil,
 			serviceCallTimes: 1,
@@ -538,6 +547,7 @@ func TestRuleService_Get(t *testing.T) {
 			got, err := ruleService.Get(tt.args.ctx, tt.args.key)
 			if (err != nil) != (tt.wantedErr != nil) {
 				t.Errorf("Save() error = %v, wantErr %v", err, tt.wantedErr != nil)
+
 				return
 			}
 
@@ -545,6 +555,7 @@ func TestRuleService_Get(t *testing.T) {
 				if !reflect.DeepEqual(tt.wantedErr, err) {
 					t.Fatalf("Error is not the expected. Expected: %v - Actual: %v", tt.wantedErr, err)
 				}
+
 				return
 			}
 
@@ -622,6 +633,7 @@ func TestRuleService_Delete(t *testing.T) {
 			err := ruleService.Delete(tt.args.ctx, tt.args.key)
 			if (err != nil) != (tt.wantedErr != nil) {
 				t.Errorf("Save() error = %v, wantErr %v", err, tt.wantedErr != nil)
+
 				return
 			}
 
@@ -629,6 +641,7 @@ func TestRuleService_Delete(t *testing.T) {
 				if !reflect.DeepEqual(tt.wantedErr, err) {
 					t.Fatalf("Error is not the expected. Expected: %v - Actual: %v", tt.wantedErr, err)
 				}
+
 				return
 			}
 		})

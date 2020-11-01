@@ -8,6 +8,7 @@ const (
 	VariableTypeRandom = "random"
 	VariableTypeHash   = "hash"
 	VariableTypeQuery  = "query"
+	VariableTypePath   = "path"
 )
 
 type Variable struct {
@@ -19,9 +20,9 @@ type Variable struct {
 func (variable *Variable) Validate() error {
 	if variable.Type != VariableTypeBody && variable.Type != VariableTypeHeader &&
 		variable.Type != VariableTypeRandom && variable.Type != VariableTypeHash &&
-		variable.Type != VariableTypeQuery {
+		variable.Type != VariableTypeQuery && variable.Type != VariableTypePath {
 		return mockserrors.InvalidRulesError{
-			Message: "variable Type must be 'body', 'header', 'query', 'random' or 'hash'",
+			Message: "variable Type must be 'body', 'header', 'query', 'random', 'hash', 'query' or 'path'",
 		}
 	}
 

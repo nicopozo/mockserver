@@ -3,15 +3,15 @@ package testutils
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 
+	"github.com/gin-gonic/gin"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
-
-	"github.com/gin-gonic/gin"
 )
 
 type Body struct {
@@ -23,7 +23,7 @@ func (Body) Close() error { return nil }
 func GetJSONFromFile(filename string) (string, error) {
 	contentBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error file, %w", err)
 	}
 
 	contentString := string(contentBytes)
@@ -62,9 +62,13 @@ func GetGinContextWithBody(requestBodyFile string) (*gin.Context, *mocks.MockGin
 
 func GetErrorFromResponse(response []byte) (*model.Error, error) {
 	errorResponse := &model.Error{}
-	err := json.Unmarshal(response, &errorResponse)
 
-	return errorResponse, err
+	err := json.Unmarshal(response, &errorResponse)
+	if err != nil {
+		return errorResponse, fmt.Errorf("error reading erro from response, %w", err)
+	}
+
+	return errorResponse, nil
 }
 
 func getGinContext() (*gin.Context, *mocks.MockGinResponseWriter) {
@@ -83,14 +87,22 @@ func getGinContext() (*gin.Context, *mocks.MockGinResponseWriter) {
 
 func GetRuleFromResponse(response []byte) (*model.Rule, error) {
 	rule := &model.Rule{}
-	err := json.Unmarshal(response, &rule)
 
-	return rule, err
+	err := json.Unmarshal(response, &rule)
+	if err != nil {
+		return nil, fmt.Errorf("error reading rule from response, %w", err)
+	}
+
+	return rule, nil
 }
 
 func GetRuleListFromResponse(response []byte) (*model.RuleList, error) {
 	list := &model.RuleList{}
-	err := json.Unmarshal(response, &list)
 
-	return list, err
+	err := json.Unmarshal(response, &list)
+	if err != nil {
+		return nil, fmt.Errorf("error reading rule list from response, %w", err)
+	}
+
+	return list, nil
 }

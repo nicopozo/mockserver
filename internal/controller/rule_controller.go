@@ -44,7 +44,7 @@ func (controller *RuleController) Create(context *gin.Context) {
 	rule, err = controller.RuleService.Save(reqContext, rule)
 
 	if err != nil {
-		switch err.(type) {
+		switch err.(type) { //nolint:errorlint
 		case ruleserrors.InvalidRulesError:
 			logger.Error(controller, nil, err, "Invalid rule: %v", jsonutils.Marshal(rule))
 
@@ -97,7 +97,7 @@ func (controller *RuleController) Update(context *gin.Context) {
 	rule, err = controller.RuleService.Update(reqContext, key, rule)
 
 	if err != nil {
-		switch err.(type) {
+		switch err.(type) { //nolint:errorlint
 		case ruleserrors.RuleNotFoundError:
 			logger.Debug(controller, nil, "No rule found with key: %v", key)
 
@@ -118,7 +118,7 @@ func (controller *RuleController) Update(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusCreated, rule)
+	context.JSON(http.StatusOK, rule)
 }
 
 // @Tags Rules
@@ -151,9 +151,8 @@ func (controller *RuleController) UpdateStatus(context *gin.Context) {
 	}
 
 	rule, err := controller.RuleService.UpdateStatus(reqContext, key, ruleStatus)
-
 	if err != nil {
-		switch err.(type) {
+		switch err.(type) { //nolint:errorlint
 		case ruleserrors.RuleNotFoundError:
 			logger.Debug(controller, nil, "No rule found with key: %v", key)
 
@@ -174,7 +173,7 @@ func (controller *RuleController) UpdateStatus(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusCreated, rule)
+	context.JSON(http.StatusOK, rule)
 }
 
 // @Tags Rules
@@ -198,9 +197,8 @@ func (controller *RuleController) Get(context *gin.Context) {
 	key := context.Param("key")
 
 	task, err := controller.RuleService.Get(reqContext, key)
-
 	if err != nil {
-		switch err.(type) {
+		switch err.(type) { //nolint:errorlint
 		case ruleserrors.RuleNotFoundError:
 			logger.Debug(controller, nil, "No rule found with key: %v", key)
 
@@ -256,7 +254,6 @@ func (controller *RuleController) Search(context *gin.Context) {
 	params := getParametersFromRequest(context.Request)
 
 	ruleList, err := controller.RuleService.Search(reqContext, params, *paging)
-
 	if err != nil {
 		logger.Error(controller, nil, err, "Failed to search rules")
 
@@ -288,9 +285,8 @@ func (controller *RuleController) Delete(context *gin.Context) {
 	key := context.Param("key")
 
 	err := controller.RuleService.Delete(reqContext, key)
-
 	if err != nil {
-		switch err.(type) {
+		switch err.(type) { //nolint:errorlint
 		case ruleserrors.RuleNotFoundError:
 			context.Status(http.StatusNoContent)
 		default:

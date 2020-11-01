@@ -405,6 +405,9 @@
                 "http_status": {
                     "type": "integer",
                     "example": 200
+                },
+                "scene": {
+                    "type": "string"
                 }
             }
         },

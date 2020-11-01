@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"io"
 
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
@@ -14,6 +15,7 @@ const (
 	RuleStrategyNormal     = "normal"
 	RuleStrategySequential = "sequential"
 	RuleStrategyRandom     = "random"
+	RuleStrategyScene      = "scene"
 )
 
 type Rule struct {
@@ -56,16 +58,24 @@ type ESTotal struct {
 
 func UnmarshalRule(body io.Reader) (*Rule, error) {
 	rule := &Rule{}
-	err := jsonutils.Unmarshal(body, rule)
 
-	return rule, err
+	err := jsonutils.Unmarshal(body, rule)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling body, %w", err)
+	}
+
+	return rule, nil
 }
 
 func UnmarshalRuleStatus(body io.Reader) (*RuleStatus, error) {
 	status := &RuleStatus{}
-	err := jsonutils.Unmarshal(body, status)
 
-	return status, err
+	err := jsonutils.Unmarshal(body, status)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling body, %w", err)
+	}
+
+	return status, nil
 }
 
 func (status *RuleStatus) Validate() error {
@@ -80,14 +90,22 @@ func (status *RuleStatus) Validate() error {
 
 func UnmarshalESRule(body io.Reader) (*Rule, error) {
 	rule := &ESRule{}
-	err := jsonutils.Unmarshal(body, rule)
 
-	return rule.Source, err
+	err := jsonutils.Unmarshal(body, rule)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling body, %w", err)
+	}
+
+	return rule.Source, nil
 }
 
 func UnmarshalSearchESRule(body io.Reader) (*ESSearchResult, error) {
 	result := &ESSearchResult{}
-	err := jsonutils.Unmarshal(body, result)
 
-	return result, err
+	err := jsonutils.Unmarshal(body, result)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling body, %w", err)
+	}
+
+	return result, nil
 }

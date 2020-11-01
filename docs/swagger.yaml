@@ -54,6 +54,8 @@ definitions:
       http_status:
         example: 200
         type: integer
+      scene:
+        type: string
     type: object
   model.Rule:
     properties:

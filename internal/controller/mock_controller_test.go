@@ -112,6 +112,7 @@ func TestMockController_Execute(t *testing.T) {
 				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
 					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
 				}
+
 				return
 			}
 

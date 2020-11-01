@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
@@ -75,7 +76,7 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 				path:    "/test",
 			},
 			want:             nil,
-			wantedErr:        errors.New("error in service"),
+			wantedErr:        fmt.Errorf("error searching rule, %w", errors.New("error in service")),
 			ruleServiceRule:  nil,
 			ruleServiceErr:   errors.New("error in service"),
 			ruleServiceTimes: 1,
@@ -98,6 +99,7 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 			got, err := srv.SearchResponseForRequest(tt.args.ctx, tt.args.request, tt.args.path)
 			if (err != nil) != (tt.wantedErr != nil) {
 				t.Errorf("SearchResponseForMethodAndPath() error = %v, wantedErr %v", err, tt.wantedErr != nil)
+
 				return
 			}
 
@@ -105,6 +107,7 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 				if !reflect.DeepEqual(tt.wantedErr, err) {
 					t.Fatalf("Error is not the expected. Expected: %v - Actual: %v", tt.wantedErr, err)
 				}
+
 				return
 			}
 

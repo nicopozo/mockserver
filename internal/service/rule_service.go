@@ -35,6 +35,7 @@ func (ruleService *RuleService) Save(ctx context.Context, rule *model.Rule) (*mo
 
 	if err := validateRule(rule); err != nil {
 		logger.Error(ruleService, nil, err, "Rule Validation failed")
+
 		return nil, err
 	}
 
@@ -48,6 +49,7 @@ func (ruleService *RuleService) Update(ctx context.Context, key string, rule *mo
 
 	if err := validateRule(rule); err != nil {
 		logger.Error(ruleService, nil, err, "Rule Validation failed")
+
 		return nil, err
 	}
 
@@ -63,7 +65,7 @@ func (ruleService *RuleService) UpdateStatus(ctx context.Context, key string,
 	logger.Debug(ruleService, nil, "Entering RuleService Update()")
 
 	if err := ruleStatus.Validate(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error validating rule, %w", err)
 	}
 
 	rule, err := ruleService.Get(ctx, key)
@@ -84,7 +86,8 @@ func (ruleService *RuleService) Get(ctx context.Context, key string) (*model.Rul
 	result, err := ruleService.RuleRepository.Get(ctx, key)
 	if err != nil {
 		logger.Error(ruleService, nil, err, "error getting task")
-		return nil, err
+
+		return nil, fmt.Errorf("error getting rule, %w", err)
 	}
 
 	return result, nil
@@ -107,7 +110,8 @@ func (ruleService *RuleService) SearchByMethodAndPath(ctx context.Context, metho
 	result, err := ruleService.RuleRepository.SearchByMethodAndPath(ctx, method, path)
 	if err != nil {
 		logger.Error(ruleService, nil, err, "error searching rules")
-		return nil, err
+
+		return nil, fmt.Errorf("error searching rule, %w", err)
 	}
 
 	return result, nil
@@ -151,10 +155,11 @@ func validateRule(rule *model.Rule) error {
 	}
 
 	if rule.Strategy != "" && rule.Strategy != model.RuleStrategyNormal && rule.Strategy != model.RuleStrategyRandom &&
-		rule.Strategy != model.RuleStrategySequential {
+		rule.Strategy != model.RuleStrategySequential && rule.Strategy != model.RuleStrategyScene {
 		return mockserrors.InvalidRulesError{
-			Message: fmt.Sprintf("invalid rule strategy - only '%s', '%s' or '%s' are valid values",
-				model.RuleStrategyNormal, model.RuleStrategyRandom, model.RuleStrategySequential),
+			Message: fmt.Sprintf("invalid rule strategy - only '%s', '%s', '%s' or '%s' are valid values",
+				model.RuleStrategyNormal, model.RuleStrategyRandom, model.RuleStrategySequential,
+				model.RuleStrategyScene),
 		}
 	}
 
@@ -190,7 +195,7 @@ func validateVariables(variables []*model.Variable) error {
 
 	for _, variable := range variables {
 		if err := variable.Validate(); err != nil {
-			return err
+			return fmt.Errorf("error validating variable, %w", err)
 		}
 	}
 

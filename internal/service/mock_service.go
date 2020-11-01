@@ -9,13 +9,12 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
+	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
-	"github.com/nicopozo/mockserver/internal/utils/log"
 	"github.com/yalp/jsonpath"
 )
 
@@ -39,65 +38,44 @@ func (service *MockService) SearchResponseForRequest(ctx context.Context,
 
 	method := strings.ToUpper(request.Method)
 
-	result, err := service.RuleService.SearchByMethodAndPath(ctx, method, path)
+	rule, err := service.RuleService.SearchByMethodAndPath(ctx, method, path)
 	if err != nil {
 		logger.Error(service, nil, err, "error searching responses")
-		return nil, err
+
+		return nil, fmt.Errorf("error searching rule, %w", err)
 	}
 
-	response := result.Responses[0]
-	reqBody := new(strings.Builder)
+	reqBodyBuilder := new(strings.Builder)
 
-	_, err = io.Copy(reqBody, request.Body)
+	_, err = io.Copy(reqBodyBuilder, request.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading body, %w", err)
+	}
+
+	reqBody := reqBodyBuilder.String()
+
+	response, err := service.getResponseFromRule(rule, request, reqBody, path)
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := service.applyVariables(request, reqBody.String(), response.Body, result.Variables)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err = service.replacePathParam(body, result.Path, path, logger)
+	body, err := service.applyVariables(request, reqBody, response, rule, path)
 	if err != nil {
 		return nil, err
 	}
 
 	response.Body = body
 
-	return &response, nil
+	return response, nil
 }
 
-func (service *MockService) replacePathParam(responseBody, rulePath, reqPath string,
-	logger log.ILogger) (string, error) {
-	u, err := url.Parse(reqPath)
-	if err != nil {
-		logger.Error(service, nil, err, "error parsing path")
-		return "", err
-	}
-
-	values := strings.Split(u.Path, "/")
-	pathParts := strings.Split(rulePath, "/")
-
-	for i, part := range pathParts {
-		if part != "" {
-			first := string(part[0])
-			last := string(part[len(part)-1])
-
-			if first == "{" && last == "}" {
-				responseBody = strings.Replace(responseBody, part, values[i], -1)
-			}
-		}
-	}
-
-	return responseBody, nil
-}
-
-func (service *MockService) applyVariables(request *http.Request, reqBody, respBody string,
-	variables []*model.Variable) (string, error) {
+func (service *MockService) applyVariables(request *http.Request, reqBody string, response *model.Response,
+	rule *model.Rule, path string) (string, error) {
 	var err error
 
-	for _, v := range variables {
+	respBody := response.Body
+
+	for _, v := range rule.Variables {
 		switch v.Type {
 		case model.VariableTypeHeader:
 			respBody = service.applyHeaderVariables(request, respBody, v.Name, v.Key)
@@ -115,22 +93,141 @@ func (service *MockService) applyVariables(request *http.Request, reqBody, respB
 			if err != nil {
 				break
 			}
+		case model.VariableTypePath:
+			respBody, err = service.applyPathVariables(respBody, rule.Path, path)
+			if err != nil {
+				break
+			}
 		}
 	}
 
 	return respBody, err
 }
 
+func (service *MockService) applyPathVariables(responseBody, rulePath, reqPath string) (string, error) {
+	params, err := service.getPathParams(rulePath, reqPath)
+	if err != nil {
+		return "", err
+	}
+
+	for key, value := range params {
+		responseBody = strings.ReplaceAll(responseBody, fmt.Sprintf("{%s}", key), value)
+	}
+
+	return responseBody, nil
+}
+
 func (service *MockService) applyBodyVariables(reqBody, respBody string, name string,
 	key string) (string, error) {
+	value, err := service.getBodyVariableValue(key, reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	respBody = strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", name), jsonutils.Marshal(value))
+
+	return respBody, nil
+}
+
+func (service *MockService) applyRandomVariables(respBody string, name string) string {
+	return strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", name), service.getRandomVariableValue())
+}
+
+func (service *MockService) applyHashVariables(respBody string, name string) string {
+	return strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", name), service.getHashVariableValue())
+}
+
+func (service *MockService) applyQueryVariables(request *http.Request, body string, name string,
+	key string) (string, error) {
+	queryValue, err := service.getQueryVariableValue(key, request)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.ReplaceAll(body, fmt.Sprintf("{%s}", name), queryValue), nil
+}
+
+func (service *MockService) applyHeaderVariables(request *http.Request, body string, name string, key string) string {
+	header := service.getHeaderVariableValue(key, request)
+	if header != "" {
+		body = strings.ReplaceAll(body, fmt.Sprintf("{%s}", name), header)
+	}
+
+	return body
+}
+
+func (service *MockService) getResponseFromRule(rule *model.Rule, request *http.Request, body string,
+	path string) (*model.Response, error) {
+	strategy := rule.Strategy
+
+	switch strategy {
+	case model.RuleStrategyNormal:
+		return &rule.Responses[0], nil
+	case model.RuleStrategyScene:
+		var scene *model.Variable
+
+		for _, variable := range rule.Variables {
+			if variable.Name == model.RuleStrategyScene {
+				scene = variable
+
+				break
+			}
+		}
+
+		if scene == nil {
+			return nil, mockserrors.InvalidRulesError{
+				Message: "rule doesn't have any variable names 'scene'",
+			}
+		}
+
+		sceneName, err := service.getVariableValue(*scene, request, body, rule, path)
+		if err != nil {
+			return nil, err
+		}
+
+		first := string(sceneName[0])
+		last := string(sceneName[len(sceneName)-1])
+
+		// if it is a BODY variable, it is returned as JSON. So, I delete the "" from the beginning and the end
+		if first == "\"" && last == "\"" {
+			sceneName = sceneName[1 : len(sceneName)-1]
+		}
+
+		for _, resp := range rule.Responses {
+			if resp.Scene == sceneName {
+				return &resp, nil
+			}
+		}
+
+		return nil, mockserrors.InvalidRulesError{
+			Message: fmt.Sprintf("rule doesn't have an scene called %s", sceneName),
+		}
+	}
+
+	return nil, mockserrors.InvalidRulesError{
+		Message: "rule doesn't have a valid strategy",
+	}
+}
+
+func (service *MockService) getHeaderVariableValue(key string, request *http.Request) string {
+	header := request.Header[key]
+
+	if len(header) > 0 {
+		return header[0]
+	}
+
+	return ""
+}
+
+func (service *MockService) getBodyVariableValue(key, body string) (string, error) {
 	apply, err := jsonpath.Prepare(key)
 	if err != nil {
 		return "", fmt.Errorf("invalid JSON path for key %s - %w", key, err)
 	}
 
 	var reqMap interface{}
-	if err := json.Unmarshal([]byte(reqBody), &reqMap); err != nil {
-		return "", err
+	if err := json.Unmarshal([]byte(body), &reqMap); err != nil {
+		return "", fmt.Errorf("%w", err)
 	}
 
 	value, err := apply(reqMap)
@@ -138,30 +235,28 @@ func (service *MockService) applyBodyVariables(reqBody, respBody string, name st
 		return "", err
 	}
 
-	respBody = strings.Replace(respBody, fmt.Sprintf("{%s}", name), jsonutils.Marshal(value), -1)
-
-	return respBody, nil
+	return jsonutils.Marshal(value), nil
 }
 
-func (service *MockService) applyRandomVariables(respBody string, name string) string {
-	n := rand.Int63n(max)
-	respBody = strings.Replace(respBody, fmt.Sprintf("{%s}", name), strconv.FormatInt(n, 10), -1)
-
-	return respBody
-}
-
-func (service *MockService) applyHashVariables(respBody string, name string) string {
-	n := rand.Int63n(max)
+func (service *MockService) getHashVariableValue() string {
+	n := rand.Int63n(max) //nolint:gosec
 	h := sha256.New()
 	h.Write([]byte(fmt.Sprintf("%v", n))) //nolint:errcheck
 	bs := h.Sum(nil)
-	respBody = strings.Replace(respBody, fmt.Sprintf("{%s}", name), fmt.Sprintf("%x", bs), -1)
 
-	return respBody
+	return fmt.Sprintf("%x", bs)
 }
 
-func (service *MockService) applyQueryVariables(request *http.Request, body string, name string,
-	key string) (string, error) {
+func (service *MockService) getRandomVariableValue() string {
+	n := rand.Int63n(max) //nolint:gosec
+	h := sha256.New()
+	h.Write([]byte(fmt.Sprintf("%v", n))) //nolint:errcheck
+	bs := h.Sum(nil)
+
+	return fmt.Sprintf("%x", bs)
+}
+
+func (service *MockService) getQueryVariableValue(key string, request *http.Request) (string, error) {
 	queries, err := url.ParseQuery(request.URL.RawQuery)
 	if err != nil {
 		return "", fmt.Errorf("error parsing queries %w", err)
@@ -169,19 +264,74 @@ func (service *MockService) applyQueryVariables(request *http.Request, body stri
 
 	for queryName, queryValue := range queries {
 		if queryName == key {
-			body = strings.Replace(body, fmt.Sprintf("{%s}", name), queryValue[0], -1)
-			break
+			return queryValue[0], nil
 		}
 	}
 
-	return body, nil
+	return "", mockserrors.InvalidRulesError{
+		Message: fmt.Sprintf("no query param found with key %s", key),
+	}
 }
 
-func (service *MockService) applyHeaderVariables(request *http.Request, body string, name string, key string) string {
-	header := request.Header[key]
-	if len(header) > 0 {
-		body = strings.Replace(body, fmt.Sprintf("{%s}", name), header[0], -1)
+func (service *MockService) getPathVariableValue(key, rulePath, reqPath string) (string, error) {
+	pathVariables, err := service.getPathParams(rulePath, reqPath)
+	if err != nil {
+		return "", err
 	}
 
-	return body
+	if pathVariables[key] == "" {
+		return "", mockserrors.InvalidRulesError{
+			Message: fmt.Sprintf("no path param found with key %s", key),
+		}
+	}
+
+	return pathVariables[key], nil
+}
+
+func (service *MockService) getVariableValue(v model.Variable, request *http.Request, body string,
+	rule *model.Rule, path string) (string, error) {
+	switch v.Type {
+	case model.VariableTypeHeader:
+		return service.getHeaderVariableValue(v.Key, request), nil
+	case model.VariableTypeBody:
+		return service.getBodyVariableValue(v.Key, body)
+	case model.VariableTypeHash:
+		return service.getHashVariableValue(), nil
+	case model.VariableTypeRandom:
+		return service.getRandomVariableValue(), nil
+	case model.VariableTypeQuery:
+		return service.getQueryVariableValue(v.Key, request)
+	case model.VariableTypePath:
+		return service.getPathVariableValue(v.Key, rule.Path, path)
+	}
+
+	return "", mockserrors.InvalidRulesError{
+		Message: fmt.Sprintf("%s is invalid variable type", v.Type),
+	}
+}
+
+func (service *MockService) getPathParams(rulePath, reqPath string) (map[string]string, error) {
+	u, err := url.Parse(reqPath)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url, %w", err)
+	}
+
+	values := strings.Split(u.Path, "/")
+	pathParts := strings.Split(rulePath, "/")
+
+	params := make(map[string]string)
+
+	for i, part := range pathParts {
+		if part != "" {
+			first := string(part[0])
+			last := string(part[len(part)-1])
+
+			if first == "{" && last == "}" {
+				key := part[1 : len(part)-1]
+				params[key] = values[i]
+			}
+		}
+	}
+
+	return params, nil
 }

@@ -97,7 +97,8 @@ func (repository *RuleElasticRepository) Get(ctx context.Context, key string) (*
 
 	if err != nil {
 		logger.Error(repository, nil, err, "error getting rule from Elastic Search")
-		return nil, err
+
+		return nil, fmt.Errorf("error reading Elastic Search Response, %w", err)
 	}
 
 	if getRuleResp.IsError() {
@@ -122,10 +123,10 @@ func (repository *RuleElasticRepository) Get(ctx context.Context, key string) (*
 
 	rule, err = model.UnmarshalESRule(getRuleResp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading Elastic Search Response, %w", err)
 	}
 
-	return rule, err
+	return rule, nil
 }
 
 func (repository *RuleElasticRepository) Search(ctx context.Context, params map[string]interface{},
@@ -181,7 +182,8 @@ func (repository *RuleElasticRepository) Search(ctx context.Context, params map[
 
 	if err != nil {
 		logger.Error(repository, nil, err, "error getting rule from Elastic Search")
-		return nil, err
+
+		return nil, fmt.Errorf("error reading Elastic Search Response, %w", err)
 	}
 
 	if searchRuleResp.IsError() {
@@ -200,7 +202,8 @@ func (repository *RuleElasticRepository) Search(ctx context.Context, params map[
 	esResponse, err = model.UnmarshalSearchESRule(searchRuleResp.Body)
 	if err != nil {
 		logger.Error(repository, nil, err, "error unmarshalling results from Elastic Search")
-		return nil, err
+
+		return nil, fmt.Errorf("error reading Elastic Search Response, %w", err)
 	}
 
 	result := &model.RuleList{}
@@ -294,6 +297,7 @@ func (repository *RuleElasticRepository) SearchByMethodAndPath(ctx context.Conte
 
 	for _, pattern := range patternList.Patterns {
 		var regex = regexp.MustCompile(pattern.PathExpression)
+
 		if regex.MatchString(path) {
 			for _, ruleKey := range pattern.RuleKeys {
 				rule, _ := repository.Get(ctx, ruleKey)
@@ -327,7 +331,8 @@ func (repository *RuleElasticRepository) getExpressionsByMethod(ctx context.Cont
 
 	if err != nil {
 		logger.Error(repository, nil, err, "error getting expressions from Elastic Search")
-		return nil, err
+
+		return nil, fmt.Errorf("error reading Elastic Search Response, %w", err)
 	}
 
 	if getExprResp.IsError() {
@@ -351,7 +356,7 @@ func (repository *RuleElasticRepository) getExpressionsByMethod(ctx context.Cont
 
 	patternList, err = model.UnmarshalESPatternList(getExprResp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading Elastic Search Response, %w", err)
 	}
 
 	return patternList, nil
@@ -374,7 +379,8 @@ func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rul
 
 	if err != nil {
 		logger.Error(repository, nil, err, "error getting expressions from Elastic Search")
-		return nil, err
+
+		return nil, fmt.Errorf("error reading Elastic Search Response, %w", err)
 	}
 
 	if getResp.IsError() {
@@ -394,7 +400,7 @@ func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rul
 	if getResp.StatusCode != http.StatusNotFound {
 		l, err := model.UnmarshalESPatternList(getResp.Body)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error reading Elastic Search Response, %w", err)
 		}
 
 		list = *l
@@ -411,6 +417,7 @@ func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rul
 	for i, p := range list.Patterns {
 		if p.PathExpression == expression {
 			foundPatterIndex = i
+
 			break
 		}
 	}
@@ -421,6 +428,7 @@ func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rul
 		for _, key := range list.Patterns[foundPatterIndex].RuleKeys {
 			if key == rule.Key {
 				foundKey = true
+
 				break
 			}
 		}
@@ -488,8 +496,8 @@ func (repository *RuleElasticRepository) getElasticClient() *elasticsearch.Clien
 				"http://localhost:9200",
 			},
 		}
-		es, err := elasticsearch.NewClient(cfg)
 
+		es, err := elasticsearch.NewClient(cfg)
 		if err != nil {
 			fmt.Println("Que hacer aqui!!")
 		}

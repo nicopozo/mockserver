@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -12,13 +13,17 @@ const (
 )
 
 func getPagingFromRequest(request *http.Request) (*model.Paging, error) {
-	paging := &model.Paging{Limit: defaultPageSize}
+	paging := &model.Paging{
+		Total:  0,
+		Limit:  defaultPageSize,
+		Offset: 0,
+	}
 
 	offset := request.URL.Query().Get("offset")
 	if offset != "" {
 		o, err := strconv.ParseInt(offset, 10, 32)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error parsing paging offset, %w", err)
 		}
 
 		paging.Offset = int32(o)
@@ -28,7 +33,7 @@ func getPagingFromRequest(request *http.Request) (*model.Paging, error) {
 	if limit != "" {
 		l, err := strconv.ParseInt(limit, 10, 32)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error parsing paging limit, %w", err)
 		}
 
 		paging.Limit = int32(l)

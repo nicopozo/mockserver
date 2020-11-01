@@ -16,6 +16,7 @@ const (
 	NotImplementedError       = 1031
 )
 
+//nolint:gofumpt
 var (
 	//nolint:gochecknoglobals
 	causeMap = map[int]causeMapping{
