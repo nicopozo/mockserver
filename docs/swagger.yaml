@@ -55,6 +55,7 @@ definitions:
         example: 200
         type: integer
       scene:
+        example: normal
         type: string
     type: object
   model.Rule:
