@@ -68,7 +68,7 @@
           ></b-form-input>
         </b-form-group>
 
-        <!-- INPUT APPLICATION -->
+        <!-- INPUT PATH -->
         <b-form-group
           id="input-group-method"
           required
@@ -83,6 +83,25 @@
               :value="httpMethod.value"
             >
               {{ httpMethod.text }}
+            </option>
+          </b-form-select>
+        </b-form-group>
+
+        <!-- INPUT STRATEGY -->
+        <b-form-group
+          id="input-group-strategy"
+          required
+          label-cols="4"
+          label-cols-lg="2"
+          label="Strategy:"
+        >
+          <b-form-select v-model="mock.strategy">
+            <option
+              v-for="strategy in strategies"
+              :key="strategy.text"
+              :value="strategy.value"
+            >
+              {{ strategy.text }}
             </option>
           </b-form-select>
         </b-form-group>
@@ -360,6 +379,13 @@ export default {
         { text: "RANDOM", value: "random" },
         { text: "HASH", value: "hash" },
         { text: "PATH", value: "path" },
+      ],
+
+      strategies: [
+        { text: "Select One", value: null },
+        { text: "NORMAL", value: "normal" },
+        { text: "SCENE", value: "scene" },
+        { text: "RAMDOM", value: "random" },
       ],
     };
   },

@@ -9,7 +9,9 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
@@ -202,6 +204,13 @@ func (service *MockService) getResponseFromRule(rule *model.Rule, request *http.
 		return nil, mockserrors.InvalidRulesError{
 			Message: fmt.Sprintf("rule doesn't have an scene called %s", sceneName),
 		}
+	case model.RuleStrategyRandom:
+		responsesLen := len(rule.Responses)
+
+		rand.Seed(time.Now().UnixNano())
+		i := rand.Int63n(int64(responsesLen)) // nolint:gosec
+
+		return &rule.Responses[i], nil
 	}
 
 	return nil, mockserrors.InvalidRulesError{
@@ -248,12 +257,10 @@ func (service *MockService) getHashVariableValue() string {
 }
 
 func (service *MockService) getRandomVariableValue() string {
+	rand.Seed(time.Now().UnixNano())
 	n := rand.Int63n(max) //nolint:gosec
-	h := sha256.New()
-	h.Write([]byte(fmt.Sprintf("%v", n))) //nolint:errcheck
-	bs := h.Sum(nil)
 
-	return fmt.Sprintf("%x", bs)
+	return strconv.FormatInt(n, 10)
 }
 
 func (service *MockService) getQueryVariableValue(key string, request *http.Request) (string, error) {
