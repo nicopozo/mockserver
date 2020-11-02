@@ -187,12 +187,14 @@ func (service *MockService) getResponseFromRule(rule *model.Rule, request *http.
 			return nil, err
 		}
 
-		first := string(sceneName[0])
-		last := string(sceneName[len(sceneName)-1])
+		if sceneName != "" {
+			first := string(sceneName[0])
+			last := string(sceneName[len(sceneName)-1])
 
-		// if it is a BODY variable, it is returned as JSON. So, I delete the "" from the beginning and the end
-		if first == "\"" && last == "\"" {
-			sceneName = sceneName[1 : len(sceneName)-1]
+			// if it is a BODY variable, it is returned as JSON. So, I delete the "" from the beginning and the end
+			if first == "\"" && last == "\"" {
+				sceneName = sceneName[1 : len(sceneName)-1]
+			}
 		}
 
 		respIndex := -1
