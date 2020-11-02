@@ -95,7 +95,8 @@
           label-cols-lg="2"
           label="Strategy:"
         >
-          <b-form-select v-model="mock.strategy">
+          <b-form-select v-model="mock.strategy"
+          v-on:change="updateResponses()">
             <option
               v-for="strategy in strategies"
               :key="strategy.text"
@@ -172,7 +173,7 @@
               id="input-group-body"
               label-cols="4"
               label-cols-lg="2"
-              label="body:"
+              label="Body:"
               label-for="input-body"
             >
               <b-form-textarea
@@ -193,10 +194,11 @@
               label-for="input-scene"
             >
               <b-form-input
+                :disabled="mock.strategy != 'scene'"
+                :required="mock.strategy === 'scene'"
                 id="input-scene"
                 v-model="response.scene"
-                required
-                placeholder="Example: name"
+                placeholder="Value of 'scene' variable when SCENE strategy is selected."
               ></b-form-input>
             </b-form-group>
 
@@ -212,7 +214,7 @@
 
           <br />
 
-          <!-- ADD NEW VARIABLE BUTTON-->
+          <!-- ADD NEW RESPONSE BUTTON-->
           <b-container>
             <b-row align-h="end">
               <b-col cols="100">
@@ -269,12 +271,14 @@
                     :disabled="
                       variable.type != 'body' &&
                       variable.type != 'query' &&
-                      variable.type != 'header'
+                      variable.type != 'header' &&
+                      variable.type != 'path'
                     "
                     :required="
                       variable.type === 'body' ||
                       variable.type === 'query' ||
-                      variable.type === 'header'
+                      variable.type === 'header' ||
+                      variable.type === 'path'
                     "
                     class="mb-2 mr-sm-2 mb-sm-0"
                     v-model="variable.key"
@@ -610,6 +614,13 @@ export default {
     },
     removeResponse(i) {
       this.mock.responses.splice(i, 1);
+    },
+    updateResponses() {
+      if (this.mock.strategy != "scene") {
+        this.mock.responses.forEach(r => {
+          r.scene = ""
+        });
+      }
     },
     newMock() {
       return {

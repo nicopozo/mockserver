@@ -195,10 +195,22 @@ func (service *MockService) getResponseFromRule(rule *model.Rule, request *http.
 			sceneName = sceneName[1 : len(sceneName)-1]
 		}
 
-		for _, resp := range rule.Responses {
+		respIndex := -1
+
+		for i, resp := range rule.Responses {
 			if resp.Scene == sceneName {
-				return &resp, nil
+				respIndex = i
+
+				break
 			}
+
+			if strings.ToLower(resp.Scene) == "default" {
+				respIndex = i
+			}
+		}
+
+		if respIndex >= 0 {
+			return &rule.Responses[respIndex], nil
 		}
 
 		return nil, mockserrors.InvalidRulesError{
