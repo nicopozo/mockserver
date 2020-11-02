@@ -231,13 +231,7 @@ func (service *MockService) getResponseFromRule(rule *model.Rule, request *http.
 }
 
 func (service *MockService) getHeaderVariableValue(key string, request *http.Request) string {
-	header := request.Header[key]
-
-	if len(header) > 0 {
-		return header[0]
-	}
-
-	return ""
+	return request.Header.Get(key)
 }
 
 func (service *MockService) getBodyVariableValue(key, body string) (string, error) {

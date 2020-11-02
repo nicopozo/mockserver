@@ -389,7 +389,7 @@ export default {
         { text: "Select One", value: null },
         { text: "NORMAL", value: "normal" },
         { text: "SCENE", value: "scene" },
-        { text: "RAMDOM", value: "random" },
+        { text: "RANDOM", value: "random" },
       ],
     };
   },
