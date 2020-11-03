@@ -84,7 +84,7 @@ func (service *MockService) applyVariables(request *http.Request, reqBody string
 		case model.VariableTypeBody:
 			respBody, err = service.applyBodyVariables(reqBody, respBody, v.Name, v.Key)
 			if err != nil {
-				break
+				return respBody, err
 			}
 		case model.VariableTypeHash:
 			respBody = service.applyHashVariables(respBody, v.Name)
@@ -93,12 +93,12 @@ func (service *MockService) applyVariables(request *http.Request, reqBody string
 		case model.VariableTypeQuery:
 			respBody, err = service.applyQueryVariables(request, respBody, v.Name, v.Key)
 			if err != nil {
-				break
+				return respBody, err
 			}
 		case model.VariableTypePath:
 			respBody, err = service.applyPathVariables(respBody, rule.Path, path)
 			if err != nil {
-				break
+				return respBody, err
 			}
 		}
 	}
@@ -126,7 +126,7 @@ func (service *MockService) applyBodyVariables(reqBody, respBody string, name st
 		return "", err
 	}
 
-	respBody = strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", name), jsonutils.Marshal(value))
+	respBody = strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", name), value)
 
 	return respBody, nil
 }
@@ -244,12 +244,12 @@ func (service *MockService) getBodyVariableValue(key, body string) (string, erro
 
 	var reqMap interface{}
 	if err := json.Unmarshal([]byte(body), &reqMap); err != nil {
-		return "", fmt.Errorf("%w", err)
+		return "", fmt.Errorf("error unmarshalling request body. Body: %s: %w", body, err)
 	}
 
 	value, err := apply(reqMap)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error getting value from JSON PATH. Request: %v: %w", reqMap, err)
 	}
 
 	return jsonutils.Marshal(value), nil
