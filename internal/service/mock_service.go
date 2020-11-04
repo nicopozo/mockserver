@@ -96,7 +96,7 @@ func (service *MockService) applyVariables(request *http.Request, reqBody string
 				return respBody, err
 			}
 		case model.VariableTypePath:
-			respBody, err = service.applyPathVariables(respBody, rule.Path, path)
+			respBody, err = service.applyPathVariable(respBody, rule.Path, path, v.Name, v.Key)
 			if err != nil {
 				return respBody, err
 			}
@@ -106,14 +106,17 @@ func (service *MockService) applyVariables(request *http.Request, reqBody string
 	return respBody, err
 }
 
-func (service *MockService) applyPathVariables(responseBody, rulePath, reqPath string) (string, error) {
+func (service *MockService) applyPathVariable(responseBody, rulePath, reqPath, variableName,
+	variableKey string) (string, error) {
 	params, err := service.getPathParams(rulePath, reqPath)
 	if err != nil {
 		return "", err
 	}
 
-	for key, value := range params {
-		responseBody = strings.ReplaceAll(responseBody, fmt.Sprintf("{%s}", key), value)
+	for paramKey, paramValue := range params {
+		if paramKey == variableKey {
+			return strings.ReplaceAll(responseBody, fmt.Sprintf("{%s}", variableName), paramValue), nil
+		}
 	}
 
 	return responseBody, nil
