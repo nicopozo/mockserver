@@ -8,7 +8,6 @@ import (
 
 	guuid "github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	reconerrors "github.com/mercadolibre/fury_recon-commons-go/pkg/error"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
@@ -266,7 +265,7 @@ func (repository *RuleMySQLRepository) Search(ctx context.Context, params map[st
 	if err != nil {
 		logger.Error(repository, nil, err, "error executing SQL query")
 
-		return nil, reconerrors.New("error searching rules in DB", err)
+		return nil, fmt.Errorf("error searching rules in DB, %w", err)
 	}
 
 	if len(rows) > 0 {
@@ -279,7 +278,7 @@ func (repository *RuleMySQLRepository) Search(ctx context.Context, params map[st
 		if err != nil {
 			logger.Error(repository, nil, err, "error executing SQL query")
 
-			return nil, reconerrors.New("error calculating total rules in DB", err)
+			return nil, fmt.Errorf("error calculating total rules in DB, %w", err)
 		}
 
 		paging.Total = total
@@ -340,7 +339,7 @@ func (repository *RuleMySQLRepository) Delete(ctx context.Context, key string) e
 	if err != nil {
 		logger.Error(repository, nil, err, "error deleting rule in DB")
 
-		return reconerrors.New("error deleting rule", err)
+		return fmt.Errorf("error deleting rule, %w", err)
 	}
 
 	return nil
@@ -361,7 +360,7 @@ func (repository *RuleMySQLRepository) SearchByMethodAndPath(ctx context.Context
 	if err != nil {
 		logger.Error(repository, nil, err, "error executing SQL query")
 
-		return nil, reconerrors.New("error searching rules in DB", err)
+		return nil, fmt.Errorf("error searching rules in DB, %w", err)
 	}
 
 	for _, row := range rows {
