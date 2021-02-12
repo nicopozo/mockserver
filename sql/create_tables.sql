@@ -9,7 +9,7 @@ CREATE TABLE `rules` (
     `pattern` varchar(255) NOT NULL,
     PRIMARY KEY (`key`),
     UNIQUE KEY `key_UNIQUE` (`key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `responses` (
     `id` bigint NOT NULL AUTO_INCREMENT,
@@ -22,10 +22,10 @@ CREATE TABLE `responses` (
     PRIMARY KEY (`id`),
     KEY `rules_idx` (`rule_key`),
     CONSTRAINT `rules` FOREIGN KEY (`rule_key`) REFERENCES `rules` (`key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `variables` (
-    `id` int NOT NULL AUTO_INCREMENT,
+    `id` bigint NOT NULL AUTO_INCREMENT,
     `type` varchar(255) NOT NULL,
     `name` varchar(255) NOT NULL,
     `key` varchar(255) NOT NULL,
@@ -33,4 +33,4 @@ CREATE TABLE `variables` (
     PRIMARY KEY (`id`),
     KEY `rule_idx` (`rule_key`),
     CONSTRAINT `rule` FOREIGN KEY (`rule_key`) REFERENCES `rules` (`key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
