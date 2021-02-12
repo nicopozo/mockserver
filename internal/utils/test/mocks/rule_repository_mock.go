@@ -34,19 +34,34 @@ func (m *MockIRuleRepository) EXPECT() *MockIRuleRepositoryMockRecorder {
 	return m.recorder
 }
 
-// Save mocks base method
-func (m *MockIRuleRepository) Save(ctx context.Context, rule *model.Rule, isUpdate bool) (*model.Rule, error) {
+// Create mocks base method
+func (m *MockIRuleRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Save", ctx, rule, isUpdate)
+	ret := m.ctrl.Call(m, "Create", ctx, rule)
 	ret0, _ := ret[0].(*model.Rule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Save indicates an expected call of Save
-func (mr *MockIRuleRepositoryMockRecorder) Save(ctx, rule, isUpdate interface{}) *gomock.Call {
+// Create indicates an expected call of Create
+func (mr *MockIRuleRepositoryMockRecorder) Create(ctx, rule interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockIRuleRepository)(nil).Save), ctx, rule, isUpdate)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIRuleRepository)(nil).Create), ctx, rule)
+}
+
+// Update mocks base method
+func (m *MockIRuleRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", ctx, rule)
+	ret0, _ := ret[0].(*model.Rule)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Update indicates an expected call of Update
+func (mr *MockIRuleRepositoryMockRecorder) Update(ctx, rule interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockIRuleRepository)(nil).Update), ctx, rule)
 }
 
 // Get mocks base method

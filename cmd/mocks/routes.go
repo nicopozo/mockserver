@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,7 +33,12 @@ func mapRoutes(router *gin.Engine) {
 }
 
 func newRuleController() controller.RuleController {
-	ruleRepository := &repository.RuleElasticRepository{}
+	db, err := repository.GetDB()
+	if err != nil {
+		panic(fmt.Sprintf("Error connecting to mysql DB: %s", err.Error()))
+	}
+
+	ruleRepository := repository.NewRuleMySQLRepository(db)
 	ruleService := &service.RuleService{
 		RuleRepository: ruleRepository,
 	}
@@ -44,7 +50,12 @@ func newRuleController() controller.RuleController {
 }
 
 func newMockController() controller.MockController {
-	ruleRepository := &repository.RuleElasticRepository{}
+	db, err := repository.GetDB()
+	if err != nil {
+		panic(fmt.Sprintf("Error connecting to mysql DB: %s", err.Error()))
+	}
+
+	ruleRepository := repository.NewRuleMySQLRepository(db)
 	ruleService := &service.RuleService{
 		RuleRepository: ruleRepository,
 	}

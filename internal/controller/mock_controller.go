@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"errors"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -9,6 +12,7 @@ import (
 	ruleserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/service"
+	"github.com/nicopozo/mockserver/internal/utils/log"
 )
 
 type MockController struct {
@@ -22,30 +26,36 @@ func (controller *MockController) Execute(context *gin.Context) {
 	logger.Debug(controller, nil, "Entering MockController Execute()")
 
 	path := context.Param("rule")
+	reqBody := controller.extractExecutionBody(logger, context.Request.Body)
 
-	response, err := controller.MockService.SearchResponseForRequest(reqContext, context.Request, path)
+	response, err := controller.MockService.SearchResponseForRequest(reqContext, context.Request, path, reqBody)
 	if err != nil {
-		switch err.(type) { //nolint:errorlint
-		case ruleserrors.RuleNotFoundError:
+		if (errors.As(err, &ruleserrors.RuleNotFoundError{})) {
 			logger.Debug(controller, nil, "No rule found for path: %v and method: %s",
 				path, context.Request.Method)
 
 			errorResult := model.NewError(model.ResourceNotFoundError,
 				"No rule found for path: %v and method: %s. %v", path, context.Request.Method, err.Error())
 			context.JSON(http.StatusNotFound, errorResult)
-		case ruleserrors.InvalidRulesError:
+
+			return
+		}
+
+		if (errors.As(err, &ruleserrors.InvalidRulesError{})) {
 			logger.Debug(controller, nil, "No rule found for path: %v and method: %s",
 				path, context.Request.Method)
 
 			errorResult := model.NewError(model.ValidationError, err.Error())
 			context.JSON(http.StatusNotFound, errorResult)
-		default:
-			logger.Error(controller, nil, err,
-				"Failed to execute rule for method %v: and path %v", context.Request.Method, path)
 
-			errorResult := model.NewError(model.InternalError, "Error occurred when getting rule. %s", err.Error())
-			context.JSON(http.StatusInternalServerError, errorResult)
+			return
 		}
+
+		logger.Error(controller, nil, err,
+			"Failed to execute rule for method %v: and path %v", context.Request.Method, path)
+
+		errorResult := model.NewError(model.InternalError, "Error occurred when getting rule. %s", err.Error())
+		context.JSON(http.StatusInternalServerError, errorResult)
 
 		return
 	}
@@ -54,4 +64,23 @@ func (controller *MockController) Execute(context *gin.Context) {
 
 	time.Sleep(time.Duration(response.Delay) * time.Millisecond)
 	context.String(response.HTTPStatus, response.Body)
+}
+
+func (controller *MockController) extractExecutionBody(logger log.ILogger, body io.Reader) string {
+	var bodyContents []byte
+
+	if body == nil {
+		logger.Warn(controller, nil, "Received body was NIL")
+
+		return "<nil>"
+	}
+
+	bodyContents, err := ioutil.ReadAll(body)
+	if err != nil {
+		logger.Error(controller, nil, err, "Error extracting body from execution: "+err.Error())
+
+		return "<error>"
+	}
+
+	return string(bodyContents)
 }

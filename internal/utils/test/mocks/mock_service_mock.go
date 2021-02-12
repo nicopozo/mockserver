@@ -36,16 +36,16 @@ func (m *MockIMockService) EXPECT() *MockIMockServiceMockRecorder {
 }
 
 // SearchResponseForRequest mocks base method
-func (m *MockIMockService) SearchResponseForRequest(ctx context.Context, request *http.Request, path string) (*model.Response, error) {
+func (m *MockIMockService) SearchResponseForRequest(ctx context.Context, request *http.Request, path, body string) (*model.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchResponseForRequest", ctx, request, path)
+	ret := m.ctrl.Call(m, "SearchResponseForRequest", ctx, request, path, body)
 	ret0, _ := ret[0].(*model.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SearchResponseForRequest indicates an expected call of SearchResponseForRequest
-func (mr *MockIMockServiceMockRecorder) SearchResponseForRequest(ctx, request, path interface{}) *gomock.Call {
+func (mr *MockIMockServiceMockRecorder) SearchResponseForRequest(ctx, request, path, body interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchResponseForRequest", reflect.TypeOf((*MockIMockService)(nil).SearchResponseForRequest), ctx, request, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchResponseForRequest", reflect.TypeOf((*MockIMockService)(nil).SearchResponseForRequest), ctx, request, path, body)
 }

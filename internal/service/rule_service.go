@@ -39,7 +39,7 @@ func (ruleService *RuleService) Save(ctx context.Context, rule *model.Rule) (*mo
 		return nil, err
 	}
 
-	return ruleService.RuleRepository.Save(ctx, formatRule(rule), false)
+	return ruleService.RuleRepository.Create(ctx, formatRule(rule))
 }
 
 func (ruleService *RuleService) Update(ctx context.Context, key string, rule *model.Rule) (*model.Rule, error) {
@@ -55,7 +55,7 @@ func (ruleService *RuleService) Update(ctx context.Context, key string, rule *mo
 
 	rule.Key = key
 
-	return ruleService.RuleRepository.Save(ctx, formatRule(rule), true)
+	return ruleService.RuleRepository.Update(ctx, formatRule(rule))
 }
 
 func (ruleService *RuleService) UpdateStatus(ctx context.Context, key string,
@@ -75,7 +75,7 @@ func (ruleService *RuleService) UpdateStatus(ctx context.Context, key string,
 
 	rule.Status = ruleStatus.Status
 
-	return ruleService.RuleRepository.Save(ctx, formatRule(rule), true)
+	return ruleService.RuleRepository.Update(ctx, formatRule(rule))
 }
 
 func (ruleService *RuleService) Get(ctx context.Context, key string) (*model.Rule, error) {

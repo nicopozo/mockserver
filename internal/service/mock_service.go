@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -25,7 +24,7 @@ const max = 9999999999
 //go:generate mockgen -destination=../utils/test/mocks/mock_service_mock.go -package=mocks -source=./mock_service.go
 
 type IMockService interface {
-	SearchResponseForRequest(ctx context.Context, request *http.Request, path string) (*model.Response, error)
+	SearchResponseForRequest(ctx context.Context, request *http.Request, path, body string) (*model.Response, error)
 }
 
 type MockService struct {
@@ -33,7 +32,7 @@ type MockService struct {
 }
 
 func (service *MockService) SearchResponseForRequest(ctx context.Context,
-	request *http.Request, path string) (*model.Response, error) {
+	request *http.Request, path, body string) (*model.Response, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(service, nil, "Entering MockService Execute()")
@@ -47,21 +46,12 @@ func (service *MockService) SearchResponseForRequest(ctx context.Context,
 		return nil, fmt.Errorf("error searching rule, %w", err)
 	}
 
-	reqBodyBuilder := new(strings.Builder)
-
-	_, err = io.Copy(reqBodyBuilder, request.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading body, %w", err)
-	}
-
-	reqBody := reqBodyBuilder.String()
-
-	response, err := service.getResponseFromRule(rule, request, reqBody, path)
+	response, err := service.getResponseFromRule(rule, request, body, path)
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := service.applyVariables(request, reqBody, response, rule, path)
+	body, err = service.applyVariables(request, body, response, rule, path)
 	if err != nil {
 		return nil, err
 	}

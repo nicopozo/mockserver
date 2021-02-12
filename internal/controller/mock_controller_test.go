@@ -86,7 +86,7 @@ func TestMockController_Execute(t *testing.T) {
 			mockServiceMock := mocks.NewMockIMockService(mockCtrl)
 			defer mockCtrl.Finish()
 
-			mockServiceMock.EXPECT().SearchResponseForRequest(gomock.Any(), gomock.Any(), "/test").
+			mockServiceMock.EXPECT().SearchResponseForRequest(gomock.Any(), gomock.Any(), "/test", gomock.Any()).
 				Return(tt.serviceResponse, tt.serviceErr).Times(tt.serviceCallTimes)
 
 			ginContext, response := testutils.GetGinContext()

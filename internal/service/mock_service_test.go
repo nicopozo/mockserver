@@ -23,6 +23,7 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 		ctx     context.Context
 		request *http.Request
 		path    string
+		body    string
 	}
 
 	tests := []struct {
@@ -40,6 +41,7 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 				ctx:     mockscontext.Background(),
 				request: requestMock,
 				path:    "/test",
+				body:    "body",
 			},
 			want: &model.Response{
 				Body:        "{\"balance\":5000}",
@@ -74,6 +76,7 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 				ctx:     mockscontext.Background(),
 				request: requestMock,
 				path:    "/test",
+				body:    "body",
 			},
 			want:             nil,
 			wantedErr:        fmt.Errorf("error searching rule, %w", errors.New("error in service")),
@@ -96,7 +99,7 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 				RuleService: ruleServiceMock,
 			}
 
-			got, err := srv.SearchResponseForRequest(tt.args.ctx, tt.args.request, tt.args.path)
+			got, err := srv.SearchResponseForRequest(tt.args.ctx, tt.args.request, tt.args.path, tt.args.body)
 			if (err != nil) != (tt.wantedErr != nil) {
 				t.Errorf("SearchResponseForMethodAndPath() error = %v, wantedErr %v", err, tt.wantedErr != nil)
 
