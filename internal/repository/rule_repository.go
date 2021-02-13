@@ -22,7 +22,7 @@ type IRuleRepository interface {
 }
 
 func CreateExpression(path string) string {
-	var paramRegex = regexp.MustCompile("{.+?}/")
+	paramRegex := regexp.MustCompile("{.+?}/")
 	params := paramRegex.FindAllString(path, -1)
 
 	for _, param := range params {

@@ -65,17 +65,7 @@ func (repository *RuleMySQLRepository) Create(ctx context.Context, rule *model.R
 		return nil, fmt.Errorf("error strating transaction, %w", err)
 	}
 
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		} else {
-			err = tx.Commit()
-			if err != nil {
-				logger.Error(repository, nil, err, "Error committing changes")
-				_ = tx.Rollback()
-			}
-		}
-	}()
+	defer repository.commitOrRollback(ctx, tx, err)
 
 	rule.Key = fmt.Sprintf("%v", guuid.New())
 
@@ -113,17 +103,7 @@ func (repository *RuleMySQLRepository) Update(ctx context.Context, rule *model.R
 		return nil, fmt.Errorf("error starting transaction, %w", err)
 	}
 
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		} else {
-			err = tx.Commit()
-			if err != nil {
-				logger.Error(repository, nil, err, "Error committing changes")
-				_ = tx.Rollback()
-			}
-		}
-	}()
+	defer repository.commitOrRollback(ctx, tx, err)
 
 	_, err = tx.Exec(query, rule.Application, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
 		CreateExpression(rule.Path), rule.Key)
@@ -306,17 +286,7 @@ func (repository *RuleMySQLRepository) Delete(ctx context.Context, key string) e
 		return fmt.Errorf("error strating transaction, %w", err)
 	}
 
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		} else {
-			err = tx.Commit()
-			if err != nil {
-				logger.Error(repository, nil, err, "Error committing changes")
-				_ = tx.Rollback()
-			}
-		}
-	}()
+	defer repository.commitOrRollback(ctx, tx, err)
 
 	err = repository.deleteVariables(ctx, key, tx)
 	if err != nil {
@@ -417,7 +387,7 @@ func (repository *RuleMySQLRepository) insertResponses(ctx context.Context, rule
 func newSearchQuery(params map[string]interface{}) string {
 	query := "SELECT * FROM rules"
 	where := newWhereClause(params)
-	order := " LIMIT ? OFFSET ?"
+	order := " ORDER BY application, path, method LIMIT ? OFFSET ?"
 
 	return query + where + order
 }
@@ -491,5 +461,19 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 		Status:      row.Status,
 		Variables:   vars,
 		Responses:   resps,
+	}
+}
+
+func (repository *RuleMySQLRepository) commitOrRollback(ctx context.Context, tx *sqlx.Tx, err error) {
+	logger := mockscontext.Logger(ctx)
+
+	if err != nil {
+		_ = tx.Rollback()
+	} else {
+		err = tx.Commit()
+		if err != nil {
+			logger.Error(repository, nil, err, "Error committing changes")
+			_ = tx.Rollback()
+		}
 	}
 }
