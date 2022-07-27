@@ -1,34 +1,34 @@
 <template>
   <div>
-    <b-navbar toggleable="lg" type="dark" variant="info">
-      <img src="../assets/mock.png" width="20" height="20" />
-      <b-navbar-brand></b-navbar-brand>
-      <b-navbar-brand>Mocks Server</b-navbar-brand>
+    <v-app-bar app color="primary" dark>
+      <v-img
+          alt="Mocks Server"
+          class="shrink mr-2"
+          contain
+          src="../assets/mock.png"
+          transition="scale-transition"
+          width="40"
+      />
 
-      <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+      <v-toolbar-title class="mr-3">Mocks Server</v-toolbar-title>
 
-      <b-collapse id="nav-collapse" is-nav>
-        <b-navbar-nav>
-          <b-nav-item
-            active-class="active"
-            class="nav-link"
-            key="listMocks"
-            :to="{name: 'ListMocks'}"
-            exact="true"
-          >Home</b-nav-item>
-        </b-navbar-nav>
+      <v-btn :to="{name: 'ListMocks'}" text class="mx-1" exact>
+        <v-icon>mdi-home</v-icon>
+        <span class="mx-1">Home</span>
+      </v-btn>
 
-        <b-navbar-nav>
-          <b-nav-item
-            active-class="active"
-            class="nav-link"
-            key="newMock"
-            :to="{name: 'NewMock'}"
-            exact="true"
-          >New Mock</b-nav-item>
-        </b-navbar-nav>
-      </b-collapse>
-    </b-navbar>
+      <v-btn :to="{name: 'NewMock'}" text class="mx-1" exact>
+        <v-icon>mdi-plus-circle-outline</v-icon>
+        <span class="mx-1">New Mock</span>
+      </v-btn>
+
+      <v-spacer></v-spacer>
+
+      <v-btn :to="{name: 'Help'}" text class="mx-1" exact>
+        <v-icon>mdi-help-circle</v-icon>
+      </v-btn>
+
+    </v-app-bar>
   </div>
 </template>
 

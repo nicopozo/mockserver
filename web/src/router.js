@@ -2,11 +2,11 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import ListMocks from "./components/ListMocks.vue";
 import MockDetails from "./components/MockDetails.vue"
+import Help from "./components/Help.vue"
 
 Vue.use(Router)
 
 export default new Router({
-    //mode:"history",
     routes: [
         {
             path: '/',
@@ -23,6 +23,11 @@ export default new Router({
             path: '/new',
             name: "NewMock",
             component: MockDetails,
+        },
+        {
+            path: '/help',
+            name: "Help",
+            component: Help,
         },
     ]
 });

@@ -1,16 +1,22 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
-import 'bootstrap/dist/css/bootstrap.css'
-import 'bootstrap-vue/dist/bootstrap-vue.css'
+import vuetify from './plugins/vuetify';
+import confirm from 'vuetify-confirm'
+import title from './mixins/title'
 
-Vue.use(BootstrapVue)
-Vue.use(IconsPlugin)
+Vue.config.productionTip = false;
+Vue.use(confirm, {
+  vuetify,
+  icon: '',
+  property: '$confirm',
+});
 
-Vue.config.productionTip = false
+Vue.mixin(title)
+
 
 new Vue({
   router,
-  render: h => h(App),
+  vuetify,
+  render: h => h(App)
 }).$mount('#app')

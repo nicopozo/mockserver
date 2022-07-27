@@ -9,11 +9,11 @@
   },
   "dependencies": {
     "axios": "^0.21.2",
-    "bootstrap": "^4.5.0",
-    "bootstrap-vue": "^2.15.0",
     "core-js": "^3.6.5",
-    "vue": "^2.6.11",
-    "vue-router": "^3.3.4"
+    "vue": "^2.7.8",
+    "vue-router": "^3.3.4",
+    "vuetify": "^2.4.0",
+    "vuetify-confirm": "^2.0.6"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.4.0",
@@ -22,7 +22,12 @@
     "babel-eslint": "^10.1.0",
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^6.2.2",
-    "vue-template-compiler": "^2.6.11"
+    "vue-template-compiler": "^2.7.8",
+    "sass": "^1.32.0",
+    "sass-loader": "^10.0.0",
+    "vue-cli-plugin-vuetify": "~2.1.0",
+    "vuetify-loader": "^1.7.0"
+
   },
   "eslintConfig": {
     "root": true,

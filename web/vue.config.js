@@ -3,6 +3,10 @@ module.exports = {
         devtool: 'source-map'
     },
     publicPath: process.env.NODE_ENV === 'production'
-        ? '/reconciliations/mockservice/admin/'
-        : '/admin/'
+        ? '/mock-service/admin/'
+        : '/admin/',
+
+    transpileDependencies: [
+            'vuetify'
+          ]
 }

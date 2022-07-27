@@ -14,18 +14,18 @@ import (
 )
 
 func mapRoutes(router *gin.Engine) {
-	router.Static("/reconciliations/mockservice/admin", "/Users/npozo/Proyectos/mockserver/web/dist")
+	router.Static("/mock-service/admin", "/Users/npozo/Proyectos/mockserver/web/dist")
 
 	ruleController := newRuleController()
-	router.POST("/mock-server/rules", ruleController.Create)
-	router.GET("/mock-server/rules/:key", ruleController.Get)
-	router.GET("/mock-server/rules", ruleController.Search)
-	router.DELETE("/mock-server/rules/:key", ruleController.Delete)
-	router.PUT("/mock-server/rules/:key", ruleController.Update)
-	router.PUT("/mock-server/rules/:key/status", ruleController.UpdateStatus)
+	router.POST("/mock-service/rules", ruleController.Create)
+	router.GET("/mock-service/rules/:key", ruleController.Get)
+	router.GET("/mock-service/rules", ruleController.Search)
+	router.DELETE("/mock-service/rules/:key", ruleController.Delete)
+	router.PUT("/mock-service/rules/:key", ruleController.Update)
+	router.PUT("/mock-service/rules/:key/status", ruleController.UpdateStatus)
 
 	mockController := newMockController()
-	router.Any("/mock-server/mock/*rule", mockController.Execute)
+	router.Any("/mock-service/mock/*rule", mockController.Execute)
 
 	router.GET("/ping", ping)
 

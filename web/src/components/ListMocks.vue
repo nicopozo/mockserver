@@ -1,139 +1,85 @@
 <template>
   <div>
-    <br />
-    <b-container>
-      <!-- V-CARD SEARCH-->
-      <b-card class="mt-3" header="Filters:">
-        <b-row align-h="between">
-          <b-col cols="0">
-            <div class="form-inline">
-              <label class="mr-sm-2" for="inline-form-custom-select-pref">Application:</label>
-              <b-form-input
-                class="mb-2 mr-sm-2 mb-sm-0"
-                v-model="searchFields.application"
-                v-on:keyup.enter="applyFilters"
-              ></b-form-input>
-              <label class="mr-sm-2" for="inline-form-custom-select-pref">Path:</label>
-              <b-form-input
-                class="mb-2 mr-sm-2 mb-sm-0"
-                v-model="searchFields.path"
-                v-on:keyup.enter="applyFilters"
-              ></b-form-input>
-              <label class="mr-sm-2" for="inline-form-custom-select-pref">Strategy:</label>
-              <b-form-select
-                v-model="searchFields.strategy"
-                class="mb-2 mr-sm-2 mb-sm-0"
-                @change="applyFilters"
-              >
-                <option
-                  v-for="strategy in strategies"
-                  :key="strategy.text"
-                  :value="strategy.value"
-                >{{ strategy.text }}</option>
-              </b-form-select>
-              <label class="mr-sm-2" for="inline-form-custom-select-pref">HTTP Method:</label>
-              <b-form-select
-                v-model="searchFields.httpMethod"
-                class="mb-2 mr-sm-2 mb-sm-0"
-                @change="applyFilters"
-              >
-                <option
-                  v-for="httpMethod in httpMethods"
-                  :key="httpMethod.text"
-                  :value="httpMethod.value"
-                >{{ httpMethod.text }}</option>
-              </b-form-select>
-            </div>
-          </b-col>
-          <b-col cols="200">
-            <div class="form-inline">
-              <b-button pill variant="outline-danger" v-on:click="resetFilters()">Reset</b-button>
-              <label class="mr-sm-2" for="inline-form-custom-select-pref"></label>
-              <b-button pill variant="outline-primary" v-on:click="applyFilters()">Apply</b-button>
-            </div>
-          </b-col>
-        </b-row>
-      </b-card>
-      <br />
+    <!--SEARCH-->
+    <v-card class="elevation-2">
+      <v-container fluid>
+        <v-row>
+          <!--APPLICATION FILTER-->
+          <v-col cols="12" md="3">
+            <v-text-field label="Application"
+                          v-model="filters.application"
+                          @keyup.enter.native="search()"
+                          outlined dense clearable hide-details></v-text-field>
+          </v-col>
+          <!--PATH FILTER-->
+          <v-col cols="12" md="3">
+            <v-text-field label="Path"
+                          v-model="filters.path"
+                          @keyup.enter.native="search()"
+                          outlined dense clearable hide-details></v-text-field>
+          </v-col>
+          <!--STRATEGY FILTER-->
+          <v-col cols="12" md="3">
+            <v-select
+                label="Strategy"
+                v-model="filters.strategy"
+                @keyup.enter.native="search()"
+                :items="strategies"
+                outlined dense clearable hide-details
+            ></v-select>
+          </v-col>
+          <!--HTTP METHOD FILTER-->
+          <v-col cols="12" md="3">
+            <v-select
+                label="HTTP Method"
+                v-model="filters.method"
+                @keyup.enter.native="search()"
+                :items="httpMethods"
+                outlined dense clearable hide-details
+            ></v-select>
+          </v-col>
+          <!--SEARCH BUTTONS-->
+          <v-col cols="12" class="text-right">
+            <v-btn depressed class="mr-2" @click="reset()">Reset</v-btn>
+            <v-btn depressed color="primary" @click="search()">Search</v-btn>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-card>
 
-      <!-- MOCKS TABLE -->
-      <b-table
-        id="mocks-table"
-        striped
-        small
-        :fields="fields"
-        :items="mocks.results"
-        responsive="sm"
-      >
-        <template v-slot:cell(name)="data">
-          <router-link
-            :to="{name: 'MockDetails', params:{theKey:data.item.key}}"
-          >{{ data.item.name }}</router-link>
-        </template>
-        <template v-slot:cell(application)="data">{{ data.item.application }}</template>
-        <template v-slot:cell(path)="data">{{ data.item.path }}</template>
-        <template v-slot:cell(strategy)="data">{{ data.item.strategy }}</template>
+    <!-- RESULT -->
+    <br>
+    <v-data-table
+        class="elevation-2" dense
+        :headers="table.columns"
+        :items="table.rows"
+        :footer-props="table.footer"
+        :server-items-length="table.total"
+        :loading="table.loading"
+        :options.sync="options"
+        disable-sort
+    >
+      <template v-slot:item.status="{ item }">
+        <v-switch v-model="item.status" true-value="enabled" false-value="disabled" hide-details style="margin: 0"
+                  @change="callStatus(item)"></v-switch>
+      </template>
+      <template v-slot:item.name="{ item }">
+        <router-link :to="{name: 'MockDetails', params:{theKey:item.key, theName:item.name}}">
+          <span class="mr-2">{{ item.name }}</span>
+        </router-link>
+      </template>
+      <template v-slot:item.method="{ item }">
+        <span :class="getHTTPMethodColor(item.method)">{{ item.method }}</span>
+      </template>
+      <template v-slot:item.delete="{ item }">
+        <v-btn icon color="red" @click="callDelete(item)">
+          <v-icon>mdi-delete</v-icon>
+        </v-btn>
+      </template>
+    </v-data-table>
 
-        <template v-slot:cell(method)="data">
-          <b v-if="data.item.method === 'GET'" style="color: #436f8a;">{{ data.item.method }}</b>
-          <b v-if="data.item.method === 'POST'" style="color: #96bb7c;">{{ data.item.method }}</b>
-          <b v-if="data.item.method === 'PUT'" style="color: #ffbd69;">{{ data.item.method }}</b>
-          <b v-if="data.item.method === 'PATCH'" style="color: #45046a;">{{ data.item.method }}</b>
-          <b v-if="data.item.method === 'DELETE'" style="color: #e84a5f;">{{ data.item.method }}</b>
-          <b v-if="data.item.method === 'OPTIONS'" style="color: #b5076b;">{{ data.item.method }}</b>
-          <b v-if="data.item.method === 'HEAD'" style="color: #342b38;">{{ data.item.method }}</b>
-        </template>
+    <v-snackbar v-model="alert.show" :color="alert.color">{{ alert.text }}</v-snackbar>
 
-        <!-- DROPDOWN ENABLED/DISABLED -->
-        <template v-slot:cell(status)="data">
-          <b-dropdown
-            :text="data.item.status"
-            variant="outline-success"
-            size="sm"
-            v-if="data.item.status === 'enabled'"
-          >
-            <b-dropdown-item
-              href="#"
-              v-on:click="submitUpdateStatus(data.item.key, 'disabled')"
-            >Disable</b-dropdown-item>
-          </b-dropdown>
-
-          <b-dropdown
-            :text="data.item.status"
-            variant="outline-danger"
-            size="sm"
-            v-if="data.item.status === 'disabled'"
-          >
-            <b-dropdown-item
-              href="#"
-              v-on:click="submitUpdateStatus(data.item.key, 'enabled')"
-            >Enable</b-dropdown-item>
-          </b-dropdown>
-        </template>
-
-        <!-- BUTTON DELETE RULE -->
-        <template v-slot:cell(delete)="data">
-          <b-button
-            pill
-            variant="outline-danger"
-            size="sm"
-            v-on:click="submitDelete(data.item.key)"
-          >Delete</b-button>
-        </template>
-      </b-table>
-
-      <!-- PAGINATION -->
-      <div class="mt-3">
-        <b-pagination
-          v-model="paging.page"
-          :total-rows="paging.total"
-          :per-page="paging.limit"
-          align="center"
-          aria-controls="mocks-table"
-          @change="pageChange"
-        >></b-pagination>
-      </div>
-    </b-container>
   </div>
 </template>
 
@@ -141,239 +87,188 @@
 import axios from "axios";
 
 export default {
-  name: "ListMocks",
-  props: {},
+  title() {
+    return "Mocks";
+  },
   data() {
     return {
-      fields: [
-        "name",
-        "application",
-        "path",
-        "strategy",
-        "method",
-        "status",
-        "delete"
-      ],
-      mocks: [],
       httpMethods: [
-        { text: "", value: null },
-        { text: "GET", value: "GET" },
-        { text: "POST", value: "POST" },
-        { text: "PUT", value: "PUT" },
-        { text: "PATCH", value: "PATCH" },
-        { text: "DELETE", value: "DELETE" },
-        { text: "OPTIONS", value: "OPTIONS" },
-        { text: "HEAD", value: "HEAD" }
+        {text: "GET", value: "GET", color: "blue--text"},
+        {text: "POST", value: "POST", color: "green--text"},
+        {text: "PUT", value: "PUT", color: "orange--text"},
+        {text: "PATCH", value: "PATCH", color: "violet--text"},
+        {text: "DELETE", value: "DELETE", color: "red--text"},
+        {text: "OPTIONS", value: "OPTIONS", color: "gray--text"},
+        {text: "HEAD", value: "HEAD", color: "black--text"}
       ],
       strategies: [
-        { text: "", value: null },
-        { text: "Normal", value: "normal" }
+        {text: "Normal", value: "normal"},
+        {text: "Scene", value: "scene"},
+        {text: "Random", value: "random"}
       ],
-      searchFields: {
-        httpMethod: "",
-        application: "",
-        path: "",
-        strategy: ""
+      filters: {
+        application: null,
+        path: null,
+        strategy: null,
+        method: null,
       },
-      paging: {
-        offset: 0,
-        limit: 15,
+      table: {
+        columns: [
+          {text: "Enabled", value: "status"},
+          {text: "Name", value: "name"},
+          {text: "Application", value: "application"},
+          {text: "Path", value: "path", width: "35%"},
+          {text: "Strategy", value: "strategy"},
+          {text: "Method", value: "method"},
+          {text: "", value: "delete", width: "1%"},
+        ],
+        rows: [],
+        footer: {
+          showFirstLastPage: false,
+          "items-per-page-options": [10, 30, 50],
+        },
         total: 0,
-        page: 0
-      }
+        loading: true,
+      },
+      options: {},
+      alert: {
+        show: false,
+        color: "green",
+        text: ""
+      },
     };
   },
   methods: {
-    search() {
-      axios
-        .get("http://localhost:8081/mock-server/rules", {
-            params: this.queryParams()
-          }
-        )
-        .then(res => {
-          this.mocks = res.data;
-          this.paging.total = res.data.paging.total;
-          this.paging.page =
-            Math.floor(this.paging.offset / this.paging.limit) + 1;
-        })
-        .catch(err => {
-          console.log(err);
-        });
+    baseURL() {
+      if (process.env.NODE_ENV === 'production') {
+        return "/mock-service/rules"
+      }
+      return "http://localhost:8080/mock-service/rules"
     },
-    submitDelete(theKey) {
-      var confirmMsg = "Please confirm you want to delete this mock";
-      var confirmTitle = "Deleting Mock: " + theKey;
-
-      this.$bvModal
-        .msgBoxConfirm(confirmMsg, {
-          title: confirmTitle,
-          okTitle: "OK",
-          cancelTitle: "Cancel",
-          centered: true
-        })
-        .then(ok => {
-          if (ok) {
-            this.deleteMock(theKey);
-          }
-        })
-        .catch(err => {
-          console.log(err);
-        });
-    },
-    submitUpdateStatus(theKey, newStatus) {
-      var confirmMsg = "Please confirm you want to update this mock´s Status";
-      var confirmTitle = "New status: " + newStatus;
-
-      this.$bvModal
-        .msgBoxConfirm(confirmMsg, {
-          title: confirmTitle,
-          okTitle: "OK",
-          cancelTitle: "Cancel",
-          centered: true
-        })
-        .then(ok => {
-          if (ok) {
-            this.updateMockStatus(theKey, newStatus);
-          }
-        })
-        .catch(err => {
-          console.log(err);
-        });
-    },
-    deleteMock(theKey) {
-      axios
-        .delete("http://localhost:8081/mock-server/rules/" + theKey)
-        .then(res => {
-          var msg = "Mock successfully deleted!";
-          var title = "Success!!";
-          this.showSuccessModal(title, msg, true);
-          console.log(res);
-        })
-        .catch(err => {
-          var msg = err.message;
-          if (
-            typeof err.response !== "undefined" &&
-            err.response.data !== "undefined" &&
-            err.response.data.message !== "undefined" &&
-            err.response.data.cause[0] !== "undefined" &&
-            err.response.data.cause[0].description !== "undefined"
-          ) {
-            msg =
-              err.response.data.cause[0].description +
-              " - " +
-              err.response.data.message;
-          }
-          this.$bvModal.msgBoxOk(msg, {
-            title: "Error deleting mock",
-            okVariant: "danger",
-            centered: true
-          });
-        });
-    },
-    updateMockStatus(theKey, newStatus) {
-      const mocks = this.mocks;
-      axios
-        .put("http://localhost:8081/mock-server/rules/" + theKey + "/status",
-          { status: newStatus },
-          {
-            headers: {
-              "Content-Type": "application/json"
-            }
-          }
-        )
-        .then(res => {
-          mocks.results.forEach(function(item) {
-            if (item.key === theKey) {
-              item.status = newStatus;
-            }
-          });
-          var msg = "Mock status successfully updated!";
-          var title = "Success!!";
-          this.showSuccessModal(title, msg, false);
-          console.log(res);
-        })
-        .catch(err => {
-          var msg = err.message;
-          if (
-            typeof err.response !== "undefined" &&
-            err.response.data !== "undefined" &&
-            err.response.data.message !== "undefined" &&
-            err.response.data.cause[0] !== "undefined" &&
-            err.response.data.cause[0].description !== "undefined"
-          ) {
-            msg =
-              err.response.data.cause[0].description +
-              " - " +
-              err.response.data.message;
-          }
-          this.$bvModal.msgBoxOk(msg, {
-            title: "Error updating mock status",
-            okVariant: "danger",
-            centered: true
-          });
-        });
-    },
-    showSuccessModal(title, msg, goHome) {
-      this.$bvModal
-        .msgBoxOk(msg, {
-          title: title,
-          okVariant: "success",
-          centered: true
-        })
-        .then(value => {
-          if (goHome) {
-            this.applyFilters();
-          }
-          console.log(value);
-        })
-        .catch(err => {
-          console.log(err);
-        });
+    getHTTPMethodColor(httpMethod) {
+      return this.httpMethods.find(x => x.value == httpMethod).color;
     },
     queryParams() {
-      var params = {
-        limit: this.paging.limit,
-        offset: this.paging.offset
+      const {
+        application,
+        path,
+        strategy,
+        method,
+      } = this.filters;
+
+      const {
+        page,
+        itemsPerPage,
+      } = this.options;
+
+      let params = {
+        limit: itemsPerPage,
+        offset: (page - 1) * itemsPerPage,
       };
 
-      if (this.searchFields.httpMethod) {
-        params.method = this.searchFields.httpMethod;
+      if (application) {
+        params.application = application;
       }
 
-      if (this.searchFields.application) {
-        params.application = this.searchFields.application;
+      if (path) {
+        params.path = path;
       }
 
-      if (this.searchFields.path) {
-        params.path = this.searchFields.path;
+      if (strategy) {
+        params.strategy = strategy;
       }
 
-      if (this.searchFields.strategy) {
-        params.strategy = this.searchFields.strategy;
+      if (method) {
+        params.method = method;
       }
 
       return params;
     },
-    applyFilters() {
-      this.paging.page = 1;
-      this.paging.offset = 0;
+    reset() {
+      this.filters = {
+        application: null,
+        path: null,
+        strategy: null,
+        method: null,
+      };
       this.search();
     },
-    resetFilters() {
-      this.searchFields.httpMethod = "";
-      this.searchFields.application = "";
-      this.searchFields.path = "";
-      this.searchFields.strategy = "";
-      this.applyFilters();
+    search() {
+      this.options = {
+        page: 1,
+        itemsPerPage: 10,
+      };
     },
-    pageChange(page) {
-      this.paging.page = page;
-      this.paging.offset = (page - 1) * this.paging.limit;
-      this.search();
+    showAlert(text, err) {
+      this.alert = {text: text, color: err == null ? "green" : "red", show: true};
+      console.log(err);
+    },
+    //API calls
+    restSearch() {
+      this.table.loading = true;
+      axios
+          .get(this.baseURL(), {
+            params: this.queryParams(),
+          })
+          .then((res) => {
+            this.table.rows = res.data.results;
+            this.table.total = res.data.paging.total;
+          })
+          .catch((err) => {
+            this.table.rows = [];
+            this.table.total = 0;
+
+            const msg = "Something went wrong searching mocks!";
+            this.showAlert(msg, err)
+          })
+          .finally(() => {
+            this.table.loading = false
+          });
+    },
+    callStatus(item) {
+      axios
+        .put(
+            this.baseURL() + "/" + item.key + "/status",
+            {status: item.status},
+            {
+              headers: {
+                "Content-Type": "application/json"
+              }
+            }
+        ).then(() => {
+          this.showAlert("Mock successfully " + item.status + "!", null);
+        }).catch((err) => {
+          item.status = item.status === "enabled" ? "disabled" : "enabled"; //rollback
+
+          const msg = "Something went wrong updated mock status!";
+          this.showAlert(msg, err)
+        })
+    },
+    async callDelete(item) {
+      const confirmTitle = "Deleting Mock: " + item.key;
+      const confirmMsg = "Please confirm you want to delete this mock";
+      const confirmation = await this.$confirm(confirmMsg, {title: confirmTitle, color: "error"});
+      if (confirmation) {
+        axios
+            .delete(this.baseURL() + "/" + item.key)
+            .then(() => {
+              this.showAlert("Mock successfully deleted!", null);
+            })
+            .catch((err) => {
+              this.showAlert("Error deleting mock!", err);
+            }).finally(() => {
+              this.search();
+            });
+      }
     }
   },
-  created() {
-    this.search();
-  }
+  watch: {
+    options: {
+      handler() {
+        this.restSearch();
+      },
+      deep: true,
+    },
+  },
 };
 </script>

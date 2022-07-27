@@ -1,354 +1,188 @@
 <template>
-  <div>
-    <br />
-    <!-- CONTAINER FORM -->
-    <b-container>
-      <b-form @submit="submit">
-        <!-- INPUT KEY -->
-        <b-form-group
-          id="input-group-key"
-          label-cols="4"
-          label-cols-lg="2"
-          label="Key:"
-          label-for="input-key"
-          v-if="mock.key"
-        >
-          <b-form-input
-            id="input-key"
-            v-model="mock.key"
-            disabled
-          ></b-form-input>
-        </b-form-group>
+  <v-form ref="form" v-model="valid">
+    <v-progress-linear indeterminate color="primary" :active="loading"/>
+    <!--MOCK-->
+    <v-card class="elevation-2 pb-0">
+      <v-container fluid>
+        <v-card-title class="px-0 py-0 pb-2">
+          Mock
+        </v-card-title>
+        <v-row>
+          <v-col cols="6">
+            <!--MOCK KEY-->
+            <v-text-field label="Key"
+                          v-model="mock.key"
+                          outlined dense disabled/>
+            <!--MOCK NAME-->
+            <v-text-field label="Name"
+                          v-model="mock.name"
+                          :rules="[v => !!v || 'Name is required']"
+                          required outlined dense/>
+            <!--MOCK APPLICATION-->
+            <v-text-field label="Application"
+                          v-model="mock.application"
+                          placeholder="Examples: core, payments, simetrik, etc"
+                          :rules="[v => !!v || 'Application is required']"
+                          required outlined dense/>
+          </v-col>
+          <v-col cols="6">
+            <!--MOCK PATH-->
+            <v-text-field label="Path"
+                          v-model="mock.path"
+                          placeholder="Example: /users/{user_id}"
+                          :rules="[v => !!v || 'Path is required', v => /^((?!\?).)*$/.test(v) || 'Type path without query']"
+                          required dense outlined/>
+            <!--MOCK METHOD-->
+            <v-select label="HTTP Method"
+                      v-model="mock.method"
+                      :items="httpMethods"
+                      :rules="[v => !!v || 'HTTP Method is required']"
+                      required outlined dense/>
+            <!--MOCK STRATEGY-->
+            <v-select label="Strategy"
+                      v-model="mock.strategy"
+                      :items="strategies"
+                      :rules="[v => !!v || 'Strategy is required']"
+                      v-on:change="updateResponses()"
+                      required outlined dense/>
+          </v-col>
+          <v-col cols="6">
+            <v-switch v-model="mock.status"
+                      true-value="enabled" false-value="disabled"
+                      hide-details class="v-input--reverse mx-0 my-0">
+              <template #label>
+                Enable mock?
+              </template>
+            </v-switch>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-card>
 
-        <!-- INPUT NAME -->
-        <b-form-group
-          id="input-group-name"
-          label-cols="4"
-          label-cols-lg="2"
-          label="Name:"
-          label-for="input-name"
-        >
-          <b-form-input
-            id="input-name"
-            v-model="mock.name"
-            required
-            placeholder="Enter a name for your mock"
-          ></b-form-input>
-        </b-form-group>
+    <!--RESPONSE-->
+    <br>
+    <v-card>
+      <v-container fluid>
+        <v-card class="elevation-3 py-0 my-2" style="border-color: #aaa" v-for="(response, index) in mock.responses"
+                v-bind:key="index">
+          <v-container fluid class="pt-0">
+            <v-card-title class="px-0 py-0 pb-2">
+              <!--RESPONSE DESCRIPTION-->
+              <v-text-field :prefix="getResponseDescriptionPrefix(index)"
+                            v-model="response.description"
+                            placeholder="Type Response Description (Optional)"
+                            class="description"/>
+              <!--REMOVE RESPONSE BUTTON-->
+              <v-btn icon color="red" @click="removeResponse(index)">
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </v-card-title>
+            <v-row>
+              <v-col cols="6">
+                <!--RESPONSE TYPE-->
+                <v-text-field label="Content Type"
+                              v-model="response.content_type"
+                              placeholder="Example: application/json"
+                              :rules="[v => !!v || 'Content Type is required']"
+                              required outlined dense/>
+                <!--RESPONSE STATUS CODE-->
+                <v-text-field label="HTTP Status"
+                              v-model.number="response.http_status"
+                              placeholder="Examples: 200, 201, 400, 404, 500"
+                              :rules="[v => (!isNaN(parseFloat(v)) && v >= 0) || 'HTTP Status is required and greater than or equal to 0']"
+                              required outlined dense type="number"/>
+                <!--RESPONSE DELAY-->
+                <v-text-field label="Delay"
+                              v-model.number="response.delay"
+                              placeholder="Time to delay the response from server in milliseconds"
+                              :rules="[v => (!isNaN(parseFloat(v)) && v >= 0) || 'Delay is required and greater than or equal to 0']"
+                              required outlined dense type="number"/>
+                <!--RESPONSE SCENE-->
+                <v-text-field label="Scene"
+                              v-model="response.scene"
+                              placeholder="Value of 'scene' variable when SCENE strategy is selected."
+                              :rules="isResponseSceneRequired(mock) ? [v => !!v || 'Scene is required'] : []"
+                              outlined dense
+                              :disabled="!isResponseSceneRequired(mock)"
+                              :required="isResponseSceneRequired(mock)"/>
+              </v-col>
+              <v-col cols="6">
+                <v-textarea label="Body"
+                            v-model="response.body"
+                            :rules="[v => !!v || 'Body is required']"
+                            required outlined dense
+                            rows="8" height="238"/>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card>
+        <v-col cols="12" class="text-right">
+          <v-btn depressed color="primary" @click="addResponse()">New Response</v-btn>
+        </v-col>
+      </v-container>
+    </v-card>
 
-        <!-- INPUT APPLICATION -->
-        <b-form-group
-          id="input-group-application"
-          label-cols="4"
-          label-cols-lg="2"
-          label="Application:"
-          label-for="input-application"
-        >
-          <b-form-input
-            id="input-application"
-            v-model="mock.application"
-            required
-            placeholder="Examples: core, payments, simetrik, movistar, etc"
-          ></b-form-input>
-        </b-form-group>
+    <!--VARIABLES-->
+    <br>
+    <v-card>
+      <v-container fluid>
+        <v-card class="elevation-3 py-0 my-2" style="border-color: #aaa" v-for="(variable, index) in mock.variables"
+                v-bind:key="index">
+          <v-container fluid>
+            <v-card-title class="px-0 py-0 pb-2">
+              Variable {{ index + 1 }}
+              <v-spacer/>
+              <!--REMOVE VARIABLE BUTTON-->
+              <v-btn icon color="red" @click="removeVariable(index)">
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </v-card-title>
+            <v-row>
+              <v-col cols="4">
+                <!--VARIABLE TYPE-->
+                <v-select label="Type"
+                          v-model="variable.type"
+                          :items="varTypes"
+                          :rules="[v => !!v || 'Type is required']"
+                          v-on:change="updateVariables()"
+                          required outlined dense/>
+              </v-col>
+              <v-col cols="4">
+                <!--VARIABLE NAME-->
+                <v-text-field label="Name"
+                              v-model="variable.name"
+                              :rules="[v => !!v || 'Name is required']"
+                              required outlined dense/>
+              </v-col>
+              <v-col cols="4">
+                <!--VARIABLE KEY-->
+                <v-text-field label="Key"
+                              v-model="variable.key"
+                              :rules="isVariableTypeRequired(variable) ? [v => !!v || 'Key is required'] : []"
+                              outlined dense
+                              :disabled="!isVariableTypeRequired(variable)"
+                              :required="isVariableTypeRequired(variable)"
+                />
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card>
+        <v-col cols="12" class="text-right">
+          <v-btn depressed color="primary" @click="addVariable()">New Variable</v-btn>
+        </v-col>
+      </v-container>
+    </v-card>
 
-        <!-- INPUT PATH -->
-        <b-form-group
-          id="input-group-path"
-          label="Path:"
-          label-cols="4"
-          label-cols-lg="2"
-          label-for="input-path"
-        >
-          <b-form-input
-            id="input-path"
-            v-model="mock.path"
-            required
-            placeholder="Example: /users/{user_id}"
-          ></b-form-input>
-        </b-form-group>
+    <v-col cols="12" class="text-right">
+      <v-btn depressed color="error" class="mx-1" @click="submitDelete" v-if="theKey">Delete</v-btn>
+      <v-btn depressed color="warning" class="mx-1" @click="resetForm">Reset</v-btn>
+      <v-btn depressed color="primary" class="mx-1" @click="submit" :loading="saving">Save</v-btn>
+    </v-col>
 
-        <!-- INPUT PATH -->
-        <b-form-group
-          id="input-group-method"
-          required
-          label-cols="4"
-          label-cols-lg="2"
-          label="Method:"
-        >
-          <b-form-select v-model="mock.method">
-            <option
-              v-for="httpMethod in httpMethods"
-              :key="httpMethod.text"
-              :value="httpMethod.value"
-            >
-              {{ httpMethod.text }}
-            </option>
-          </b-form-select>
-        </b-form-group>
+    <v-snackbar v-model="alert.show" :color="alert.color">{{ alert.text }}</v-snackbar>
 
-        <!-- INPUT STRATEGY -->
-        <b-form-group
-          id="input-group-strategy"
-          required
-          label-cols="4"
-          label-cols-lg="2"
-          label="Strategy:"
-        >
-          <b-form-select v-model="mock.strategy"
-          v-on:change="updateResponses()">
-            <option
-              v-for="strategy in strategies"
-              :key="strategy.text"
-              :value="strategy.value"
-            >
-              {{ strategy.text }}
-            </option>
-          </b-form-select>
-        </b-form-group>
-
-        <!-- RESPONSES -->
-        <b-card class="mt-3" header="Responses:">
-          <!-- FOR EACH RESPONSE -->
-          <b-card
-            class="mt-3"
-            v-for="(response, index) in mock.responses"
-            v-bind:key="response"
-          >
-            <!-- RESPONSE CONTENT TYPE-->
-            <b-form-group
-              id="input-group-content-type"
-              label-cols="4"
-              label-cols-lg="2"
-              label="Content Type:"
-              label-for="input-content-type"
-            >
-              <b-form-input
-                id="input-content-type"
-                v-model="response.content_type"
-                required
-                placeholder="Example: application/json"
-              ></b-form-input>
-            </b-form-group>
-
-            <!-- RESPONSE HTTP STATUS-->
-            <b-form-group
-              id="input-group-status"
-              label-cols="4"
-              label-cols-lg="2"
-              label="HTTP Status:"
-              label-for="input-status"
-            >
-              <b-form-input
-                id="input-status"
-                type="number"
-                number
-                v-model="response.http_status"
-                required
-                placeholder="Examples: 200, 201, 400, 404, 500"
-              ></b-form-input>
-            </b-form-group>
-
-            <!-- RESPONSE DELAY-->
-            <b-form-group
-              id="input-group-delay"
-              label-cols="4"
-              label-cols-lg="2"
-              label="Delay Time:"
-              label-for="input-delay"
-            >
-              <b-form-input
-                id="input-delay"
-                type="number"
-                number
-                v-model="response.delay"
-                required
-                value="0"
-                placeholder="Time to delay the response from server in Miliseconds."
-              ></b-form-input>
-            </b-form-group>
-
-            <!-- RESPONSE BODY-->
-            <b-form-group
-              id="input-group-body"
-              label-cols="4"
-              label-cols-lg="2"
-              label="Body:"
-              label-for="input-body"
-            >
-              <b-form-textarea
-                id="input-group-body"
-                v-model="response.body"
-                placeholder="Add a response body..."
-                rows="3"
-                max-rows="6"
-              ></b-form-textarea>
-            </b-form-group>
-
-            <!-- RESPONSE SCENE-->
-            <b-form-group
-              id="input-group-scene"
-              label-cols="4"
-              label-cols-lg="2"
-              label="Scene:"
-              label-for="input-scene"
-            >
-              <b-form-input
-                :disabled="mock.strategy != 'scene'"
-                :required="mock.strategy === 'scene'"
-                id="input-scene"
-                v-model="response.scene"
-                placeholder="Value of 'scene' variable when SCENE strategy is selected."
-              ></b-form-input>
-            </b-form-group>
-
-            <b-col cols="100">
-              <b-button
-                pill
-                variant="outline-danger"
-                v-on:click="removeResponse(index)"
-                >Remove</b-button
-              >
-            </b-col>
-          </b-card>
-
-          <br />
-
-          <!-- ADD NEW RESPONSE BUTTON-->
-          <b-container>
-            <b-row align-h="end">
-              <b-col cols="100">
-                <b-button
-                  pill
-                  variant="outline-primary"
-                  v-on:click="addResponse()"
-                  >New Response</b-button
-                >
-              </b-col>
-            </b-row>
-          </b-container>
-        </b-card>
-
-        <!-- V-CARD VARIABLES -->
-        <b-card class="mt-3" header="Variables:">
-          <!-- FOR EACH VARIABLE -->
-          <b-card
-            class="mt-3"
-            v-for="(variable, index) in mock.variables"
-            v-bind:key="variable"
-          >
-            <b-row align-h="between">
-              <b-col cols="200">
-                <div class="form-inline">
-                  <label class="mr-sm-2" for="inline-form-custom-select-pref"
-                    >Type:</label
-                  >
-                  <b-form-select
-                    v-model="variable.type"
-                    @change="variable.key = null"
-                    class="mb-2 mr-sm-2 mb-sm-0"
-                  >
-                    <option
-                      v-for="varType in varTypes"
-                      :key="varType.text"
-                      :value="varType.value"
-                    >
-                      {{ varType.text }}
-                    </option>
-                  </b-form-select>
-                  <label class="mr-sm-2" for="inline-form-custom-select-pref"
-                    >Name:</label
-                  >
-                  <b-form-input
-                    class="mb-2 mr-sm-2 mb-sm-0"
-                    v-model="variable.name"
-                    required
-                  ></b-form-input>
-                  <label class="mr-sm-2" for="inline-form-custom-select-pref"
-                    >Value:</label
-                  >
-                  <b-form-input
-                    :disabled="
-                      variable.type != 'body' &&
-                      variable.type != 'query' &&
-                      variable.type != 'header' &&
-                      variable.type != 'path'
-                    "
-                    :required="
-                      variable.type === 'body' ||
-                      variable.type === 'query' ||
-                      variable.type === 'header' ||
-                      variable.type === 'path'
-                    "
-                    class="mb-2 mr-sm-2 mb-sm-0"
-                    v-model="variable.key"
-                  ></b-form-input>
-                </div>
-              </b-col>
-              <b-col cols="100">
-                <b-button
-                  pill
-                  variant="outline-danger"
-                  v-on:click="removeVariable(index)"
-                  >Remove</b-button
-                >
-              </b-col>
-            </b-row>
-          </b-card>
-
-          <br />
-
-          <!-- ADD NEW VARIABLE BUTTON-->
-          <b-container>
-            <b-row align-h="end">
-              <b-col cols="100">
-                <b-button
-                  pill
-                  variant="outline-primary"
-                  v-on:click="addVariable()"
-                  >New Variable</b-button
-                >
-              </b-col>
-            </b-row>
-          </b-container>
-        </b-card>
-
-        <br />
-
-        <!-- SUBMIT BUTTON-->
-        <b-container>
-          <b-row align-h="end">
-            <b-col cols="1000">
-              <div class="form-inline">
-                <b-button variant="info" v-on:click="resetForm()"
-                  >Reset</b-button
-                >
-                <label
-                  class="mr-sm-2"
-                  for="inline-form-custom-select-pref"
-                ></label>
-                <b-button
-                  variant="danger"
-                  v-on:click="submitDelete()"
-                  v-if="theKey"
-                  >Delete</b-button
-                >
-                <label
-                  class="mr-sm-2"
-                  for="inline-form-custom-select-pref"
-                  v-if="theKey"
-                ></label>
-                <b-button type="submit" variant="primary">Submit</b-button>
-              </div>
-            </b-col>
-          </b-row>
-        </b-container>
-      </b-form>
-    </b-container>
-    <br />
-  </div>
+  </v-form>
 </template>
-
 
 <script>
 import axios from "axios";
@@ -360,231 +194,154 @@ export default {
       type: String,
       required: false,
     },
+    theName: {
+      type: String,
+      required: false,
+    },
+  },
+  title() {
+    return this.theName ? this.theName : "New Mock";
   },
   data() {
     return {
       mock: {},
       httpMethods: [
-        { text: "Select One", value: null },
-        { text: "GET", value: "GET" },
-        { text: "POST", value: "POST" },
-        { text: "PUT", value: "PUT" },
-        { text: "PATCH", value: "PATCH" },
-        { text: "DELETE", value: "DELETE" },
-        { text: "OPTIONS", value: "OPTIONS" },
-        { text: "HEAD", value: "HEAD" },
+        {text: "GET", value: "GET"},
+        {text: "POST", value: "POST"},
+        {text: "PUT", value: "PUT"},
+        {text: "PATCH", value: "PATCH"},
+        {text: "DELETE", value: "DELETE"},
+        {text: "OPTIONS", value: "OPTIONS"},
+        {text: "HEAD", value: "HEAD"},
       ],
-
-      varTypes: [
-        { text: "Select One", value: null },
-        { text: "BODY", value: "body" },
-        { text: "HEADER", value: "header" },
-        { text: "QUERY", value: "query" },
-        { text: "RANDOM", value: "random" },
-        { text: "HASH", value: "hash" },
-        { text: "PATH", value: "path" },
-      ],
-
       strategies: [
-        { text: "Select One", value: null },
-        { text: "NORMAL", value: "normal" },
-        { text: "SCENE", value: "scene" },
-        { text: "RANDOM", value: "random" },
+        {text: "Normal", value: "normal"},
+        {text: "Scene", value: "scene"},
+        {text: "Random", value: "random"},
       ],
+      varTypes: [
+        {text: "Body", value: "body"},
+        {text: "Header", value: "header"},
+        {text: "Query", value: "query"},
+        {text: "Random", value: "random"},
+        {text: "Hash", value: "hash"},
+        {text: "Path", value: "path"},
+      ],
+      alert: {
+        show: false,
+        color: "green",
+        text: ""
+      },
+      valid: false,
+      loading: false,
+      saving: false,
     };
   },
   methods: {
-    submit(ev) {
-      var confirmMsg = "";
-      var confirmTitle = "";
-      if (this.theKey) {
-        confirmMsg = "Please confirm you want to update this mock";
-        confirmTitle = "Updating Mock: " + this.theKey;
-      } else {
-        confirmMsg = "Please confirm you want to  create this mock";
-        confirmTitle = "Creating New Mock";
+    baseURL() {
+      if (process.env.NODE_ENV === 'production') {
+        return "/mock-service/rules"
+      }
+      return "http://localhost:8080/mock-service/rules"
+    },
+    submit() {
+      if (!this.$refs.form.validate()) {
+        this.showAlert("Some fields are not valid!", "validation error");
+        return;
       }
 
-      this.$bvModal
-        .msgBoxConfirm(confirmMsg, {
-          title: confirmTitle,
-          okTitle: "OK",
-          cancelTitle: "Cancel",
-          centered: true,
-        })
-        .then((ok) => {
-          if (ok) {
-            if (this.theKey) {
-              this.updateMock();
-            } else {
-              this.createMock();
-            }
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-      ev.preventDefault();
+      if (this.theKey) {
+        this.submitUpdate();
+      } else {
+        this.submitCreate();
+      }
     },
-    submitDelete() {
-      var confirmMsg = "Please confirm you want to delete this mock";
-      var confirmTitle = "Deleting Mock: " + this.theKey;
-
-      this.$bvModal
-        .msgBoxConfirm(confirmMsg, {
-          title: confirmTitle,
-          okTitle: "OK",
-          cancelTitle: "Cancel",
-          centered: true,
-        })
-        .then((ok) => {
-          if (ok) {
-            this.deleteMock();
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+    async submitCreate() {
+      const confirmTitle = "Creating New Mock";
+      const confirmMsg = "Please confirm you want to create this mock";
+      const confirmation = await this.$confirm(confirmMsg, {title: confirmTitle, color: "primary"});
+      if (confirmation) {
+        this.createMock();
+      }
     },
-    resetForm() {
-      var confirmMsg = "All changes will be lost, are you sure?";
-      var confirmTitle = "Reset Form";
-
-      this.$bvModal
-        .msgBoxConfirm(confirmMsg, {
-          title: confirmTitle,
-          okTitle: "OK",
-          cancelTitle: "Cancel",
-          centered: true,
-        })
-        .then((ok) => {
-          if (ok) {
-            this.initialize();
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+    async submitUpdate() {
+      const confirmTitle = "Updating Mock: " + this.theKey;
+      const confirmMsg = "Please confirm you want to update this mock";
+      const confirmation = await this.$confirm(confirmMsg, {title: confirmTitle, color: "warning"});
+      if (confirmation) {
+        this.updateMock();
+      }
     },
-    updateMock() {
+    async submitDelete() {
+      const confirmTitle = "Deleting Mock: " + this.theKey;
+      const confirmMsg = "Please confirm you want to delete this mock";
+      const confirmation = await this.$confirm(confirmMsg, {title: confirmTitle, color: "error"});
+      if (confirmation) {
+        this.deleteMock();
+      }
+    },
+    async resetForm() {
+      const confirmTitle = "Reset Form";
+      const confirmMsg = "All changes will be lost, are you sure?";
+      const confirmation = await this.$confirm(confirmMsg, {title: confirmTitle, color: "warning"});
+      if (confirmation) {
+        this.$refs.form.reset();
+        this.initialize();
+      }
+    },
+    createMock() {
+      this.saving = true;
       axios
-        .put(
-          "http://localhost:8081/mock-server/rules/" + this.theKey,
-          this.mock,
-          {
+          .post(this.baseURL(), this.mock, {
             headers: {
               "Content-Type": "application/json",
             },
-          }
-        )
-        .then((response) => {
-          var title = "Success!!";
-          var msg = "Mock successfully updated!";
-          this.showSuccessModal(title, msg, false);
-          console.log(response);
-        })
-        .catch((err) => {
-          var msg = err.message;
-          if (
-            typeof err.response !== "undefined" &&
-            err.response.data !== "undefined" &&
-            err.response.data.message !== "undefined" &&
-            err.response.data.cause[0] !== "undefined" &&
-            err.response.data.cause[0].description !== "undefined"
-          ) {
-            msg =
-              err.response.data.cause[0].description +
-              " - " +
-              err.response.data.message;
-          }
-          this.showErrorModal("Error updating mock", msg);
-        });
+          })
+          .then((res) => {
+            this.$router.push({name: 'MockDetails', params:{theKey:res.data.key, theName:res.data.name}});
+          })
+          .catch((err) => {
+            this.showAlert("Error creating mock", err);
+          }).finally(() => {
+        this.saving = false;
+      });
     },
-    createMock() {
+    updateMock() {
+      this.saving = true;
       axios
-        .post("http://localhost:8081/mock-server/rules", this.mock, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then((resp) => {
-          var msg = "Mock successfully created!";
-          var title = "Success!!";
-          this.showSuccessModal(title, msg, true);
-          console.log(resp);
-        })
-        .catch((err) => {
-          var msg = err.message;
-          if (
-            typeof err.response !== "undefined" &&
-            err.response.data !== "undefined" &&
-            err.response.data.message !== "undefined" &&
-            err.response.data.cause[0] !== "undefined" &&
-            err.response.data.cause[0].description !== "undefined"
-          ) {
-            msg =
-              err.response.data.cause[0].description +
-              " - " +
-              err.response.data.message;
-          }
-          this.showErrorModal("Error creating mock", msg);
-        });
+          .put(this.baseURL() + "/" + this.theKey,
+              this.mock,
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+          )
+          .then(() => {
+            this.showAlert("Mock successfully updated!", null);
+          })
+          .catch((err) => {
+            this.showAlert("Error updating mock", err)
+          }).finally(() => {
+        this.saving = false;
+      });
     },
     deleteMock() {
       axios
-        .delete("http://localhost:8081/mock-server/rules/" + this.theKey)
-        .then((res) => {
-          var msg = "Mock successfully deleted! ";
-          var title = "Success!!";
-          this.showSuccessModal(title, msg, true);
-          console.log(res);
-        })
-        .catch((err) => {
-          var msg = err.message;
-          if (
-            typeof err.response !== "undefined" &&
-            err.response.data !== "undefined" &&
-            err.response.data.message !== "undefined" &&
-            err.response.data.cause[0] !== "undefined" &&
-            err.response.data.cause[0].description !== "undefined"
-          ) {
-            msg =
-              err.response.data.cause[0].description +
-              " - " +
-              err.response.data.message;
-          }
-          var title = "ERROR!";
-
-          this.showErrorModal(title, msg);
-        });
+          .delete(this.baseURL() + "/" + this.theKey)
+          .then(() => {
+            this.$router.push({ name: 'ListMocks' });
+          })
+          .catch((err) => {
+            this.showAlert("Error deleting mock!", err);
+          });
     },
-    showSuccessModal(title, msg, goHome) {
-      const router = this.$router;
-      this.$bvModal
-        .msgBoxOk(msg, {
-          title: title,
-          okVariant: "success",
-          centered: true,
-        })
-        .then((value) => {
-          if (goHome) {
-            router.push({ name: "ListMocks" });
-          }
-          console.log(value);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    },
-    showErrorModal(title, msg) {
-      this.$bvModal.msgBoxOk(msg, {
-        title: title,
-        okVariant: "danger",
-        centered: true,
-      });
+    showAlert(text, err) {
+      this.alert = {text: text, color: err == null ? "green" : "red", show: true};
+      console.log(err);
     },
     addVariable() {
-      var newVar = {
+      let newVar = {
         type: "body",
         name: "",
         key: "",
@@ -599,7 +356,7 @@ export default {
       this.mock.variables.splice(i, 1);
     },
     addResponse() {
-      var newResponse = {
+      let newResponse = {
         body: "",
         content_type: "application/json",
         http_status: 200,
@@ -616,11 +373,27 @@ export default {
       this.mock.responses.splice(i, 1);
     },
     updateResponses() {
-      if (this.mock.strategy != "scene") {
+      if (this.mock.strategy !== "scene") {
         this.mock.responses.forEach(r => {
           r.scene = ""
         });
       }
+    },
+    updateVariables() {
+      this.mock.variables.forEach(v => {
+        if (v.type !== "body" && v.type !== "query" && v.type !== "header" && v.type !== "path") {
+          v.key = "";
+        }
+      });
+    },
+    isResponseSceneRequired(mock) {
+      return mock.strategy === "scene";
+    },
+    isVariableTypeRequired(variable) {
+      return variable.type === 'body' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
+    },
+    getResponseDescriptionPrefix(index) {
+      return "Response " + (index + 1).toString() + ": "
     },
     newMock() {
       return {
@@ -630,12 +403,13 @@ export default {
         path: "",
         strategy: "",
         method: "",
-        status: "",
+        status: "enabled",
         responses: [
           {
+            description: "",
             body: "",
-            content_type: "",
-            http_status: "",
+            content_type: "application/json",
+            http_status: 200,
             delay: 0,
             scene: "",
           },
@@ -645,30 +419,19 @@ export default {
     },
     initialize() {
       if (this.theKey) {
+        this.loading = true;
         axios
-          .get("http://localhost:8081/mock-server/rules/" + this.theKey)
-          .then((res) => {
-            this.mock = res.data;
-          })
-          .catch((err) => {
-            var msg = err.message;
-            if (
-              typeof err.response !== "undefined" &&
-              err.response.data !== "undefined" &&
-              err.response.data.message !== "undefined" &&
-              err.response.data.cause[0] !== "undefined" &&
-              err.response.data.cause[0].description !== "undefined"
-            ) {
-              msg =
-                err.response.data.cause[0].description +
-                " - " +
-                err.response.data.message;
-            }
-
-            this.showErrorModal("ERROR!", msg);
-          });
+            .get(this.baseURL() + "/" + this.theKey)
+            .then((res) => {
+              this.mock = res.data;
+            }).catch((err) => {
+          this.showAlert("Error getting mock info!", err);
+        }).finally(() => {
+          this.loading = false;
+        });
       } else {
         this.mock = this.newMock();
+        this.$refs.form.resetValidation();
       }
     },
   },
@@ -685,3 +448,27 @@ export default {
   },
 };
 </script>
+
+<style>
+.v-input--reverse .v-input__slot {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+.v-application--is-ltr,
+.v-input--selection-controls__input {
+  margin-right: 0;
+  margin-left: 8px;
+}
+
+.v-application--is-rtl,
+.v-input--selection-controls__input {
+  margin-left: 0;
+  margin-right: 8px;
+}
+
+.description > .v-input__control > .v-input__slot::before {
+  display: none!important;
+}
+
+</style>
