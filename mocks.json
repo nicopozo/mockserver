@@ -1,0 +1,40 @@
+[
+  {
+    "key": "fcc6460a-ee1d-427f-beb8-30dd54a51bae",
+    "application": "TestApp",
+    "name": "TestMock",
+    "path": "/test",
+    "strategy": "normal",
+    "method": "GET",
+    "status": "enabled",
+    "responses": [
+      {
+        "body": "{\"field\":\"value\"}",
+        "content_type": "application/json",
+        "http_status": 200,
+        "delay": 0,
+        "scene": ""
+      }
+    ],
+    "variables": []
+  },
+  {
+    "key": "832577d5-b1f3-4ff5-9f32-a752d0071e16",
+    "application": "TestApp2",
+    "name": "TestNew",
+    "path": "/test/new",
+    "strategy": "normal",
+    "method": "GET",
+    "status": "enabled",
+    "responses": [
+      {
+        "body": "body",
+        "content_type": "application/json",
+        "http_status": 200,
+        "delay": 0,
+        "scene": ""
+      }
+    ],
+    "variables": []
+  }
+]

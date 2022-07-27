@@ -67,6 +67,17 @@ func UnmarshalRule(body io.Reader) (*Rule, error) {
 	return rule, nil
 }
 
+func UnmarshalRules(body io.Reader) ([]Rule, error) {
+	rules := new([]Rule)
+
+	err := jsonutils.Unmarshal(body, rules)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling body, %w", err)
+	}
+
+	return *rules, nil
+}
+
 func UnmarshalRuleStatus(body io.Reader) (*RuleStatus, error) {
 	status := &RuleStatus{}
 

@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
-	"regexp"
 )
 
 func main() {
+
+	arr := []string{"0", "1", "2", "3", "4", "5"}
+	fmt.Print(arr[0:5])
+
 	/*	s := ""
 
 		u, err := url.Parse(s)
@@ -23,9 +26,9 @@ func main() {
 	//strings.Replace()
 
 	//var re = regexp.MustCompile(`/test/.+?/[1-9a-zA-z]+?$`)
-	var re = regexp.MustCompile(`^/test/[^/]+?/[^/]+?/[^/]+$`)
-	res := re.MatchString("/test/1/2")
-	fmt.Println(res)
+	//	var re = regexp.MustCompile(`^/test/[^/]+?/[^/]+?/[^/]+$`)
+	//	res := re.MatchString("/test/1/2")
+	//	fmt.Println(res)
 }
 
 /*

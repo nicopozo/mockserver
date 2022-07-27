@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/nicopozo/mockserver/docs"
@@ -14,7 +15,7 @@ import (
 )
 
 func mapRoutes(router *gin.Engine) {
-	router.Static("/mock-service/admin", "/Users/npozo/Proyectos/mockserver/web/dist")
+	router.Static("/mock-service/admin", "../../web/dist")
 
 	ruleController := newRuleController()
 	router.POST("/mock-service/rules", ruleController.Create)
@@ -33,12 +34,7 @@ func mapRoutes(router *gin.Engine) {
 }
 
 func newRuleController() controller.RuleController {
-	db, err := repository.GetDB()
-	if err != nil {
-		panic(fmt.Sprintf("Error connecting to mysql DB: %s", err.Error()))
-	}
-
-	ruleRepository := repository.NewRuleMySQLRepository(db)
+	ruleRepository := NewRuleRepository()
 	ruleService := &service.RuleService{
 		RuleRepository: ruleRepository,
 	}
@@ -50,12 +46,7 @@ func newRuleController() controller.RuleController {
 }
 
 func newMockController() controller.MockController {
-	db, err := repository.GetDB()
-	if err != nil {
-		panic(fmt.Sprintf("Error connecting to mysql DB: %s", err.Error()))
-	}
-
-	ruleRepository := repository.NewRuleMySQLRepository(db)
+	ruleRepository := NewRuleRepository()
 	ruleService := &service.RuleService{
 		RuleRepository: ruleRepository,
 	}
@@ -71,4 +62,30 @@ func newMockController() controller.MockController {
 
 func ping(c *gin.Context) {
 	c.String(http.StatusOK, "pong")
+}
+
+func NewRuleRepository() repository.IRuleRepository {
+	dataSource := os.Getenv("MOCKS_DATASOURCE")
+
+	switch dataSource {
+	case "file":
+		filePath := os.Getenv("MOCKS_FILE")
+
+		repo, err := repository.NewRuleFileRepository(filePath)
+		if err != nil {
+			panic(fmt.Sprintf("Error creating File Repository: %s", err.Error()))
+		}
+
+		return repo
+	case "elastic":
+		return new(repository.RuleElasticRepository)
+	default:
+		db, err := repository.GetDB()
+		if err != nil {
+			panic(fmt.Sprintf("Error connecting to mysql DB: %s", err.Error()))
+		}
+
+		return repository.NewRuleMySQLRepository(db)
+
+	}
 }

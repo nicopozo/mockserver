@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,7 @@ type RuleController struct {
 	RuleService service.IRuleService
 }
 
+// Create a Rule.
 // @Tags Rules
 // @Summary Create a Rule
 // @Description Create a Rule for serving a mock response
@@ -26,7 +28,6 @@ type RuleController struct {
 // @Failure 400 {object} model.Error "Validation of the rule failed"
 // @Failure 500 {object} model.Error "Internal server error"
 // @Router /rules [post]
-// Create a Rule.
 func (controller *RuleController) Create(context *gin.Context) {
 	reqContext := mockscontext.New(context)
 	logger := mockscontext.Logger(reqContext)
@@ -65,6 +66,7 @@ func (controller *RuleController) Create(context *gin.Context) {
 	context.JSON(http.StatusCreated, rule)
 }
 
+// Update a Rule.
 // @Tags Rules
 // @Summary Update a Rule
 // @Description Update an existing Rule for serving a mock response
@@ -77,7 +79,6 @@ func (controller *RuleController) Create(context *gin.Context) {
 // @Failure 400 {object} model.Error "Validation of the rule failed"
 // @Failure 500 {object} model.Error "Internal server error"
 // @Router /rules/{key} [put]
-// Update a Rule.
 func (controller *RuleController) Update(context *gin.Context) {
 	reqContext := mockscontext.New(context)
 	logger := mockscontext.Logger(reqContext)
@@ -121,6 +122,7 @@ func (controller *RuleController) Update(context *gin.Context) {
 	context.JSON(http.StatusOK, rule)
 }
 
+// UpdateStatus updates a Rule Status.
 // @Tags Rules
 // @Summary Update a Rule Status
 // @Description Update an existing Rule for serving a mock response
@@ -133,7 +135,6 @@ func (controller *RuleController) Update(context *gin.Context) {
 // @Failure 400 {object} model.Error "Validation of the rule failed"
 // @Failure 500 {object} model.Error "Internal server error"
 // @Router /rules/{key}/status [put]
-// Update a Rule.
 func (controller *RuleController) UpdateStatus(context *gin.Context) {
 	reqContext := mockscontext.New(context)
 	logger := mockscontext.Logger(reqContext)
@@ -176,6 +177,7 @@ func (controller *RuleController) UpdateStatus(context *gin.Context) {
 	context.JSON(http.StatusOK, rule)
 }
 
+// Get a Rule.
 // @Tags Rules
 // @Summary Get Rule by Key
 // @Description Get a Rule, if not found return 404
@@ -187,7 +189,6 @@ func (controller *RuleController) UpdateStatus(context *gin.Context) {
 // @Failure 404 {object} model.Error
 // @Failure 500 {object} model.Error
 // @Router /rules/{key} [get]
-// Get a Rule.
 func (controller *RuleController) Get(context *gin.Context) {
 	reqContext := mockscontext.New(context)
 	logger := mockscontext.Logger(reqContext)
@@ -198,19 +199,18 @@ func (controller *RuleController) Get(context *gin.Context) {
 
 	task, err := controller.RuleService.Get(reqContext, key)
 	if err != nil {
-		switch err.(type) { //nolint:errorlint
-		case ruleserrors.RuleNotFoundError:
+		if errors.As(err, &ruleserrors.RuleNotFoundError{}) {
 			logger.Debug(controller, nil, "No rule found with key: %v", key)
 
 			errorResult := model.NewError(model.ResourceNotFoundError, "%s", err.Error())
 			context.JSON(http.StatusNotFound, errorResult)
-		default:
-			logger.Error(controller, nil, err,
-				"Failed to get task with key: %v", key)
-
-			errorResult := model.NewError(model.InternalError, "Error occurred when getting rule. %s", err.Error())
-			context.JSON(http.StatusInternalServerError, errorResult)
 		}
+
+		logger.Error(controller, nil, err,
+			"Failed to get task with key: %v", key)
+
+		errorResult := model.NewError(model.InternalError, "Error occurred when getting rule. %s", err.Error())
+		context.JSON(http.StatusInternalServerError, errorResult)
 
 		return
 	}
@@ -218,6 +218,7 @@ func (controller *RuleController) Get(context *gin.Context) {
 	context.JSON(http.StatusOK, task)
 }
 
+// Search Rules.
 // @Tags Rules
 // @Summary Search Rule
 // @Description Search Rule by key, name, application, method or status
@@ -235,7 +236,6 @@ func (controller *RuleController) Get(context *gin.Context) {
 // @Failure 404 {object} model.Error
 // @Failure 500 {object} model.Error
 // @Router /rules [get]
-// Search Rules.
 func (controller *RuleController) Search(context *gin.Context) {
 	reqContext := mockscontext.New(context)
 	logger := mockscontext.Logger(reqContext)
@@ -266,6 +266,7 @@ func (controller *RuleController) Search(context *gin.Context) {
 	context.JSON(http.StatusOK, ruleList)
 }
 
+// Delete Rule.
 // @Tags Rules
 // @Summary Delete Rule by key
 // @Description Delete Rule by Key
@@ -275,7 +276,6 @@ func (controller *RuleController) Search(context *gin.Context) {
 // @Success 204
 // @Failure 500 {object} model.Error
 // @Router /rules/{key} [delete]
-// Delete Rule.
 func (controller *RuleController) Delete(context *gin.Context) {
 	reqContext := mockscontext.New(context)
 	logger := mockscontext.Logger(reqContext)

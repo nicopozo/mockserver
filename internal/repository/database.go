@@ -23,7 +23,7 @@ const (
 //nolint:gochecknoglobals
 var db *sqlx.DB
 
-const defaultForwarderDB = "root:@/mockserver"
+const defaultForwarderDB = "root:password@/mockserver"
 
 type Database interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
