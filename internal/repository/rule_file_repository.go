@@ -14,7 +14,7 @@ import (
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 )
 
-type RuleFileRepository struct {
+type ruleFileRepository struct {
 	rules    []model.Rule
 	filePath string
 }
@@ -32,13 +32,13 @@ func NewRuleFileRepository(filePath string) (IRuleRepository, error) {
 		return nil, fmt.Errorf("error creating file repository when unmarshaling file: %s - %w", filePath, err)
 	}
 
-	return &RuleFileRepository{
+	return &ruleFileRepository{
 		rules:    rules,
 		filePath: filePath,
 	}, nil
 }
 
-func (repository *RuleFileRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (repository *ruleFileRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(repository, nil, "Saving new rule into file")
@@ -50,7 +50,7 @@ func (repository *RuleFileRepository) Create(ctx context.Context, rule *model.Ru
 	return rule, repository.SaveFile(ctx)
 }
 
-func (repository *RuleFileRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (repository *ruleFileRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(repository, nil, "Updating rule.")
@@ -64,7 +64,7 @@ func (repository *RuleFileRepository) Update(ctx context.Context, rule *model.Ru
 	return rule, repository.SaveFile(ctx)
 }
 
-func (repository *RuleFileRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
+func (repository *ruleFileRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(repository, nil, "Updating rule.")
@@ -86,7 +86,7 @@ func (repository *RuleFileRepository) Get(ctx context.Context, key string) (*mod
 	return nil, err
 }
 
-func (repository *RuleFileRepository) Search(ctx context.Context, params map[string]interface{},
+func (repository *ruleFileRepository) Search(ctx context.Context, params map[string]interface{},
 	paging model.Paging) (*model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)
 
@@ -96,21 +96,26 @@ func (repository *RuleFileRepository) Search(ctx context.Context, params map[str
 	ruleList.Paging = paging
 	ruleList.Results = make([]*model.Rule, 0)
 
-	if paging.Offset > int32(len(repository.rules)) {
+	filtered := make([]*model.Rule, 0)
+
+	for index := range repository.rules {
+		if applies(repository.rules[index], params) {
+			filtered = append(filtered, &repository.rules[index])
+		}
+	}
+
+	if paging.Offset > int32(len(filtered)) {
 		return ruleList, nil
 	}
 
 	to := paging.Offset + paging.Limit
-	if to > int32(len(repository.rules)) {
-		to = int32(len(repository.rules))
-	}
-	for index := range repository.rules[paging.Offset:to] {
-		if applies(repository.rules[index], params) {
-			ruleList.Results = append(ruleList.Results, &repository.rules[index])
-		}
+	if to > int32(len(filtered)) {
+		to = int32(len(filtered))
 	}
 
-	ruleList.Paging.Total = int64(len(repository.rules))
+	ruleList.Results = filtered[paging.Offset:to]
+
+	ruleList.Paging.Total = int64(len(filtered))
 
 	return ruleList, nil
 }
@@ -122,26 +127,26 @@ func applies(rule model.Rule, params map[string]any) bool {
 		v := strings.ToLower(fmt.Sprintf("%v", value))
 		switch key {
 		case "application":
-			result = result && strings.Contains(rule.Application, v)
+			result = result && strings.Contains(strings.ToLower(rule.Application), v)
 		case "status":
-			result = result && strings.Contains(rule.Status, v)
+			result = result && strings.Contains(strings.ToLower(rule.Status), v)
 		case "method":
-			result = result && strings.Contains(rule.Method, v)
+			result = result && strings.Contains(strings.ToLower(rule.Method), v)
 		case "strategy":
-			result = result && strings.Contains(rule.Strategy, v)
+			result = result && strings.Contains(strings.ToLower(rule.Strategy), v)
 		case "path":
-			result = result && strings.Contains(rule.Path, v)
+			result = result && strings.Contains(strings.ToLower(rule.Path), v)
 		case "name":
-			result = result && strings.Contains(rule.Name, v)
+			result = result && strings.Contains(strings.ToLower(rule.Name), v)
 		case "key":
-			result = result && strings.Contains(rule.Key, v)
+			result = result && strings.Contains(strings.ToLower(rule.Key), v)
 		}
 	}
 
 	return result
 }
 
-func (repository *RuleFileRepository) Delete(ctx context.Context, key string) error {
+func (repository *ruleFileRepository) Delete(ctx context.Context, key string) error {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(repository, nil, "Updating rule.")
@@ -156,7 +161,7 @@ func (repository *RuleFileRepository) Delete(ctx context.Context, key string) er
 	return repository.SaveFile(ctx)
 }
 
-func (repository *RuleFileRepository) SearchByMethodAndPath(ctx context.Context, method string,
+func (repository *ruleFileRepository) SearchByMethodAndPath(ctx context.Context, method string,
 	path string) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
@@ -175,7 +180,7 @@ func (repository *RuleFileRepository) SearchByMethodAndPath(ctx context.Context,
 	}
 }
 
-func (repository *RuleFileRepository) SaveFile(ctx context.Context) error {
+func (repository *ruleFileRepository) SaveFile(ctx context.Context) error {
 	file, err := os.Create(repository.filePath)
 	if err != nil {
 		return fmt.Errorf("error saving file: %s - %w", repository.filePath, err)

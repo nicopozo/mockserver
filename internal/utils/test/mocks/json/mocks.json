@@ -1,0 +1,78 @@
+[
+  {
+    "key": "a1",
+    "application": "TestApp",
+    "name": "TestMock",
+    "path": "/test",
+    "strategy": "normal",
+    "method": "DELETE",
+    "status": "enabled",
+    "responses": [
+      {
+        "body": "{\"field\":\"value\"}",
+        "content_type": "application/json",
+        "http_status": 200,
+        "delay": 0,
+        "scene": ""
+      }
+    ],
+    "variables": []
+  },
+  {
+    "key": "b2",
+    "application": "TestApp2",
+    "name": "TestNew",
+    "path": "/test/new",
+    "strategy": "normal",
+    "method": "GET",
+    "status": "enabled",
+    "responses": [
+      {
+        "body": "body",
+        "content_type": "application/json",
+        "http_status": 200,
+        "delay": 0,
+        "scene": ""
+      }
+    ],
+    "variables": []
+  },
+  {
+    "key": "c3",
+    "application": "TestApp2",
+    "name": "TestNew",
+    "path": "/test/new/2",
+    "strategy": "normal",
+    "method": "POST",
+    "status": "enabled",
+    "responses": [
+      {
+        "body": "body",
+        "content_type": "application/json",
+        "http_status": 200,
+        "delay": 0,
+        "scene": ""
+      }
+    ],
+    "variables": []
+  },
+  {
+    "key": "d4",
+    "application": "TestApp2",
+    "name": "TestNew",
+    "path": "/test/new2",
+    "strategy": "normal",
+    "method": "POST",
+    "status": "enabled",
+    "responses": [
+      {
+        "body": "body",
+        "content_type": "application/json",
+        "http_status": 200,
+        "delay": 0,
+        "scene": ""
+      }
+    ],
+    "variables": []
+  }
+]

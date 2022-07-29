@@ -204,6 +204,8 @@ func (controller *RuleController) Get(context *gin.Context) {
 
 			errorResult := model.NewError(model.ResourceNotFoundError, "%s", err.Error())
 			context.JSON(http.StatusNotFound, errorResult)
+
+			return
 		}
 
 		logger.Error(controller, nil, err,
@@ -286,16 +288,16 @@ func (controller *RuleController) Delete(context *gin.Context) {
 
 	err := controller.RuleService.Delete(reqContext, key)
 	if err != nil {
-		switch err.(type) { //nolint:errorlint
-		case ruleserrors.RuleNotFoundError:
+		if errors.As(err, &ruleserrors.RuleNotFoundError{}) {
 			context.Status(http.StatusNoContent)
-		default:
-			logger.Error(controller, nil, err,
-				"Failed to delete rule with key: %v", key)
 
-			errorResult := model.NewError(model.InternalError, "Error occurred when deleting rule. %s", err.Error())
-			context.JSON(http.StatusInternalServerError, errorResult)
+			return
 		}
+
+		logger.Error(controller, nil, err, "Failed to delete rule with key: %v", key)
+
+		errorResult := model.NewError(model.InternalError, "Error occurred when deleting rule. %s", err.Error())
+		context.JSON(http.StatusInternalServerError, errorResult)
 
 		return
 	}

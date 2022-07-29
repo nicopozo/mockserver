@@ -78,7 +78,7 @@ func NewRuleRepository() repository.IRuleRepository {
 
 		return repo
 	case "elastic":
-		return new(repository.RuleElasticRepository)
+		return repository.NewRuleElasticRepository()
 	default:
 		db, err := repository.GetDB()
 		if err != nil {

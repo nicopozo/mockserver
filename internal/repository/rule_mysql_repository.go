@@ -13,12 +13,12 @@ import (
 	"github.com/nicopozo/mockserver/internal/model"
 )
 
-type RuleMySQLRepository struct {
+type ruleMySQLRepository struct {
 	db Database
 }
 
 func NewRuleMySQLRepository(db Database) IRuleRepository {
-	return &RuleMySQLRepository{
+	return &ruleMySQLRepository{
 		db: db,
 	}
 }
@@ -52,7 +52,7 @@ type ResponseRow struct {
 	RuleKey     string  `db:"rule_key"`
 }
 
-func (repository *RuleMySQLRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
@@ -91,7 +91,7 @@ func (repository *RuleMySQLRepository) Create(ctx context.Context, rule *model.R
 	return rule, nil
 }
 
-func (repository *RuleMySQLRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
@@ -144,7 +144,7 @@ func (repository *RuleMySQLRepository) Update(ctx context.Context, rule *model.R
 	return rule, nil
 }
 
-func (repository *RuleMySQLRepository) deleteResponses(ctx context.Context, key string, tx *sqlx.Tx) error {
+func (repository *ruleMySQLRepository) deleteResponses(ctx context.Context, key string, tx *sqlx.Tx) error {
 	logger := mockscontext.Logger(ctx)
 
 	query := "DELETE FROM responses WHERE rule_key=?"
@@ -160,7 +160,7 @@ func (repository *RuleMySQLRepository) deleteResponses(ctx context.Context, key 
 	return nil
 }
 
-func (repository *RuleMySQLRepository) deleteVariables(ctx context.Context, key string, tx *sqlx.Tx) error {
+func (repository *ruleMySQLRepository) deleteVariables(ctx context.Context, key string, tx *sqlx.Tx) error {
 	logger := mockscontext.Logger(ctx)
 
 	query := "DELETE FROM variables WHERE rule_key=?"
@@ -176,7 +176,7 @@ func (repository *RuleMySQLRepository) deleteVariables(ctx context.Context, key 
 	return nil
 }
 
-func (repository *RuleMySQLRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
+func (repository *ruleMySQLRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
@@ -230,7 +230,7 @@ func (repository *RuleMySQLRepository) Get(ctx context.Context, key string) (*mo
 	return parseRule(row, variables, responses), nil
 }
 
-func (repository *RuleMySQLRepository) Search(ctx context.Context, params map[string]interface{},
+func (repository *ruleMySQLRepository) Search(ctx context.Context, params map[string]interface{},
 	paging model.Paging) (*model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)
 
@@ -276,7 +276,7 @@ func (repository *RuleMySQLRepository) Search(ctx context.Context, params map[st
 	return &model.RuleList{Paging: paging, Results: rules}, nil
 }
 
-func (repository *RuleMySQLRepository) Delete(ctx context.Context, key string) error {
+func (repository *ruleMySQLRepository) Delete(ctx context.Context, key string) error {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
@@ -315,7 +315,7 @@ func (repository *RuleMySQLRepository) Delete(ctx context.Context, key string) e
 	return nil
 }
 
-func (repository *RuleMySQLRepository) SearchByMethodAndPath(ctx context.Context, method string,
+func (repository *ruleMySQLRepository) SearchByMethodAndPath(ctx context.Context, method string,
 	path string) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
@@ -348,7 +348,7 @@ func (repository *RuleMySQLRepository) SearchByMethodAndPath(ctx context.Context
 	}
 }
 
-func (repository *RuleMySQLRepository) insertVariables(ctx context.Context, rule *model.Rule, tx *sqlx.Tx) error {
+func (repository *ruleMySQLRepository) insertVariables(ctx context.Context, rule *model.Rule, tx *sqlx.Tx) error {
 	logger := mockscontext.Logger(ctx)
 
 	query := "INSERT INTO variables (type, name, `key`, rule_key) VALUES (?, ?, ?, ?)"
@@ -366,7 +366,7 @@ func (repository *RuleMySQLRepository) insertVariables(ctx context.Context, rule
 	return nil
 }
 
-func (repository *RuleMySQLRepository) insertResponses(ctx context.Context, rule *model.Rule, tx *sqlx.Tx) error {
+func (repository *ruleMySQLRepository) insertResponses(ctx context.Context, rule *model.Rule, tx *sqlx.Tx) error {
 	logger := mockscontext.Logger(ctx)
 
 	query := `INSERT INTO responses (body, content_type, http_status, delay, scene, rule_key) VALUES (?, ?, ?, ?, ?, ?)`
@@ -464,7 +464,7 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 	}
 }
 
-func (repository *RuleMySQLRepository) commitOrRollback(ctx context.Context, tx *sqlx.Tx, err error) {
+func (repository *ruleMySQLRepository) commitOrRollback(ctx context.Context, tx *sqlx.Tx, err error) {
 	logger := mockscontext.Logger(ctx)
 
 	if err != nil {

@@ -21,19 +21,23 @@ import (
 	stringutils "github.com/nicopozo/mockserver/internal/utils/string"
 )
 
-type RuleElasticRepository struct {
+type ruleElasticRepository struct {
 	client *elasticsearch.Client
 }
 
-func (repository *RuleElasticRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func NewRuleElasticRepository() IRuleRepository {
+	return new(ruleElasticRepository)
+}
+
+func (repository *ruleElasticRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	return repository.save(ctx, rule, true)
 }
 
-func (repository *RuleElasticRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (repository *ruleElasticRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	return repository.save(ctx, rule, false)
 }
 
-func (repository *RuleElasticRepository) save(ctx context.Context, rule *model.Rule,
+func (repository *ruleElasticRepository) save(ctx context.Context, rule *model.Rule,
 	isUpdate bool) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
@@ -77,7 +81,7 @@ func (repository *RuleElasticRepository) save(ctx context.Context, rule *model.R
 	return rule, nil
 }
 
-func (repository *RuleElasticRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
+func (repository *ruleElasticRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
@@ -126,7 +130,7 @@ func (repository *RuleElasticRepository) Get(ctx context.Context, key string) (*
 	return rule, nil
 }
 
-func (repository *RuleElasticRepository) Search(ctx context.Context, params map[string]interface{},
+func (repository *ruleElasticRepository) Search(ctx context.Context, params map[string]interface{},
 	paging model.Paging) (*model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)
 
@@ -218,7 +222,7 @@ func (repository *RuleElasticRepository) Search(ctx context.Context, params map[
 	return result, nil
 }
 
-func (repository *RuleElasticRepository) Delete(ctx context.Context, key string) error {
+func (repository *ruleElasticRepository) Delete(ctx context.Context, key string) error {
 	logger := mockscontext.Logger(ctx)
 
 	rule, err := repository.Get(ctx, key)
@@ -283,7 +287,7 @@ func (repository *RuleElasticRepository) Delete(ctx context.Context, key string)
 	return nil
 }
 
-func (repository *RuleElasticRepository) SearchByMethodAndPath(ctx context.Context, method string,
+func (repository *ruleElasticRepository) SearchByMethodAndPath(ctx context.Context, method string,
 	path string) (*model.Rule, error) {
 	var err error
 
@@ -310,7 +314,7 @@ func (repository *RuleElasticRepository) SearchByMethodAndPath(ctx context.Conte
 	}
 }
 
-func (repository *RuleElasticRepository) getExpressionsByMethod(ctx context.Context,
+func (repository *ruleElasticRepository) getExpressionsByMethod(ctx context.Context,
 	method string) (*model.PatternList, error) {
 	logger := mockscontext.Logger(ctx)
 
@@ -359,7 +363,7 @@ func (repository *RuleElasticRepository) getExpressionsByMethod(ctx context.Cont
 	return patternList, nil
 }
 
-func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rule *model.Rule) (*model.Pattern, error) {
+func (repository *ruleElasticRepository) createPatterns(ctx context.Context, rule *model.Rule) (*model.Pattern, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
@@ -453,7 +457,7 @@ func (repository *RuleElasticRepository) createPatterns(ctx context.Context, rul
 	return pattern, nil
 }
 
-func (repository *RuleElasticRepository) saveExpression(ctx context.Context, method string,
+func (repository *ruleElasticRepository) saveExpression(ctx context.Context, method string,
 	list *model.PatternList) error {
 	logger := mockscontext.Logger(ctx)
 
@@ -486,7 +490,7 @@ func (repository *RuleElasticRepository) saveExpression(ctx context.Context, met
 	return nil
 }
 
-func (repository *RuleElasticRepository) getElasticClient() *elasticsearch.Client {
+func (repository *ruleElasticRepository) getElasticClient() *elasticsearch.Client {
 	if repository.client == nil {
 		cfg := elasticsearch.Config{
 			Addresses: []string{
