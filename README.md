@@ -30,7 +30,7 @@ cd cmd/mocks
 go build .
 ```
 
-Before running we configure the folder containing the CSV files.
+Before running we configure the JSON file with the mocks.
 
 ```sh
 export MOCKS_FILE=/tmp/mocks.json
