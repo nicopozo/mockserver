@@ -89,4 +89,5 @@ This example will return the following response:
 
 Alternatively, mocks can be created and edited [via UI](http://localhost:8080/mock-service/admin/#/)
 
-![UI](https://github.com/nicopozo/mockserver/tree/master/assets/ui.png)
+![UI](https://raw.githubusercontent.com/nicopozo/mockserver/master/assets/ui.png)
+Thanks [hecekiel](https://github.com/hecekiel) for your artwork!
