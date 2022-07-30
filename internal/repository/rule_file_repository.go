@@ -20,22 +20,48 @@ type ruleFileRepository struct {
 }
 
 func NewRuleFileRepository(filePath string) (IRuleRepository, error) {
+	repo := ruleFileRepository{
+		rules:    make([]model.Rule, 0),
+		filePath: filePath,
+	}
+
 	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("error creating file repository when reading file: %s - %w", filePath, err)
+		errMsg := err.Error()
+		if !strings.Contains(errMsg, "no such file or directory") {
+			return nil, fmt.Errorf("error creating file repository when reading file: %s - %w", filePath, err)
+		}
+
+		err = repo.SaveFile()
+		if err != nil {
+			return nil, fmt.Errorf("error creating file repository when creating file: %s - %w", filePath, err)
+		}
+
+		file, err = os.Open(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("error creating file repository when reading file: %s - %w", filePath, err)
+		}
 	}
 
 	defer func(f *os.File) { _ = file.Close() }(file)
 
-	rules, err := model.UnmarshalRules(file)
+	repo.rules = make([]model.Rule, 0)
+
+	stat, err := file.Stat()
 	if err != nil {
-		return nil, fmt.Errorf("error creating file repository when unmarshaling file: %s - %w", filePath, err)
+		return nil, fmt.Errorf("error reading file: %s - %w", filePath, err)
 	}
 
-	return &ruleFileRepository{
-		rules:    rules,
-		filePath: filePath,
-	}, nil
+	if stat.Size() > 0 {
+		rules, err := model.UnmarshalRules(file)
+		if err != nil {
+			return nil, fmt.Errorf("error creating file repository when unmarshaling file: %s - %w", filePath, err)
+		}
+
+		repo.rules = rules
+	}
+
+	return &repo, nil
 }
 
 func (repository *ruleFileRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
@@ -47,7 +73,7 @@ func (repository *ruleFileRepository) Create(ctx context.Context, rule *model.Ru
 
 	repository.rules = append(repository.rules, *rule)
 
-	return rule, repository.SaveFile(ctx)
+	return rule, repository.SaveFile()
 }
 
 func (repository *ruleFileRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
@@ -61,7 +87,7 @@ func (repository *ruleFileRepository) Update(ctx context.Context, rule *model.Ru
 		}
 	}
 
-	return rule, repository.SaveFile(ctx)
+	return rule, repository.SaveFile()
 }
 
 func (repository *ruleFileRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
@@ -158,7 +184,7 @@ func (repository *ruleFileRepository) Delete(ctx context.Context, key string) er
 		}
 	}
 
-	return repository.SaveFile(ctx)
+	return repository.SaveFile()
 }
 
 func (repository *ruleFileRepository) SearchByMethodAndPath(ctx context.Context, method string,
@@ -168,7 +194,8 @@ func (repository *ruleFileRepository) SearchByMethodAndPath(ctx context.Context,
 	logger.Debug(repository, nil, "Searching by method and path rule.")
 
 	for _, rule := range repository.rules {
-		var regex = regexp.MustCompile(CreateExpression(rule.Path))
+		expr := CreateExpression(rule.Path)
+		var regex = regexp.MustCompile(expr)
 
 		if rule.Method == method && rule.Status == model.RuleStatusEnabled && regex.MatchString(path) {
 			return &rule, nil
@@ -180,7 +207,7 @@ func (repository *ruleFileRepository) SearchByMethodAndPath(ctx context.Context,
 	}
 }
 
-func (repository *ruleFileRepository) SaveFile(ctx context.Context) error {
+func (repository *ruleFileRepository) SaveFile() error {
 	file, err := os.Create(repository.filePath)
 	if err != nil {
 		return fmt.Errorf("error saving file: %s - %w", repository.filePath, err)

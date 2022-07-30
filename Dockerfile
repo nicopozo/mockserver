@@ -1,47 +1,21 @@
-FROM golang:alpine AS builder
+FROM golang:latest AS buildContainer
+WORKDIR /go/src/app
 
-# Set necessary environmet variables needed for our image
-ENV GO111MODULE=on \
-    CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
+COPY . .
 
-# Move to working directory /build
-WORKDIR /build
+WORKDIR ./cmd/mocks
 
-# Copy and download dependency using go mod
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
+RUN CGO_ENABLED=0 GOOS=linux go build -v -mod mod -ldflags "-s -w" .
 
-# Copy the code into the container
-COPY cmd ./cmd
-COPY configs ./configs
-COPY internal ./internal
-COPY docs ./docs
-COPY web/dist ./dist
+FROM alpine:latest
+WORKDIR /app
+COPY --from=buildContainer /go/src/app/cmd/mocks/mocks .
+COPY --from=buildContainer /go/src/app/web/dist web/dist
 
-# Build the application
-WORKDIR /build/cmd/mocks
-RUN go build
+ENV GIN_MODE release
 
-# Move to /dist directory as the place for resulting binary folder
-WORKDIR /dist
+ENV HOST 0.0.0.0
+ENV PORT 8080
+EXPOSE 8080
 
-# Copy binary from build to main folder
-RUN cp /build/cmd/mocks/mocks .
-RUN cp -R /build/docs .
-RUN cp -R /build/dist .
-
-# Build a small image
-FROM scratch
-
-COPY --from=builder /dist/mocks /
-COPY --from=builder /dist/docs /docs
-COPY --from=builder /dist/dist /dist
-
-
-EXPOSE 8081
-
-# Command to run
-ENTRYPOINT ["/mocks"]
+CMD ["./mocks"]
