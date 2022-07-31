@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"time"
 
 	// mysql driver.
@@ -21,9 +22,7 @@ const (
 //go:generate mockgen -destination=../utils/test/mocks/sql_result_mock.go -package=mocks database/sql Result
 
 //nolint:gochecknoglobals
-var db *sqlx.DB
-
-const defaultForwarderDB = "root:password@/mockserver"
+var database *sqlx.DB
 
 type Database interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
@@ -35,31 +34,53 @@ type Database interface {
 
 func GetDB() (*sqlx.DB, error) {
 	var err error
-	if db == nil {
-		db, err = sqlx.Open("mysql", getDBString()+"?parseTime=true&charset=utf8")
+	if database == nil {
+		database, err = sqlx.Open("mysql", getDBString()+"?parseTime=true&charset=utf8")
 
 		if err != nil {
-			fmt.Printf("########## DB ERROR: " + err.Error() + " #############")
+			fmt.Printf("########## DB ERROR: " + err.Error() + " #############\n") //nolint:forbidigo
 
 			return nil, fmt.Errorf("error connecting DB: %w", err)
 		}
 
-		db.SetMaxIdleConns(maxIdleConnections)
-		db.SetMaxOpenConns(maxOpenConnections)
-		db.SetConnMaxLifetime(maxLifeTime)
+		database.SetMaxIdleConns(maxIdleConnections)
+		database.SetMaxOpenConns(maxOpenConnections)
+		database.SetConnMaxLifetime(maxLifeTime)
 
-		err = db.Ping()
+		for i := 0; i < 10 && (i == 0 || err != nil); i++ {
+			fmt.Printf("########## CONNECTING TO DB - try i:%v #############\n", i+1) //nolint:forbidigo
+
+			err = database.Ping()
+
+			time.Sleep(10 * time.Second) //nolint:gomnd
+		}
+
 		if err != nil {
-			fmt.Printf("########## DB ERROR: " + err.Error() + " #############")
+			fmt.Printf("########## DB ERROR: " + err.Error() + " #############\n") //nolint:forbidigo
 
-			db = nil
+			database = nil
 			err = fmt.Errorf("error DB ping: %w", err)
 		}
 	}
 
-	return db, err
+	return database, err
 }
 
 func getDBString() string {
-	return defaultForwarderDB
+	user := getEnv("DB_USER", "root")
+	password := getEnv("DB_PASSWORD", "password")
+	host := getEnv("DB_HOST", "localhost")
+	port := getEnv("DB_PORT", "3306")
+
+	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/mockserver", user, password, host, port)
+
+	return connStr
+}
+
+func getEnv(name, defaultValue string) string {
+	if e := os.Getenv(name); e != "" {
+		return e
+	}
+
+	return defaultValue
 }

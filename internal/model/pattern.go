@@ -17,7 +17,7 @@ type PatternList struct {
 }
 
 type ESPatternList struct {
-	Source *PatternList `json:"_source"`
+	Source *PatternList `json:"_source"` //nolint:tagliatelle
 }
 
 func UnmarshalESPatternList(body io.Reader) (*PatternList, error) {

@@ -6,7 +6,10 @@ import (
 	"github.com/nicopozo/mockserver/internal/repository"
 )
 
+//nolint:nosnakecase
 func Test_CreateExpression(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		path string
 	}
@@ -39,8 +42,10 @@ func Test_CreateExpression(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range tests { //nolint:paralleltest
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if got := repository.CreateExpression(tt.args.path); got != tt.want {
 				t.Errorf("CreateExpression() = %v, want %v", got, tt.want)
 			}

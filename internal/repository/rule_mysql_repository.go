@@ -24,32 +24,32 @@ func NewRuleMySQLRepository(db Database) IRuleRepository {
 }
 
 type RuleRow struct {
-	Key         string `db:"key"`
-	Application string `db:"application"`
-	Name        string `db:"name"`
-	Path        string `db:"path"`
-	Strategy    string `db:"strategy"`
-	Method      string `db:"method"`
-	Status      string `db:"status"`
-	Pattern     string `db:"pattern"`
+	Key         string `database:"key"`
+	Application string `database:"application"`
+	Name        string `database:"name"`
+	Path        string `database:"path"`
+	Strategy    string `database:"strategy"`
+	Method      string `database:"method"`
+	Status      string `database:"status"`
+	Pattern     string `database:"pattern"`
 }
 
 type VariableRow struct {
-	ID      int64  `db:"id"`
-	Type    string `db:"type"`
-	Name    string `db:"name"`
-	Key     string `db:"key"`
-	RuleKey string `db:"rule_key"`
+	ID      int64  `database:"id"`
+	Type    string `database:"type"`
+	Name    string `database:"name"`
+	Key     string `database:"key"`
+	RuleKey string `database:"rule_key"`
 }
 
 type ResponseRow struct {
-	ID          int64   `db:"id"`
-	Body        string  `db:"body"`
-	ContentType string  `db:"content_type"`
-	HTTPStatus  int     `db:"http_status"`
-	Delay       int     `db:"delay"`
-	Scene       *string `db:"scene"`
-	RuleKey     string  `db:"rule_key"`
+	ID          int64   `database:"id"`
+	Body        string  `database:"body"`
+	ContentType string  `database:"content_type"`
+	HTTPStatus  int     `database:"http_status"`
+	Delay       int     `database:"delay"`
+	Scene       *string `database:"scene"`
+	RuleKey     string  `database:"rule_key"`
 }
 
 func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
@@ -60,16 +60,16 @@ func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.R
 	query := "INSERT INTO rules (`key`, application, name, path, strategy, method, status, pattern) " +
 		"VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 
-	tx, err := repository.db.Beginx()
+	trx, err := repository.db.Beginx()
 	if err != nil {
 		return nil, fmt.Errorf("error strating transaction, %w", err)
 	}
 
-	defer repository.commitOrRollback(ctx, tx, err)
+	defer repository.commitOrRollback(ctx, trx, err)
 
 	rule.Key = fmt.Sprintf("%v", guuid.New())
 
-	_, err = tx.Exec(query, rule.Key, rule.Application, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
+	_, err = trx.Exec(query, rule.Key, rule.Application, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
 		CreateExpression(rule.Path))
 
 	if err != nil {
@@ -78,12 +78,12 @@ func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.R
 		return nil, fmt.Errorf("error creating rule into DB, %w", err)
 	}
 
-	err = repository.insertVariables(ctx, rule, tx)
+	err = repository.insertVariables(ctx, rule, trx)
 	if err != nil {
 		return nil, err
 	}
 
-	err = repository.insertResponses(ctx, rule, tx)
+	err = repository.insertResponses(ctx, rule, trx)
 	if err != nil {
 		return nil, err
 	}
@@ -98,14 +98,14 @@ func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.R
 
 	query := "UPDATE rules SET application=?, name=?, path=?, strategy=?, method=?, status=?, pattern=? WHERE `key`=?"
 
-	tx, err := repository.db.Beginx()
+	trx, err := repository.db.Beginx()
 	if err != nil {
 		return nil, fmt.Errorf("error starting transaction, %w", err)
 	}
 
-	defer repository.commitOrRollback(ctx, tx, err)
+	defer repository.commitOrRollback(ctx, trx, err)
 
-	_, err = tx.Exec(query, rule.Application, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
+	_, err = trx.Exec(query, rule.Application, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
 		CreateExpression(rule.Path), rule.Key)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating rule in DB")
@@ -113,28 +113,28 @@ func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.R
 		return nil, fmt.Errorf("error updating item into DB, %w", err)
 	}
 
-	err = repository.deleteVariables(ctx, rule.Key, tx)
+	err = repository.deleteVariables(ctx, rule.Key, trx)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
 
 		return nil, fmt.Errorf("error updating task, %w", err)
 	}
 
-	err = repository.insertVariables(ctx, rule, tx)
+	err = repository.insertVariables(ctx, rule, trx)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
 
 		return nil, fmt.Errorf("error updating task, %w", err)
 	}
 
-	err = repository.deleteResponses(ctx, rule.Key, tx)
+	err = repository.deleteResponses(ctx, rule.Key, trx)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
 
 		return nil, fmt.Errorf("error updating task, %w", err)
 	}
 
-	err = repository.insertResponses(ctx, rule, tx)
+	err = repository.insertResponses(ctx, rule, trx)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
 
@@ -149,9 +149,7 @@ func (repository *ruleMySQLRepository) deleteResponses(ctx context.Context, key 
 
 	query := "DELETE FROM responses WHERE rule_key=?"
 
-	_, err := tx.Exec(query, key)
-
-	if err != nil {
+	if _, err := tx.Exec(query, key); err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
 
 		return fmt.Errorf("error updating task, %w", err)
@@ -165,9 +163,7 @@ func (repository *ruleMySQLRepository) deleteVariables(ctx context.Context, key 
 
 	query := "DELETE FROM variables WHERE rule_key=?"
 
-	_, err := tx.Exec(query, key)
-
-	if err != nil {
+	if _, err := tx.Exec(query, key); err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
 
 		return fmt.Errorf("error updating task, %w", err)
@@ -281,21 +277,21 @@ func (repository *ruleMySQLRepository) Delete(ctx context.Context, key string) e
 
 	var err error
 
-	tx, err := repository.db.Beginx()
+	trx, err := repository.db.Beginx()
 	if err != nil {
 		return fmt.Errorf("error strating transaction, %w", err)
 	}
 
-	defer repository.commitOrRollback(ctx, tx, err)
+	defer repository.commitOrRollback(ctx, trx, err)
 
-	err = repository.deleteVariables(ctx, key, tx)
+	err = repository.deleteVariables(ctx, key, trx)
 	if err != nil {
 		logger.Error(repository, nil, err, "error deleting task in DB")
 
 		return fmt.Errorf("error deleting task, %w", err)
 	}
 
-	err = repository.deleteResponses(ctx, key, tx)
+	err = repository.deleteResponses(ctx, key, trx)
 	if err != nil {
 		logger.Error(repository, nil, err, "error deleting task in DB")
 
@@ -304,7 +300,7 @@ func (repository *ruleMySQLRepository) Delete(ctx context.Context, key string) e
 
 	query := "DELETE FROM rules WHERE `key`=?"
 
-	_, err = tx.Exec(query, key)
+	_, err = trx.Exec(query, key)
 
 	if err != nil {
 		logger.Error(repository, nil, err, "error deleting rule in DB")
@@ -348,13 +344,13 @@ func (repository *ruleMySQLRepository) SearchByMethodAndPath(ctx context.Context
 	}
 }
 
-func (repository *ruleMySQLRepository) insertVariables(ctx context.Context, rule *model.Rule, tx *sqlx.Tx) error {
+func (repository *ruleMySQLRepository) insertVariables(ctx context.Context, rule *model.Rule, trx *sqlx.Tx) error {
 	logger := mockscontext.Logger(ctx)
 
 	query := "INSERT INTO variables (type, name, `key`, rule_key) VALUES (?, ?, ?, ?)"
 
 	for _, v := range rule.Variables {
-		_, err := tx.Exec(query, v.Type, v.Name, v.Key, rule.Key)
+		_, err := trx.Exec(query, v.Type, v.Name, v.Key, rule.Key)
 
 		if err != nil {
 			logger.Error(repository, nil, err, "error creating rule variable in DB")
@@ -366,13 +362,13 @@ func (repository *ruleMySQLRepository) insertVariables(ctx context.Context, rule
 	return nil
 }
 
-func (repository *ruleMySQLRepository) insertResponses(ctx context.Context, rule *model.Rule, tx *sqlx.Tx) error {
+func (repository *ruleMySQLRepository) insertResponses(ctx context.Context, rule *model.Rule, trx *sqlx.Tx) error {
 	logger := mockscontext.Logger(ctx)
 
 	query := `INSERT INTO responses (body, content_type, http_status, delay, scene, rule_key) VALUES (?, ?, ?, ?, ?, ?)`
 
 	for _, r := range rule.Responses {
-		_, err := tx.Exec(query, r.Body, r.ContentType, r.HTTPStatus, r.Delay, r.Scene, rule.Key)
+		_, err := trx.Exec(query, r.Body, r.ContentType, r.HTTPStatus, r.Delay, r.Scene, rule.Key)
 
 		if err != nil {
 			logger.Error(repository, nil, err, "error creating rule response in DB")
@@ -433,18 +429,18 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 
 	resps := make([]model.Response, 0)
 
-	for _, r := range responses {
+	for _, resp := range responses {
 		scene := ""
 
-		if r.Scene != nil {
-			scene = *r.Scene
+		if resp.Scene != nil {
+			scene = *resp.Scene
 		}
 
 		newResp := model.Response{
-			Body:        r.Body,
-			ContentType: r.ContentType,
-			HTTPStatus:  r.HTTPStatus,
-			Delay:       r.Delay,
+			Body:        resp.Body,
+			ContentType: resp.ContentType,
+			HTTPStatus:  resp.HTTPStatus,
+			Delay:       resp.Delay,
 			Scene:       scene,
 		}
 
@@ -464,16 +460,16 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 	}
 }
 
-func (repository *ruleMySQLRepository) commitOrRollback(ctx context.Context, tx *sqlx.Tx, err error) {
+func (repository *ruleMySQLRepository) commitOrRollback(ctx context.Context, trx *sqlx.Tx, err error) {
 	logger := mockscontext.Logger(ctx)
 
 	if err != nil {
-		_ = tx.Rollback()
+		_ = trx.Rollback()
 	} else {
-		err = tx.Commit()
+		err = trx.Commit()
 		if err != nil {
 			logger.Error(repository, nil, err, "Error committing changes")
-			_ = tx.Rollback()
+			_ = trx.Rollback()
 		}
 	}
 }

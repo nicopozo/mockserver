@@ -15,7 +15,10 @@ import (
 	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
 )
 
-func TestMockController_Execute(t *testing.T) {
+//nolint:funlen
+func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase
+	t.Parallel()
+
 	tests := []struct {
 		name             string
 		want             string
@@ -75,13 +78,16 @@ func TestMockController_Execute(t *testing.T) {
 					},
 				},
 			},
-			serviceErr:       errors.New("service error"),
+			serviceErr:       errors.New("service error"), //nolint:goerr113
 			serviceResponse:  nil,
 			serviceCallTimes: 1,
 		},
 	}
-	for _, tt := range tests {
+
+	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			mockCtrl := gomock.NewController(t)
 			mockServiceMock := mocks.NewMockIMockService(mockCtrl)
 			defer mockCtrl.Finish()

@@ -16,7 +16,7 @@ import (
 )
 
 type MockController struct {
-	MockService service.IMockService
+	MockService service.MockService
 }
 
 func (controller *MockController) Execute(context *gin.Context) {

@@ -93,19 +93,18 @@ func (theLogger *log) GetMessage(message string, args ...interface{}) string {
 }
 
 func newRequestID() string {
-	id := ""
+	requestID := ""
 	logID, err := uuid.NewV4()
 
 	if err == nil {
-		id = logID.String()
+		requestID = logID.String()
 	}
 
-	return id
+	return requestID
 }
 
 func getClass(source interface{}) string {
-	t := reflect.TypeOf(source)
-	if t != nil {
+	if t := reflect.TypeOf(source); t != nil {
 		return t.String()
 	}
 
@@ -115,20 +114,20 @@ func getClass(source interface{}) string {
 func (theLogger *log) getTags(source interface{}, tags map[string]string) []string {
 	var res []string
 
-	i := 0
+	index := 0
 
 	if len(tags) == 0 {
 		res = make([]string, minTags)
 	} else {
 		res = make([]string, len(tags)+minTags)
 		for key, value := range tags {
-			res[i] = fmt.Sprintf("%s:%v", key, value)
-			i++
+			res[index] = fmt.Sprintf("%s:%v", key, value)
+			index++
 		}
 	}
 
-	res[i] = fmt.Sprintf("TRACKING_ID:%v", theLogger.trackingID)
-	res[i+1] = fmt.Sprintf("Class:%v", getClass(source))
+	res[index] = fmt.Sprintf("TRACKING_ID:%v", theLogger.trackingID)
+	res[index+1] = fmt.Sprintf("Class:%v", getClass(source))
 
 	return res
 }

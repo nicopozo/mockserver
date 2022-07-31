@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -14,13 +13,17 @@ import (
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/service"
 	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
+	"github.com/stretchr/testify/assert"
 )
 
+//nolint:funlen,nosnakecase
 func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
+	t.Parallel()
+
 	requestMock, _ := http.NewRequest("PUT", "url", strings.NewReader("body"))
 
 	type args struct {
-		ctx     context.Context
+		ctx     context.Context //nolint:containedctx
 		request *http.Request
 		path    string
 		body    string
@@ -79,15 +82,17 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 				body:    "body",
 			},
 			want:             nil,
-			wantedErr:        fmt.Errorf("error searching rule, %w", errors.New("error in service")),
+			wantedErr:        fmt.Errorf("error searching rule, %w", errors.New("error in service")), //nolint:goerr113
 			ruleServiceRule:  nil,
-			ruleServiceErr:   errors.New("error in service"),
+			ruleServiceErr:   errors.New("error in service"), //nolint:goerr113
 			ruleServiceTimes: 1,
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
 			defer mockCtrl.Finish()
@@ -95,28 +100,18 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 			ruleServiceMock.EXPECT().SearchByMethodAndPath(tt.args.ctx, tt.args.request.Method, tt.args.path).
 				Return(tt.ruleServiceRule, tt.ruleServiceErr).Times(tt.ruleServiceTimes)
 
-			srv := service.MockService{
-				RuleService: ruleServiceMock,
-			}
+			srv, err := service.NewMockService(ruleServiceMock)
+			assert.Nil(t, err)
 
 			got, err := srv.SearchResponseForRequest(tt.args.ctx, tt.args.request, tt.args.path, tt.args.body)
-			if (err != nil) != (tt.wantedErr != nil) {
-				t.Errorf("SearchResponseForMethodAndPath() error = %v, wantedErr %v", err, tt.wantedErr != nil)
-
-				return
-			}
-
 			if tt.wantedErr != nil {
-				if !reflect.DeepEqual(tt.wantedErr, err) {
-					t.Fatalf("Error is not the expected. Expected: %v - Actual: %v", tt.wantedErr, err)
-				}
+				assert.Equal(t, tt.wantedErr, err)
 
 				return
 			}
 
-			if !reflect.DeepEqual(tt.want, got) {
-				t.Errorf("Response is not the expected. Expected: %v - Actual: %v", tt.want, got)
-			}
+			assert.Nil(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

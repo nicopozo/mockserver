@@ -19,7 +19,10 @@ import (
 	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
 )
 
-func TestRuleController_Create(t *testing.T) {
+//nolint:funlen
+func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
+	t.Parallel()
+
 	tests := []struct {
 		name             string
 		requestFile      string
@@ -63,7 +66,7 @@ func TestRuleController_Create(t *testing.T) {
 			wantedErr: &model.Error{
 				Status:  http.StatusBadRequest,
 				Error:   "Bad Request",
-				Message: "Invalid JSON. error unmarshalling body, unexpected end of JSON input",
+				Message: "Invalid JSON. error unmarshalling body, error unmarshalling reader unexpected end of JSON input",
 				ErrorCause: []model.ErrorCause{
 					{
 						Code:        1001,
@@ -95,7 +98,7 @@ func TestRuleController_Create(t *testing.T) {
 		{
 			name:        "Should return 500 when service returns unexpected error",
 			requestFile: "../utils/test/mocks/json/create_rule_request.json",
-			serviceErr:  errors.New("error in service"),
+			serviceErr:  errors.New("error in service"), //nolint:goerr113
 			wantStatus:  http.StatusInternalServerError,
 			want:        nil,
 			wantedErr: &model.Error{
@@ -112,8 +115,11 @@ func TestRuleController_Create(t *testing.T) {
 			serviceCallTimes: 1,
 		},
 	}
-	for _, tt := range tests {
+
+	for _, tt := range tests { // nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
 			defer mockCtrl.Finish()
@@ -170,7 +176,10 @@ func TestRuleController_Create(t *testing.T) {
 	}
 }
 
-func TestRuleController_Get(t *testing.T) {
+//nolint:funlen
+func TestRuleController_Get(t *testing.T) { //nolint:nosnakecase
+	t.Parallel()
+
 	tests := []struct {
 		name             string
 		serviceErr       error
@@ -208,7 +217,7 @@ func TestRuleController_Get(t *testing.T) {
 
 		{
 			name:       "Should return 500 when service returns error",
-			serviceErr: errors.New("error in service"),
+			serviceErr: errors.New("error in service"), //nolint:goerr113
 			want:       nil,
 			wantStatus: http.StatusInternalServerError,
 			wantedErr: &model.Error{
@@ -245,8 +254,11 @@ func TestRuleController_Get(t *testing.T) {
 			key:              "myapp_get_4016913947",
 		},
 	}
-	for _, tt := range tests {
+
+	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
 			defer mockCtrl.Finish()
@@ -591,7 +603,10 @@ func TestRuleController_Search(t *testing.T) {
 	}
 }
 
+//nolint:nosnakecase,funlen
 func TestRuleController_Delete(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name             string
 		serviceErr       error
@@ -611,7 +626,7 @@ func TestRuleController_Delete(t *testing.T) {
 
 		{
 			name:       "Should return 500 when service returns error",
-			serviceErr: errors.New("error in service"),
+			serviceErr: errors.New("error in service"), //nolint:goerr113
 			wantStatus: http.StatusInternalServerError,
 			wantedErr: &model.Error{
 				Status:  http.StatusInternalServerError,
@@ -636,8 +651,11 @@ func TestRuleController_Delete(t *testing.T) {
 			key:              "myapp_get_4016913947",
 		},
 	}
-	for _, tt := range tests {
+
+	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
 			defer mockCtrl.Finish()

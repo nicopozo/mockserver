@@ -40,7 +40,7 @@ type RuleStatus struct {
 }
 
 type ESRule struct {
-	Source *Rule `json:"_source"`
+	Source *Rule `json:"_source"` //nolint:tagliatelle
 }
 
 type ESSearchResult struct {

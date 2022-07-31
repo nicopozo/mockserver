@@ -13,11 +13,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// nolint:funlen,nosnakecase,paralleltest
 func Test_ruleFileRepository_Get(t *testing.T) {
 	type args struct {
-		ctx context.Context
+		ctx context.Context //nolint:containedctx
 		key string
 	}
+
 	tests := []struct {
 		name      string
 		args      args
@@ -61,10 +63,11 @@ func Test_ruleFileRepository_Get(t *testing.T) {
 			wantedErr: ruleserrors.RuleNotFoundError{Message: "no rule found with key: not-found-id"},
 		},
 	}
-	for _, tt := range tests {
+
+	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
 			name := getMocksFile()
-			defer func(fileName string) { _ = os.Remove("mocks.json") }(name)
+			defer func(fileName string) { _ = os.Remove(fileName) }(name)
 
 			fileRepository, err := repository.NewRuleFileRepository(name)
 			if assert.Nil(t, err) {
@@ -79,16 +82,16 @@ func Test_ruleFileRepository_Get(t *testing.T) {
 
 				assert.Equal(t, tt.want, got)
 			}
-
 		})
 	}
 }
 
 func getMocksFile() string {
-	dest, err := os.OpenFile("mocks.json", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	dest, err := os.OpenFile("mocks.json", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600) //nolint:nosnakecase
 	if err != nil {
 		panic(err)
 	}
+
 	defer func(f *os.File) { _ = f.Close() }(dest)
 
 	originalFile, err := os.Open("../utils/test/mocks/json/mocks.json")

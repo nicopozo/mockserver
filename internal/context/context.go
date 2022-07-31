@@ -9,13 +9,13 @@ import (
 
 type loggerKey struct{}
 
-func New(c *gin.Context) context.Context {
-	trackingID := c.GetHeader("x-tracking-id")
+func New(ctx *gin.Context) context.Context {
+	trackingID := ctx.GetHeader("x-tracking-id")
 	if len(trackingID) == 0 {
-		return context.WithValue(c.Request.Context(), loggerKey{}, log.DefaultLogger())
+		return context.WithValue(ctx.Request.Context(), loggerKey{}, log.DefaultLogger())
 	}
 
-	return context.WithValue(c.Request.Context(), loggerKey{}, log.NewLogger(trackingID))
+	return context.WithValue(ctx.Request.Context(), loggerKey{}, log.NewLogger(trackingID))
 }
 
 func Logger(ctx context.Context) log.ILogger {

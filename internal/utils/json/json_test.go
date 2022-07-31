@@ -15,6 +15,8 @@ type dto struct {
 }
 
 func TestUnmarshal(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		body io.Reader
 	}
@@ -33,8 +35,10 @@ func TestUnmarshal(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := &dto{}
 
 			if err := jsonutils.Unmarshal(tt.args.body, result); (err != nil) != tt.wantErr {
@@ -49,6 +53,8 @@ func TestUnmarshal(t *testing.T) {
 }
 
 func TestMarshal(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		model interface{}
 	}
@@ -65,8 +71,9 @@ func TestMarshal(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range tests { //nolint:paralleltest
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			if got := jsonutils.Marshal(tt.args.model); got != tt.want {
 				t.Errorf("Marshal() = %v, want %v", got, tt.want)
 			}

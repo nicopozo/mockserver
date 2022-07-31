@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/nicopozo/mockserver/docs"
@@ -10,7 +11,13 @@ import (
 )
 
 func mapRoutes(router *gin.Engine) {
-	router.Static("/mock-service/admin", "web/dist")
+	webDist := "../../web/dist"
+
+	if ginMode := os.Getenv("GIN_MODE"); ginMode == "release" {
+		webDist = "web/dist"
+	}
+
+	router.Static("/mock-service/admin", webDist)
 
 	applicationContainer := container{}
 

@@ -10,36 +10,69 @@ import (
 )
 
 type container struct {
-	ruleController controller.RuleController
-	mockController controller.MockController
+	mockController *controller.MockController
+	ruleController *controller.RuleController
+
+	mockService service.MockService
+	ruleService service.RuleService
+
 	ruleRepository repository.IRuleRepository
 }
 
-func (c *container) RuleController() controller.RuleController {
-	ruleRepository := c.RuleRepository()
-	ruleService := &service.RuleService{
-		RuleRepository: ruleRepository,
-	}
-	ruleController := controller.RuleController{
-		RuleService: ruleService,
+func (c *container) MockController() *controller.MockController {
+	if c.mockController == nil {
+		mockService := c.MockService()
+		mockController := &controller.MockController{
+			MockService: mockService,
+		}
+
+		c.mockController = mockController
 	}
 
-	return ruleController
+	return c.mockController
 }
 
-func (c *container) MockController() controller.MockController {
-	ruleRepository := c.RuleRepository()
-	ruleService := &service.RuleService{
-		RuleRepository: ruleRepository,
-	}
-	mockService := &service.MockService{
-		RuleService: ruleService,
-	}
-	mockController := controller.MockController{
-		MockService: mockService,
+func (c *container) RuleController() *controller.RuleController {
+	if c.ruleController == nil {
+		ruleService := c.RuleService()
+		ruleController := &controller.RuleController{
+			RuleService: ruleService,
+		}
+
+		c.ruleController = ruleController
 	}
 
-	return mockController
+	return c.ruleController
+}
+
+func (c *container) MockService() service.MockService {
+	if c.mockService == nil {
+		ruleService := c.RuleService()
+
+		mockService, err := service.NewMockService(ruleService)
+		if err != nil {
+			panic("error creating Mock Service")
+		}
+
+		c.mockService = mockService
+	}
+
+	return c.mockService
+}
+
+func (c *container) RuleService() service.RuleService {
+	if c.ruleService == nil {
+		ruleRepository := c.RuleRepository()
+
+		ruleService, err := service.NewRuleService(ruleRepository)
+		if err != nil {
+			panic("error creating Rule Service")
+		}
+
+		c.ruleService = ruleService
+	}
+
+	return c.ruleService
 }
 
 func (c *container) RuleRepository() repository.IRuleRepository {
@@ -78,5 +111,4 @@ func (c *container) RuleRepository() repository.IRuleRepository {
 	}
 
 	return c.ruleRepository
-
 }

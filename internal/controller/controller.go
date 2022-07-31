@@ -21,7 +21,7 @@ func getPagingFromRequest(request *http.Request) (*model.Paging, error) {
 
 	offset := request.URL.Query().Get("offset")
 	if offset != "" {
-		o, err := strconv.ParseInt(offset, 10, 32)
+		o, err := strconv.ParseInt(offset, 10, 32) //nolint:gomnd
 		if err != nil {
 			return nil, fmt.Errorf("error parsing paging offset, %w", err)
 		}
@@ -31,7 +31,7 @@ func getPagingFromRequest(request *http.Request) (*model.Paging, error) {
 
 	limit := request.URL.Query().Get("limit")
 	if limit != "" {
-		l, err := strconv.ParseInt(limit, 10, 32)
+		l, err := strconv.ParseInt(limit, 10, 32) //nolint:gomnd
 		if err != nil {
 			return nil, fmt.Errorf("error parsing paging limit, %w", err)
 		}

@@ -43,7 +43,7 @@ func NewRuleFileRepository(filePath string) (IRuleRepository, error) {
 		}
 	}
 
-	defer func(f *os.File) { _ = file.Close() }(file)
+	defer func(f *os.File) { _ = f.Close() }(file)
 
 	repo.rules = make([]model.Rule, 0)
 
@@ -146,26 +146,28 @@ func (repository *ruleFileRepository) Search(ctx context.Context, params map[str
 	return ruleList, nil
 }
 
+//nolint:cyclop
 func applies(rule model.Rule, params map[string]any) bool {
 	result := true
 
 	for key, value := range params {
-		v := strings.ToLower(fmt.Sprintf("%v", value))
+		formatedValue := strings.ToLower(fmt.Sprintf("%formatedValue", value))
+
 		switch key {
 		case "application":
-			result = result && strings.Contains(strings.ToLower(rule.Application), v)
+			result = result && strings.Contains(strings.ToLower(rule.Application), formatedValue)
 		case "status":
-			result = result && strings.Contains(strings.ToLower(rule.Status), v)
+			result = result && strings.Contains(strings.ToLower(rule.Status), formatedValue)
 		case "method":
-			result = result && strings.Contains(strings.ToLower(rule.Method), v)
+			result = result && strings.Contains(strings.ToLower(rule.Method), formatedValue)
 		case "strategy":
-			result = result && strings.Contains(strings.ToLower(rule.Strategy), v)
+			result = result && strings.Contains(strings.ToLower(rule.Strategy), formatedValue)
 		case "path":
-			result = result && strings.Contains(strings.ToLower(rule.Path), v)
+			result = result && strings.Contains(strings.ToLower(rule.Path), formatedValue)
 		case "name":
-			result = result && strings.Contains(strings.ToLower(rule.Name), v)
+			result = result && strings.Contains(strings.ToLower(rule.Name), formatedValue)
 		case "key":
-			result = result && strings.Contains(strings.ToLower(rule.Key), v)
+			result = result && strings.Contains(strings.ToLower(rule.Key), formatedValue)
 		}
 	}
 
@@ -179,7 +181,7 @@ func (repository *ruleFileRepository) Delete(ctx context.Context, key string) er
 
 	for index := range repository.rules {
 		if repository.rules[index].Key == key {
-			result := append(repository.rules[0:index], repository.rules[index+1:len(repository.rules)]...)
+			result := append(repository.rules[0:index], repository.rules[index+1:len(repository.rules)]...) //nolint:gocritic
 			repository.rules = result
 		}
 	}
@@ -195,7 +197,7 @@ func (repository *ruleFileRepository) SearchByMethodAndPath(ctx context.Context,
 
 	for _, rule := range repository.rules {
 		expr := CreateExpression(rule.Path)
-		var regex = regexp.MustCompile(expr)
+		regex := regexp.MustCompile(expr)
 
 		if rule.Method == method && rule.Status == model.RuleStatusEnabled && regex.MatchString(path) {
 			return &rule, nil
@@ -213,7 +215,7 @@ func (repository *ruleFileRepository) SaveFile() error {
 		return fmt.Errorf("error saving file: %s - %w", repository.filePath, err)
 	}
 
-	defer func(f *os.File) { _ = file.Close() }(file)
+	defer func(f *os.File) { _ = f.Close() }(file)
 
 	content := jsonutils.Marshal(repository.rules)
 

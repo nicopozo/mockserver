@@ -15,7 +15,12 @@ func Unmarshal(body io.Reader, model interface{}) error {
 		return fmt.Errorf("error reading body, %w", err)
 	}
 
-	return json.Unmarshal(jsonReq, &model)
+	err = json.Unmarshal(jsonReq, &model)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling reader %w", err)
+	}
+
+	return nil
 }
 
 func Marshal(model interface{}) string {

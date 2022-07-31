@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -14,12 +13,16 @@ import (
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/service"
 	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
+	"github.com/stretchr/testify/assert"
 )
 
+//nolint:funlen,maintidx,nosnakecase
 func TestRuleService_Save(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		rule *model.Rule
-		ctx  context.Context
+		ctx  context.Context //nolint:containedctx
 	}
 
 	tests := []struct {
@@ -176,8 +179,8 @@ func TestRuleService_Save(t *testing.T) {
 				},
 			},
 			want:             nil,
-			wantedErr:        errors.New("error saving rule"),
-			repositoryErr:    errors.New("error saving rule"),
+			wantedErr:        fmt.Errorf("error creating rule - %w", errors.New("error saving rule")), //nolint:goerr113
+			repositoryErr:    errors.New("error saving rule"),                                         //nolint:goerr113
 			serviceCallTimes: 1,
 		},
 		{
@@ -404,9 +407,10 @@ func TestRuleService_Save(t *testing.T) {
 			serviceCallTimes: 0,
 		},
 	}
-
-	for _, tt := range tests {
+	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			mockCtrl := gomock.NewController(t)
 			ruleRepositoryMock := mocks.NewMockIRuleRepository(mockCtrl)
 			defer mockCtrl.Finish()
@@ -422,33 +426,29 @@ func TestRuleService_Save(t *testing.T) {
 					return rule, nil
 				}).Times(tt.serviceCallTimes)
 
-			ruleService := &service.RuleService{RuleRepository: ruleRepositoryMock}
+			ruleService, err := service.NewRuleService(ruleRepositoryMock)
+			assert.Nil(t, err)
 
 			got, err := ruleService.Save(tt.args.ctx, tt.args.rule)
-			if (err != nil) != (tt.wantedErr != nil) {
-				t.Errorf("Save() error = %v, wantErr %v", err, tt.wantedErr != nil)
-
-				return
-			}
-
 			if tt.wantedErr != nil {
-				if !reflect.DeepEqual(tt.wantedErr, err) {
-					t.Fatalf("Error is not the expected. Expected: %v - Actual: %v", tt.wantedErr, err)
-				}
+				assert.Equal(t, tt.wantedErr, err)
 
 				return
 			}
 
-			if !reflect.DeepEqual(tt.want, got) {
-				t.Errorf("Rule is not the expected. Expected: %v - Actual: %v", tt.want, got)
-			}
+			assert.Nil(t, err)
+
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
+//nolint:funlen,nosnakecase
 func TestRuleService_Get(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
-		ctx context.Context
+		ctx context.Context //nolint:containedctx
 		key string
 	}
 
@@ -512,14 +512,14 @@ func TestRuleService_Get(t *testing.T) {
 				key: "key123",
 			},
 			want:             nil,
-			wantedErr:        fmt.Errorf("error getting rule, %w", errors.New("error getting rule")),
-			repositoryErr:    errors.New("error getting rule"),
+			wantedErr:        fmt.Errorf("error getting rule, %w", errors.New("error getting rule")), //nolint:goerr113
+			repositoryErr:    errors.New("error getting rule"),                                       //nolint:goerr113
 			repositoryRule:   nil,
 			serviceCallTimes: 1,
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			ruleRepositoryMock := mocks.NewMockIRuleRepository(mockCtrl)
@@ -528,33 +528,28 @@ func TestRuleService_Get(t *testing.T) {
 			ruleRepositoryMock.EXPECT().Get(gomock.Any(), tt.args.key).
 				Return(tt.repositoryRule, tt.repositoryErr).Times(tt.serviceCallTimes)
 
-			ruleService := &service.RuleService{RuleRepository: ruleRepositoryMock}
+			ruleService, err := service.NewRuleService(ruleRepositoryMock)
+			assert.Nil(t, err)
 
 			got, err := ruleService.Get(tt.args.ctx, tt.args.key)
-			if (err != nil) != (tt.wantedErr != nil) {
-				t.Errorf("Save() error = %v, wantErr %v", err, tt.wantedErr != nil)
-
-				return
-			}
-
 			if tt.wantedErr != nil {
-				if !reflect.DeepEqual(tt.wantedErr, err) {
-					t.Fatalf("Error is not the expected. Expected: %v - Actual: %v", tt.wantedErr, err)
-				}
+				assert.Equal(t, tt.wantedErr, err)
 
 				return
 			}
 
-			if !reflect.DeepEqual(tt.want, got) {
-				t.Errorf("Rule is not the expected. Expected: %v - Actual: %v", tt.want, got)
-			}
+			assert.Nil(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
+//nolint:funlen,nosnakecase
 func TestRuleService_Delete(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
-		ctx context.Context
+		ctx context.Context //nolint:containedctx
 		key string
 	}
 
@@ -600,36 +595,33 @@ func TestRuleService_Delete(t *testing.T) {
 				key: "key123",
 			},
 			want:             nil,
-			wantedErr:        errors.New("error deleting rule"),
-			repositoryErr:    errors.New("error deleting rule"),
+			wantedErr:        fmt.Errorf("error deleting rule - %w", errors.New("error deleting rule")), //nolint:goerr113
+			repositoryErr:    errors.New("error deleting rule"),                                         //nolint:goerr113
 			serviceCallTimes: 1,
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			mockCtrl := gomock.NewController(t)
 			ruleRepositoryMock := mocks.NewMockIRuleRepository(mockCtrl)
 			defer mockCtrl.Finish()
 
 			ruleRepositoryMock.EXPECT().Delete(gomock.Any(), tt.args.key).Return(tt.repositoryErr).Times(tt.serviceCallTimes)
 
-			ruleService := &service.RuleService{RuleRepository: ruleRepositoryMock}
+			ruleService, err := service.NewRuleService(ruleRepositoryMock)
+			assert.Nil(t, err)
 
-			err := ruleService.Delete(tt.args.ctx, tt.args.key)
-			if (err != nil) != (tt.wantedErr != nil) {
-				t.Errorf("Save() error = %v, wantErr %v", err, tt.wantedErr != nil)
-
-				return
-			}
-
+			err = ruleService.Delete(tt.args.ctx, tt.args.key)
 			if tt.wantedErr != nil {
-				if !reflect.DeepEqual(tt.wantedErr, err) {
-					t.Fatalf("Error is not the expected. Expected: %v - Actual: %v", tt.wantedErr, err)
-				}
+				assert.Equal(t, tt.wantedErr, err)
 
 				return
 			}
+
+			assert.Nil(t, err)
 		})
 	}
 }

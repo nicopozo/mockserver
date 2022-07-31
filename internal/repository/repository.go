@@ -7,8 +7,7 @@ import (
 )
 
 func closeBody(body io.ReadCloser, repository IRuleRepository, logger log.ILogger) {
-	err := body.Close()
-	if err != nil {
+	if err := body.Close(); err != nil {
 		logger.Error(repository, nil, err, "error closing response body")
 	}
 }

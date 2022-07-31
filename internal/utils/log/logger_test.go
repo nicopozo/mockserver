@@ -6,7 +6,10 @@ import (
 	"github.com/nicopozo/mockserver/internal/utils/log"
 )
 
+//nolint:nosnakecase,funlen
 func Test_log_getMessage(t *testing.T) {
+	t.Parallel()
+
 	type fields struct {
 		trackingID string
 	}
@@ -59,8 +62,11 @@ func Test_log_getMessage(t *testing.T) {
 			want: "with one string argument and 1 int value message",
 		},
 	}
-	for _, tt := range tests {
+
+	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			theLogger := log.NewLogger(tt.fields.trackingID)
 			if got := theLogger.GetMessage(tt.args.message, tt.args.args...); got != tt.want {
 				t.Errorf("log.GetMessage() = %v, want %v", got, tt.want)

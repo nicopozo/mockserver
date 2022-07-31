@@ -16,7 +16,6 @@ const (
 	NotImplementedError       = 1031
 )
 
-//nolint:gofumpt
 var (
 	//nolint:gochecknoglobals
 	causeMap = map[int]causeMapping{
@@ -40,7 +39,7 @@ type Error struct {
 	Message    string       `json:"message" example:"no rule found with key: banks_get_55603295"`
 	Error      string       `json:"error" example:"Not Found"`
 	Status     int          `json:"status" example:"404"`
-	ErrorCause []ErrorCause `json:"cause"`
+	ErrorCause []ErrorCause `json:"cause"` //nolint:tagliatelle
 }
 
 func NewError(causeCode int64, message string, args ...interface{}) Error {

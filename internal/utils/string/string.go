@@ -16,7 +16,7 @@ func ArraysContains(array []string, str string) bool {
 
 func Hash(s string) uint32 {
 	hash := fnv.New32a()
-	hash.Write([]byte(s)) //nolint:errcheck
+	_, _ = hash.Write([]byte(s))
 
 	return hash.Sum32()
 }
