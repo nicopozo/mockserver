@@ -22,8 +22,14 @@ By default, the application will look for mocks in the file set in `MOCKS_FILE` 
 docker run -v /tmp:/tmp -e MOCKS_FILE=/tmp/mocks.json -p 8080:8080 --name mock-service mock-service
 ```
 
+Alternatively, Mock Service can be run with MySQL database:
+```sh
+docker run -e MOCKS_DATASOURCE=mysql -e DB_USER={{user}} -e DB_PASSWORD={{password}} - DB_HOST={{host}} -e DB_PORT={{port}} -p 8080:8080 --name mock-service mock-service
+```
+Database must contain a schema `mockserver` with required tables. Follow[`this link`](https://github.com/nicopozo/mockserver/blob/master/scripts/init.sql "Init sql script") to get the creation script.
+
 ### By compiling with Go
-Alternatively, we can compile and run this app without the need of a Dockers installation. In order to compile this application, we need Go 1.18 installed.
+Mock Service can be compiled and run without the need of a Dockers installation. In order to compile this application, we need Go 1.18 installed.
 
 ```sh
 cd cmd/mocks 
@@ -41,6 +47,18 @@ Now, simply run the application:
 ```sh
 ./mocks
 ```
+
+In order to use the application with MySQL database instead of a file, set these environment variables before running the app.
+
+```sh
+export MOCKS_DATASOURCE=mysql
+export DB_USER={{user}}
+export DB_PASSWORD={{password}} 
+export DB_HOST={{host}}
+export DB_PORT={{port}}
+```
+
+and then run the app witj `./mocks` command
 
 ### Consuming web service
 
