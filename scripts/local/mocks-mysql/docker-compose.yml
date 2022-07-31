@@ -1,0 +1,32 @@
+version: "3.0"
+
+services:
+  db:
+    image: mysql
+    container_name: mysql-container
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+    ports:
+      - '3306:3306'
+    tty: true
+    command: --init-file /data/application/init.sql
+    volumes:
+      - ../../init.sql:/data/application/init.sql
+    networks:
+      - mocks-network
+  mock-service:
+    container_name: mock-service
+    build: ../../../.
+    environment:
+      - MOCKS_DATASOURCE=mysql
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_HOST=mysql-container
+      - DB_PORT=3306
+    ports:
+      - '8080:8080'
+    networks:
+      - mocks-network
+networks:
+  mocks-network:
+    driver: bridge

@@ -11,12 +11,12 @@ services:
     tty: true
     command: --init-file /data/application/init.sql
     volumes:
-      - ./init.sql:/data/application/init.sql
+      - ../../init.sql:/data/application/init.sql
     networks:
       - mocks-network
   mock-service:
+    image: nicopozo/mock-service
     container_name: mock-service
-    build: ../../.
     environment:
       - MOCKS_DATASOURCE=mysql
       - DB_USER=root
