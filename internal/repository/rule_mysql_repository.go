@@ -24,32 +24,32 @@ func NewRuleMySQLRepository(db Database) IRuleRepository {
 }
 
 type RuleRow struct {
-	Key         string `database:"key"`
-	Application string `database:"application"`
-	Name        string `database:"name"`
-	Path        string `database:"path"`
-	Strategy    string `database:"strategy"`
-	Method      string `database:"method"`
-	Status      string `database:"status"`
-	Pattern     string `database:"pattern"`
+	Key         string `db:"key"`
+	Application string `db:"application"`
+	Name        string `db:"name"`
+	Path        string `db:"path"`
+	Strategy    string `db:"strategy"`
+	Method      string `db:"method"`
+	Status      string `db:"status"`
+	Pattern     string `db:"pattern"`
 }
 
 type VariableRow struct {
-	ID      int64  `database:"id"`
-	Type    string `database:"type"`
-	Name    string `database:"name"`
-	Key     string `database:"key"`
-	RuleKey string `database:"rule_key"`
+	ID      int64  `db:"id"`
+	Type    string `db:"type"`
+	Name    string `db:"name"`
+	Key     string `db:"key"`
+	RuleKey string `db:"rule_key"`
 }
 
 type ResponseRow struct {
-	ID          int64   `database:"id"`
-	Body        string  `database:"body"`
-	ContentType string  `database:"content_type"`
-	HTTPStatus  int     `database:"http_status"`
-	Delay       int     `database:"delay"`
-	Scene       *string `database:"scene"`
-	RuleKey     string  `database:"rule_key"`
+	ID          int64   `db:"id"`
+	Body        string  `db:"body"`
+	ContentType string  `db:"content_type"`
+	HTTPStatus  int     `db:"http_status"`
+	Delay       int     `db:"delay"`
+	Scene       *string `db:"scene"`
+	RuleKey     string  `db:"rule_key"`
 }
 
 func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
@@ -199,8 +199,7 @@ func (repository *ruleMySQLRepository) Get(ctx context.Context, key string) (*mo
 
 	var variables []VariableRow
 
-	query = `SELECT * FROM variables
-				WHERE rule_key = ?`
+	query = "SELECT id, type, name, `key`, rule_key FROM variables WHERE rule_key = ?"
 
 	err = repository.db.Select(&variables, query, key)
 
