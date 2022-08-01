@@ -4,9 +4,11 @@
 
 A simple mock server in Go.
 
-## How to use it
+## Installation
 
-### With Dockers
+### How to use it
+
+#### With Dockers
 
 Running this project with Dockers is the best and easiest option.
 
@@ -22,8 +24,14 @@ By default, the application will look for mocks in the file set in `MOCKS_FILE` 
 docker run -v /tmp:/tmp -e MOCKS_FILE=/tmp/mocks.json -p 8080:8080 --name mock-service mock-service
 ```
 
-### By compiling with Go
-Alternatively, we can compile and run this app without the need of a Dockers installation. In order to compile this application, we need Go 1.18 installed.
+Alternatively, Mock Service can be run with MySQL database:
+```sh
+docker run -e MOCKS_DATASOURCE=mysql -e DB_USER={{user}} -e DB_PASSWORD={{password}} - DB_HOST={{host}} -e DB_PORT={{port}} -p 8080:8080 --name mock-service mock-service
+```
+Database must contain a schema `mockserver` with required tables. Follow[`this link`](https://github.com/nicopozo/mockserver/blob/master/scripts/init.sql "Init sql script") to get the creation script.
+
+#### By compiling with Go
+Mock Service can be compiled and run without the need of a Dockers installation. In order to compile this application, we need Go 1.18 installed.
 
 ```sh
 cd cmd/mocks 
@@ -42,9 +50,21 @@ Now, simply run the application:
 ./mocks
 ```
 
+In order to use the application with MySQL database instead of a file, set these environment variables before running the app.
+
+```sh
+export MOCKS_DATASOURCE=mysql
+export DB_USER={{user}}
+export DB_PASSWORD={{password}} 
+export DB_HOST={{host}}
+export DB_PORT={{port}}
+```
+
+and then run the app witj `./mocks` command (run the [`init database script`](https://github.com/nicopozo/mockserver/blob/master/scripts/init.sql "Init sql script") before running the app).
+
 ### Consuming web service
 
-Create a new mock
+#### Create a new mock
 
 ```sh
 curl --location --request POST 'localhost:8080/mock-service/rules' \
@@ -75,7 +95,7 @@ curl --location --request POST 'localhost:8080/mock-service/rules' \
 }'
 ```
 
-Execute the mock for the path set in the previously created mock:
+#### Execute the mock for the path set in the previously created mock
 ```sh
 curl --location --request GET 'http://localhost:8080/mock-service/mock/users/123'
 ```
