@@ -6,8 +6,6 @@ A simple mock server in Go.
 
 ## Installation
 
-### How to use it
-
 #### With Dockers
 
 Running this project with Dockers is the best and easiest option.
@@ -62,7 +60,7 @@ export DB_PORT={{port}}
 
 and then run the app witj `./mocks` command (run the [`init database script`](https://github.com/nicopozo/mockserver/blob/master/scripts/init.sql "Init sql script") before running the app).
 
-### Consuming web service
+## How to use it
 
 #### Create a new mock
 
