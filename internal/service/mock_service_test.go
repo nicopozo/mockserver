@@ -54,13 +54,13 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 			},
 			wantedErr: nil,
 			ruleServiceRule: &model.Rule{
-				Key:         "key123",
-				Application: "myapp",
-				Name:        "test_mock",
-				Path:        "/test",
-				Strategy:    "normal",
-				Method:      "PUT",
-				Status:      "enabled",
+				Key:      "key123",
+				Group:    "myapp",
+				Name:     "test_mock",
+				Path:     "/test",
+				Strategy: "normal",
+				Method:   "PUT",
+				Status:   "enabled",
 				Responses: []model.Response{
 					{
 						Body:        "{\"balance\":5000}",

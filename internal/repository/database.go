@@ -18,7 +18,6 @@ const (
 	maxLifeTime        = 100 * time.Millisecond
 )
 
-//go:generate mockgen -source=client_db.go -destination=../utils/test/mocks/client_db_mock.go -package=mocks
 //go:generate mockgen -destination=../utils/test/mocks/sql_result_mock.go -package=mocks database/sql Result
 
 //nolint:gochecknoglobals

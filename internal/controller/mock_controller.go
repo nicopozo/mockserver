@@ -30,7 +30,7 @@ func (controller *MockController) Execute(context *gin.Context) {
 
 	response, err := controller.MockService.SearchResponseForRequest(reqContext, context.Request, path, reqBody)
 	if err != nil {
-		if (errors.As(err, &ruleserrors.RuleNotFoundError{})) {
+		if errors.As(err, &ruleserrors.RuleNotFoundError{}) {
 			logger.Debug(controller, nil, "No rule found for path: %v and method: %s",
 				path, context.Request.Method)
 
@@ -41,7 +41,7 @@ func (controller *MockController) Execute(context *gin.Context) {
 			return
 		}
 
-		if (errors.As(err, &ruleserrors.InvalidRulesError{})) {
+		if errors.As(err, &ruleserrors.InvalidRulesError{}) {
 			logger.Debug(controller, nil, "No rule found for path: %v and method: %s",
 				path, context.Request.Method)
 

@@ -38,13 +38,13 @@ func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
 			serviceErr:  nil,
 			wantStatus:  http.StatusCreated,
 			want: &model.Rule{
-				Key:         "myapp_get_4016913947",
-				Application: "myapp",
-				Name:        "get balance",
-				Path:        "/myapp/{user}/balance",
-				Strategy:    "normal",
-				Method:      "GET",
-				Status:      "enabled",
+				Key:      "myapp_get_4016913947",
+				Group:    "myapp",
+				Name:     "get balance",
+				Path:     "/myapp/{user}/balance",
+				Strategy: "normal",
+				Method:   "GET",
+				Status:   "enabled",
 				Responses: []model.Response{
 					{
 						Body:        "{\"balance\":5000}",
@@ -131,7 +131,7 @@ func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
 					}
 
 					rule.Method = strings.ToUpper(rule.Method)
-					rule.Key = fmt.Sprintf("%v_%v_%v", strings.ToLower(rule.Application),
+					rule.Key = fmt.Sprintf("%v_%v_%v", strings.ToLower(rule.Group),
 						strings.ToLower(rule.Method), stringutils.Hash(rule.Name))
 
 					return rule, nil
@@ -193,13 +193,13 @@ func TestRuleController_Get(t *testing.T) { //nolint:nosnakecase
 			name:       "Get Reconcilable successfully",
 			serviceErr: nil,
 			want: &model.Rule{
-				Key:         "myapp_get_4016913947",
-				Application: "myapp",
-				Name:        "get balance",
-				Path:        "/myapp/{user}/balance",
-				Strategy:    "normal",
-				Method:      "GET",
-				Status:      "enabled",
+				Key:      "myapp_get_4016913947",
+				Group:    "myapp",
+				Name:     "get balance",
+				Path:     "/myapp/{user}/balance",
+				Strategy: "normal",
+				Method:   "GET",
+				Status:   "enabled",
 				Responses: []model.Response{
 					{
 						Body:        "{\"balance\":5000}",
@@ -270,13 +270,13 @@ func TestRuleController_Get(t *testing.T) { //nolint:nosnakecase
 					}
 
 					result := &model.Rule{
-						Key:         "myapp_get_4016913947",
-						Application: "myapp",
-						Name:        "get balance",
-						Path:        "/myapp/{user}/balance",
-						Strategy:    "normal",
-						Method:      "GET",
-						Status:      "enabled",
+						Key:      "myapp_get_4016913947",
+						Group:    "myapp",
+						Name:     "get balance",
+						Path:     "/myapp/{user}/balance",
+						Strategy: "normal",
+						Method:   "GET",
+						Status:   "enabled",
 						Responses: []model.Response{
 							{
 								Body:        "{\"balance\":5000}",
@@ -350,13 +350,13 @@ func TestRuleController_Search(t *testing.T) {
 				},
 				Results: []*model.Rule{
 					{
-						Key:         "myapp_get_4016913947",
-						Application: "myapp",
-						Name:        "get balance",
-						Path:        "/myapp/{user}/balance",
-						Strategy:    "normal",
-						Method:      "GET",
-						Status:      "enabled",
+						Key:      "myapp_get_4016913947",
+						Group:    "myapp",
+						Name:     "get balance",
+						Path:     "/myapp/{user}/balance",
+						Strategy: "normal",
+						Method:   "GET",
+						Status:   "enabled",
 						Responses: []model.Response{
 							{
 								Body:        "{\"balance\":5000}",
@@ -367,13 +367,13 @@ func TestRuleController_Search(t *testing.T) {
 						},
 					},
 					{
-						Key:         "myapp_get_123123",
-						Application: "myapp",
-						Name:        "get user",
-						Path:        "/myapp/{user}",
-						Strategy:    "normal",
-						Method:      "GET",
-						Status:      "enabled",
+						Key:      "myapp_get_123123",
+						Group:    "myapp",
+						Name:     "get user",
+						Path:     "/myapp/{user}",
+						Strategy: "normal",
+						Method:   "GET",
+						Status:   "enabled",
 						Responses: []model.Response{
 							{
 								Body:        "{\"user\":\"nico\"}",
@@ -401,13 +401,13 @@ func TestRuleController_Search(t *testing.T) {
 				},
 				Results: []*model.Rule{
 					{
-						Key:         "myapp_get_4016913947",
-						Application: "myapp",
-						Name:        "get balance",
-						Path:        "/myapp/{user}/balance",
-						Strategy:    "normal",
-						Method:      "GET",
-						Status:      "enabled",
+						Key:      "myapp_get_4016913947",
+						Group:    "myapp",
+						Name:     "get balance",
+						Path:     "/myapp/{user}/balance",
+						Strategy: "normal",
+						Method:   "GET",
+						Status:   "enabled",
 						Responses: []model.Response{
 							{
 								Body:        "{\"balance\":5000}",
@@ -418,13 +418,13 @@ func TestRuleController_Search(t *testing.T) {
 						},
 					},
 					{
-						Key:         "myapp_get_123123",
-						Application: "myapp",
-						Name:        "get user",
-						Path:        "/myapp/{user}",
-						Strategy:    "normal",
-						Method:      "GET",
-						Status:      "enabled",
+						Key:      "myapp_get_123123",
+						Group:    "myapp",
+						Name:     "get user",
+						Path:     "/myapp/{user}",
+						Strategy: "normal",
+						Method:   "GET",
+						Status:   "enabled",
 						Responses: []model.Response{
 							{
 								Body:        "{\"user\":\"nico\"}",
@@ -525,13 +525,13 @@ func TestRuleController_Search(t *testing.T) {
 						},
 						Results: []*model.Rule{
 							{
-								Key:         "myapp_get_4016913947",
-								Application: "myapp",
-								Name:        "get balance",
-								Path:        "/myapp/{user}/balance",
-								Strategy:    "normal",
-								Method:      "GET",
-								Status:      "enabled",
+								Key:      "myapp_get_4016913947",
+								Group:    "myapp",
+								Name:     "get balance",
+								Path:     "/myapp/{user}/balance",
+								Strategy: "normal",
+								Method:   "GET",
+								Status:   "enabled",
 								Responses: []model.Response{
 									{
 										Body:        "{\"balance\":5000}",
@@ -542,13 +542,13 @@ func TestRuleController_Search(t *testing.T) {
 								},
 							},
 							{
-								Key:         "myapp_get_123123",
-								Application: "myapp",
-								Name:        "get user",
-								Path:        "/myapp/{user}",
-								Strategy:    "normal",
-								Method:      "GET",
-								Status:      "enabled",
+								Key:      "myapp_get_123123",
+								Group:    "myapp",
+								Name:     "get user",
+								Path:     "/myapp/{user}",
+								Strategy: "normal",
+								Method:   "GET",
+								Status:   "enabled",
 								Responses: []model.Response{
 									{
 										Body:        "{\"user\":\"nico\"}",

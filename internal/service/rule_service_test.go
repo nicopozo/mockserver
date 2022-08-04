@@ -38,12 +38,12 @@ func TestRuleService_Save(t *testing.T) {
 			args: args{
 				ctx: mockscontext.Background(),
 				rule: &model.Rule{
-					Application: "myapp",
-					Name:        "test_mock",
-					Path:        "/test",
-					Strategy:    "normal",
-					Method:      "put",
-					Status:      "enabled",
+					Group:    "myapp",
+					Name:     "test_mock",
+					Path:     "/test",
+					Strategy: "normal",
+					Method:   "put",
+					Status:   "enabled",
 					Responses: []model.Response{
 						{
 							Body:        "{\"balance\":5000}",
@@ -55,13 +55,13 @@ func TestRuleService_Save(t *testing.T) {
 				},
 			},
 			want: &model.Rule{
-				Key:         "the_key",
-				Application: "myapp",
-				Name:        "test_mock",
-				Path:        "/test",
-				Strategy:    "normal",
-				Method:      "PUT",
-				Status:      "enabled",
+				Key:      "the_key",
+				Group:    "myapp",
+				Name:     "test_mock",
+				Path:     "/test",
+				Strategy: "normal",
+				Method:   "PUT",
+				Status:   "enabled",
 				Responses: []model.Response{
 					{
 						Body:        "{\"balance\":5000}",
@@ -80,11 +80,11 @@ func TestRuleService_Save(t *testing.T) {
 			args: args{
 				ctx: mockscontext.Background(),
 				rule: &model.Rule{
-					Application: "myapp",
-					Name:        "test_mock",
-					Path:        "/test",
-					Method:      "put",
-					Status:      "enabled",
+					Group:  "myapp",
+					Name:   "test_mock",
+					Path:   "/test",
+					Method: "put",
+					Status: "enabled",
 					Responses: []model.Response{
 						{
 							Body:        "{\"balance\":5000}",
@@ -96,13 +96,13 @@ func TestRuleService_Save(t *testing.T) {
 				},
 			},
 			want: &model.Rule{
-				Key:         "the_key",
-				Application: "myapp",
-				Name:        "test_mock",
-				Path:        "/test",
-				Strategy:    "normal",
-				Method:      "PUT",
-				Status:      "enabled",
+				Key:      "the_key",
+				Group:    "myapp",
+				Name:     "test_mock",
+				Path:     "/test",
+				Strategy: "normal",
+				Method:   "PUT",
+				Status:   "enabled",
 				Responses: []model.Response{
 					{
 						Body:        "{\"balance\":5000}",
@@ -121,11 +121,11 @@ func TestRuleService_Save(t *testing.T) {
 			args: args{
 				ctx: mockscontext.Background(),
 				rule: &model.Rule{
-					Application: "myapp",
-					Name:        "test_mock",
-					Path:        "/test",
-					Strategy:    "normal",
-					Method:      "put",
+					Group:    "myapp",
+					Name:     "test_mock",
+					Path:     "/test",
+					Strategy: "normal",
+					Method:   "put",
 					Responses: []model.Response{
 						{
 							Body:        "{\"balance\":5000}",
@@ -137,13 +137,13 @@ func TestRuleService_Save(t *testing.T) {
 				},
 			},
 			want: &model.Rule{
-				Key:         "the_key",
-				Application: "myapp",
-				Name:        "test_mock",
-				Path:        "/test",
-				Strategy:    "normal",
-				Method:      "PUT",
-				Status:      "enabled",
+				Key:      "the_key",
+				Group:    "myapp",
+				Name:     "test_mock",
+				Path:     "/test",
+				Strategy: "normal",
+				Method:   "PUT",
+				Status:   "enabled",
 				Responses: []model.Response{
 					{
 						Body:        "{\"balance\":5000}",
@@ -162,12 +162,12 @@ func TestRuleService_Save(t *testing.T) {
 			args: args{
 				ctx: mockscontext.Background(),
 				rule: &model.Rule{
-					Application: "myapp",
-					Name:        "test_mock",
-					Path:        "/test",
-					Strategy:    "normal",
-					Method:      "put",
-					Status:      "enabled",
+					Group:    "myapp",
+					Name:     "test_mock",
+					Path:     "/test",
+					Strategy: "normal",
+					Method:   "put",
+					Status:   "enabled",
 					Responses: []model.Response{
 						{
 							Body:        "{\"balance\":5000}",
@@ -198,12 +198,12 @@ func TestRuleService_Save(t *testing.T) {
 			args: args{
 				ctx: mockscontext.Background(),
 				rule: &model.Rule{
-					Application: "myapp",
-					Name:        "",
-					Path:        "/test",
-					Strategy:    "normal",
-					Method:      "put",
-					Status:      "enabled",
+					Group:    "myapp",
+					Name:     "",
+					Path:     "/test",
+					Strategy: "normal",
+					Method:   "put",
+					Status:   "enabled",
 					Responses: []model.Response{
 						{
 							Body:        "{\"balance\":5000}",
@@ -224,12 +224,12 @@ func TestRuleService_Save(t *testing.T) {
 			args: args{
 				ctx: mockscontext.Background(),
 				rule: &model.Rule{
-					Application: "myapp",
-					Name:        "test_mock",
-					Path:        "",
-					Strategy:    "normal",
-					Method:      "put",
-					Status:      "enabled",
+					Group:    "myapp",
+					Name:     "test_mock",
+					Path:     "",
+					Strategy: "normal",
+					Method:   "put",
+					Status:   "enabled",
 					Responses: []model.Response{
 						{
 							Body:        "{\"balance\":5000}",
@@ -250,12 +250,12 @@ func TestRuleService_Save(t *testing.T) {
 			args: args{
 				ctx: mockscontext.Background(),
 				rule: &model.Rule{
-					Application: "myapp",
-					Name:        "test_mock",
-					Path:        "/test",
-					Strategy:    "normal",
-					Method:      "put",
-					Status:      "invalid status",
+					Group:    "myapp",
+					Name:     "test_mock",
+					Path:     "/test",
+					Strategy: "normal",
+					Method:   "put",
+					Status:   "invalid status",
 					Responses: []model.Response{
 						{
 							Body:        "{\"balance\":5000}",
@@ -278,12 +278,12 @@ func TestRuleService_Save(t *testing.T) {
 			args: args{
 				ctx: mockscontext.Background(),
 				rule: &model.Rule{
-					Application: "myapp",
-					Name:        "test_mock",
-					Path:        "/test",
-					Strategy:    "normal",
-					Method:      "invalid",
-					Status:      "enabled",
+					Group:    "myapp",
+					Name:     "test_mock",
+					Path:     "/test",
+					Strategy: "normal",
+					Method:   "invalid",
+					Status:   "enabled",
 					Responses: []model.Response{
 						{
 							Body:        "{\"balance\":5000}",
@@ -306,12 +306,12 @@ func TestRuleService_Save(t *testing.T) {
 			args: args{
 				ctx: mockscontext.Background(),
 				rule: &model.Rule{
-					Application: "myapp",
-					Name:        "test_mock",
-					Path:        "/test",
-					Strategy:    "normal",
-					Method:      "",
-					Status:      "enabled",
+					Group:    "myapp",
+					Name:     "test_mock",
+					Path:     "/test",
+					Strategy: "normal",
+					Method:   "",
+					Status:   "enabled",
 					Responses: []model.Response{
 						{
 							Body:        "{\"balance\":5000}",
@@ -334,12 +334,12 @@ func TestRuleService_Save(t *testing.T) {
 			args: args{
 				ctx: mockscontext.Background(),
 				rule: &model.Rule{
-					Application: "myapp",
-					Name:        "test_mock",
-					Path:        "/test",
-					Strategy:    "invalid",
-					Method:      "put",
-					Status:      "enabled",
+					Group:    "myapp",
+					Name:     "test_mock",
+					Path:     "/test",
+					Strategy: "invalid",
+					Method:   "put",
+					Status:   "enabled",
 					Responses: []model.Response{
 						{
 							Body:        "{\"balance\":5000}",
@@ -362,13 +362,13 @@ func TestRuleService_Save(t *testing.T) {
 			args: args{
 				ctx: mockscontext.Background(),
 				rule: &model.Rule{
-					Application: "myapp",
-					Name:        "test_mock",
-					Path:        "/test",
-					Strategy:    "normal",
-					Method:      "put",
-					Status:      "enabled",
-					Responses:   []model.Response{},
+					Group:     "myapp",
+					Name:      "test_mock",
+					Path:      "/test",
+					Strategy:  "normal",
+					Method:    "put",
+					Status:    "enabled",
+					Responses: []model.Response{},
 				},
 			},
 			want: nil,
@@ -383,12 +383,12 @@ func TestRuleService_Save(t *testing.T) {
 			args: args{
 				ctx: mockscontext.Background(),
 				rule: &model.Rule{
-					Application: "myapp",
-					Name:        "test_mock",
-					Path:        "/test",
-					Strategy:    "normal",
-					Method:      "put",
-					Status:      "enabled",
+					Group:    "myapp",
+					Name:     "test_mock",
+					Path:     "/test",
+					Strategy: "normal",
+					Method:   "put",
+					Status:   "enabled",
 					Responses: []model.Response{
 						{
 							Body:        "{\"balance\":5000}",
@@ -468,13 +468,13 @@ func TestRuleService_Get(t *testing.T) {
 				key: "key123",
 			},
 			want: &model.Rule{
-				Key:         "key123",
-				Application: "myapp",
-				Name:        "test_mock",
-				Path:        "/test",
-				Strategy:    "normal",
-				Method:      "PUT",
-				Status:      "enabled",
+				Key:      "key123",
+				Group:    "myapp",
+				Name:     "test_mock",
+				Path:     "/test",
+				Strategy: "normal",
+				Method:   "PUT",
+				Status:   "enabled",
 				Responses: []model.Response{
 					{
 						Body:        "{\"balance\":5000}",
@@ -487,13 +487,13 @@ func TestRuleService_Get(t *testing.T) {
 			wantedErr:     nil,
 			repositoryErr: nil,
 			repositoryRule: &model.Rule{
-				Key:         "key123",
-				Application: "myapp",
-				Name:        "test_mock",
-				Path:        "/test",
-				Strategy:    "normal",
-				Method:      "PUT",
-				Status:      "enabled",
+				Key:      "key123",
+				Group:    "myapp",
+				Name:     "test_mock",
+				Path:     "/test",
+				Strategy: "normal",
+				Method:   "PUT",
+				Status:   "enabled",
 				Responses: []model.Response{
 					{
 						Body:        "{\"balance\":5000}",
@@ -568,13 +568,13 @@ func TestRuleService_Delete(t *testing.T) {
 				key: "key123",
 			},
 			want: &model.Rule{
-				Key:         "key123",
-				Application: "myapp",
-				Name:        "test_mock",
-				Path:        "/test",
-				Strategy:    "normal",
-				Method:      "PUT",
-				Status:      "enabled",
+				Key:      "key123",
+				Group:    "myapp",
+				Name:     "test_mock",
+				Path:     "/test",
+				Strategy: "normal",
+				Method:   "PUT",
+				Status:   "enabled",
 				Responses: []model.Response{
 					{
 						Body:        "{\"balance\":5000}",

@@ -24,14 +24,14 @@ func NewRuleMySQLRepository(db Database) IRuleRepository {
 }
 
 type RuleRow struct {
-	Key         string `db:"key"`
-	Application string `db:"application"`
-	Name        string `db:"name"`
-	Path        string `db:"path"`
-	Strategy    string `db:"strategy"`
-	Method      string `db:"method"`
-	Status      string `db:"status"`
-	Pattern     string `db:"pattern"`
+	Key      string `db:"key"`
+	Group    string `db:"group"`
+	Name     string `db:"name"`
+	Path     string `db:"path"`
+	Strategy string `db:"strategy"`
+	Method   string `db:"method"`
+	Status   string `db:"status"`
+	Pattern  string `db:"pattern"`
 }
 
 type VariableRow struct {
@@ -57,7 +57,7 @@ func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.R
 
 	var err error
 
-	query := "INSERT INTO rules (`key`, application, name, path, strategy, method, status, pattern) " +
+	query := "INSERT INTO rules (`key`, `group`, name, path, strategy, method, status, pattern) " +
 		"VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 
 	trx, err := repository.db.Beginx()
@@ -69,7 +69,7 @@ func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.R
 
 	rule.Key = fmt.Sprintf("%v", guuid.New())
 
-	_, err = trx.Exec(query, rule.Key, rule.Application, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
+	_, err = trx.Exec(query, rule.Key, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
 		CreateExpression(rule.Path))
 
 	if err != nil {
@@ -96,7 +96,7 @@ func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.R
 
 	var err error
 
-	query := "UPDATE rules SET application=?, name=?, path=?, strategy=?, method=?, status=?, pattern=? WHERE `key`=?"
+	query := "UPDATE rules SET `group`=?, name=?, path=?, strategy=?, method=?, status=?, pattern=? WHERE `key`=?"
 
 	trx, err := repository.db.Beginx()
 	if err != nil {
@@ -105,7 +105,7 @@ func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.R
 
 	defer repository.commitOrRollback(ctx, trx, err)
 
-	_, err = trx.Exec(query, rule.Application, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
+	_, err = trx.Exec(query, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
 		CreateExpression(rule.Path), rule.Key)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating rule in DB")
@@ -233,7 +233,10 @@ func (repository *ruleMySQLRepository) Search(ctx context.Context, params map[st
 
 	var err error
 
-	searchQuery := newSearchQuery(params)
+	searchQuery, err := newSearchQuery(params)
+	if err != nil {
+		return nil, err
+	}
 
 	err = repository.db.Select(&rows, searchQuery, paging.Limit, paging.Offset)
 
@@ -246,7 +249,12 @@ func (repository *ruleMySQLRepository) Search(ctx context.Context, params map[st
 	if len(rows) > 0 {
 		var total int64
 
-		totalQuery := "SELECT COUNT(*) as total FROM rules " + newWhereClause(params)
+		where, err := newWhereClause(params)
+		if err != nil {
+			return nil, err
+		}
+
+		totalQuery := "SELECT COUNT(*) as total FROM rules " + where
 
 		err = repository.db.Get(&total, totalQuery)
 
@@ -379,17 +387,22 @@ func (repository *ruleMySQLRepository) insertResponses(ctx context.Context, rule
 	return nil
 }
 
-func newSearchQuery(params map[string]interface{}) string {
+func newSearchQuery(params map[string]interface{}) (string, error) {
 	query := "SELECT * FROM rules"
-	where := newWhereClause(params)
-	order := " ORDER BY application, path, method LIMIT ? OFFSET ?"
 
-	return query + where + order
+	where, err := newWhereClause(params)
+	if err != nil {
+		return "", err
+	}
+
+	order := " ORDER BY `group`, path, method LIMIT ? OFFSET ?"
+
+	return query + where + order, nil
 }
 
-func newWhereClause(params map[string]interface{}) string {
+func newWhereClause(params map[string]interface{}) (string, error) {
 	if len(params) == 0 {
-		return " "
+		return " ", nil
 	}
 
 	where := " WHERE "
@@ -401,16 +414,19 @@ func newWhereClause(params map[string]interface{}) string {
 		}
 
 		switch key {
-		case "application", "status", "method", "pattern", "strategy", "path", "name", "key":
+		case "status", "method", "pattern", "strategy", "path", "name":
 			v := strings.ToLower(fmt.Sprintf("%v", value))
 			where += key + " like '%" + v + "%'"
+		case "group", "key":
+			v := strings.ToLower(fmt.Sprintf("%v", value))
+			where += "`" + key + "` like '%" + v + "%'"
 		default:
-			where += key + "=" + fmt.Sprintf("%v", value)
+			return "", mockserrors.InvalidRulesError{Message: fmt.Sprintf("%s is not a valid parameter", key)}
 		}
 		index++
 	}
 
-	return where
+	return where, nil
 }
 
 func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *model.Rule {
@@ -447,15 +463,15 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 	}
 
 	return &model.Rule{
-		Key:         row.Key,
-		Application: row.Application,
-		Name:        row.Name,
-		Path:        row.Path,
-		Strategy:    row.Strategy,
-		Method:      row.Method,
-		Status:      row.Status,
-		Variables:   vars,
-		Responses:   resps,
+		Key:       row.Key,
+		Group:     row.Group,
+		Name:      row.Name,
+		Path:      row.Path,
+		Strategy:  row.Strategy,
+		Method:    row.Method,
+		Status:    row.Status,
+		Variables: vars,
+		Responses: resps,
 	}
 }
 

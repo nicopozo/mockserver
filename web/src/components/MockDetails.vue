@@ -18,11 +18,11 @@
                           v-model="mock.name"
                           :rules="[v => !!v || 'Name is required']"
                           required outlined dense/>
-            <!--MOCK APPLICATION-->
-            <v-text-field label="Application"
-                          v-model="mock.application"
-                          placeholder="Examples: core, payments, simetrik, etc"
-                          :rules="[v => !!v || 'Application is required']"
+            <!--MOCK GROUP-->
+            <v-text-field label="Group"
+                          v-model="mock.group"
+                          placeholder="Examples: users, payments, auth, etc"
+                          :rules="[v => !!v || 'Group is required']"
                           required outlined dense/>
           </v-col>
           <v-col cols="6">
@@ -398,7 +398,7 @@ export default {
     newMock() {
       return {
         key: "",
-        application: "",
+        group: "",
         name: "",
         path: "",
         strategy: "",

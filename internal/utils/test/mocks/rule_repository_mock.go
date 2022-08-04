@@ -6,35 +6,36 @@ package mocks
 
 import (
 	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/nicopozo/mockserver/internal/model"
-	reflect "reflect"
 )
 
-// MockIRuleRepository is a mock of IRuleRepository interface
+// MockIRuleRepository is a mock of IRuleRepository interface.
 type MockIRuleRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockIRuleRepositoryMockRecorder
 }
 
-// MockIRuleRepositoryMockRecorder is the mock recorder for MockIRuleRepository
+// MockIRuleRepositoryMockRecorder is the mock recorder for MockIRuleRepository.
 type MockIRuleRepositoryMockRecorder struct {
 	mock *MockIRuleRepository
 }
 
-// NewMockIRuleRepository creates a new mock instance
+// NewMockIRuleRepository creates a new mock instance.
 func NewMockIRuleRepository(ctrl *gomock.Controller) *MockIRuleRepository {
 	mock := &MockIRuleRepository{ctrl: ctrl}
 	mock.recorder = &MockIRuleRepositoryMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockIRuleRepository) EXPECT() *MockIRuleRepositoryMockRecorder {
 	return m.recorder
 }
 
-// Create mocks base method
+// Create mocks base method.
 func (m *MockIRuleRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, rule)
@@ -43,28 +44,27 @@ func (m *MockIRuleRepository) Create(ctx context.Context, rule *model.Rule) (*mo
 	return ret0, ret1
 }
 
-// Create indicates an expected call of Create
+// Create indicates an expected call of Create.
 func (mr *MockIRuleRepositoryMockRecorder) Create(ctx, rule interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIRuleRepository)(nil).Create), ctx, rule)
 }
 
-// Update mocks base method
-func (m *MockIRuleRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+// Delete mocks base method.
+func (m *MockIRuleRepository) Delete(ctx context.Context, key string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ctx, rule)
-	ret0, _ := ret[0].(*model.Rule)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "Delete", ctx, key)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// Update indicates an expected call of Update
-func (mr *MockIRuleRepositoryMockRecorder) Update(ctx, rule interface{}) *gomock.Call {
+// Delete indicates an expected call of Delete.
+func (mr *MockIRuleRepositoryMockRecorder) Delete(ctx, key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockIRuleRepository)(nil).Update), ctx, rule)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockIRuleRepository)(nil).Delete), ctx, key)
 }
 
-// Get mocks base method
+// Get mocks base method.
 func (m *MockIRuleRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, key)
@@ -73,13 +73,13 @@ func (m *MockIRuleRepository) Get(ctx context.Context, key string) (*model.Rule,
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get
+// Get indicates an expected call of Get.
 func (mr *MockIRuleRepositoryMockRecorder) Get(ctx, key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockIRuleRepository)(nil).Get), ctx, key)
 }
 
-// Search mocks base method
+// Search mocks base method.
 func (m *MockIRuleRepository) Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Search", ctx, params, paging)
@@ -88,13 +88,13 @@ func (m *MockIRuleRepository) Search(ctx context.Context, params map[string]inte
 	return ret0, ret1
 }
 
-// Search indicates an expected call of Search
+// Search indicates an expected call of Search.
 func (mr *MockIRuleRepositoryMockRecorder) Search(ctx, params, paging interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockIRuleRepository)(nil).Search), ctx, params, paging)
 }
 
-// SearchByMethodAndPath mocks base method
+// SearchByMethodAndPath mocks base method.
 func (m *MockIRuleRepository) SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchByMethodAndPath", ctx, method, path)
@@ -103,22 +103,23 @@ func (m *MockIRuleRepository) SearchByMethodAndPath(ctx context.Context, method,
 	return ret0, ret1
 }
 
-// SearchByMethodAndPath indicates an expected call of SearchByMethodAndPath
+// SearchByMethodAndPath indicates an expected call of SearchByMethodAndPath.
 func (mr *MockIRuleRepositoryMockRecorder) SearchByMethodAndPath(ctx, method, path interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchByMethodAndPath", reflect.TypeOf((*MockIRuleRepository)(nil).SearchByMethodAndPath), ctx, method, path)
 }
 
-// Delete mocks base method
-func (m *MockIRuleRepository) Delete(ctx context.Context, key string) error {
+// Update mocks base method.
+func (m *MockIRuleRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, key)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "Update", ctx, rule)
+	ret0, _ := ret[0].(*model.Rule)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// Delete indicates an expected call of Delete
-func (mr *MockIRuleRepositoryMockRecorder) Delete(ctx, key interface{}) *gomock.Call {
+// Update indicates an expected call of Update.
+func (mr *MockIRuleRepositoryMockRecorder) Update(ctx, rule interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockIRuleRepository)(nil).Delete), ctx, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockIRuleRepository)(nil).Update), ctx, rule)
 }

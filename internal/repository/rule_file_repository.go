@@ -155,7 +155,7 @@ func applies(rule model.Rule, params map[string]any) bool {
 
 		switch key {
 		case "application":
-			result = result && strings.Contains(strings.ToLower(rule.Application), formatedValue)
+			result = result && strings.Contains(strings.ToLower(rule.Group), formatedValue)
 		case "status":
 			result = result && strings.Contains(strings.ToLower(rule.Status), formatedValue)
 		case "method":

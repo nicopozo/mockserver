@@ -1,7 +1,7 @@
 [
   {
     "key": "a1",
-    "application": "TestApp",
+    "group": "TestApp",
     "name": "TestMock",
     "path": "/test",
     "strategy": "normal",
@@ -20,7 +20,7 @@
   },
   {
     "key": "b2",
-    "application": "TestApp2",
+    "group": "TestApp2",
     "name": "TestNew",
     "path": "/test/new",
     "strategy": "normal",
@@ -39,7 +39,7 @@
   },
   {
     "key": "c3",
-    "application": "TestApp2",
+    "group": "TestApp2",
     "name": "TestNew",
     "path": "/test/new/2",
     "strategy": "normal",
@@ -58,7 +58,7 @@
   },
   {
     "key": "d4",
-    "application": "TestApp2",
+    "group": "TestApp2",
     "name": "TestNew",
     "path": "/test/new2",
     "strategy": "normal",

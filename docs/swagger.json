@@ -10,7 +10,6 @@
             "name": "Nicolas Pozo",
             "email": "nicopozo@gmail.com"
         },
-        "license": {},
         "version": "1.0"
     },
     "host": "localhost:8080",
@@ -18,7 +17,7 @@
     "paths": {
         "/rules": {
             "get": {
-                "description": "Search Rule by key, name, application, method or status",
+                "description": "Search Rule by key, name, group, method or status",
                 "produces": [
                     "application/json"
                 ],
@@ -42,8 +41,8 @@
                     },
                     {
                         "type": "string",
-                        "description": "Application",
-                        "name": "application",
+                        "description": "Group",
+                        "name": "group",
                         "in": "query"
                     },
                     {
@@ -265,7 +264,9 @@
                     }
                 ],
                 "responses": {
-                    "204": {},
+                    "204": {
+                        "description": "No Content"
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -288,7 +289,7 @@
                     "Rules"
                 ],
                 "summary": "Update a Rule Status",
-                "operationId": "update-rule",
+                "operationId": "update-rule-status",
                 "parameters": [
                     {
                         "type": "string",
@@ -415,7 +416,7 @@
         "model.Rule": {
             "type": "object",
             "properties": {
-                "application": {
+                "group": {
                     "type": "string",
                     "example": "payments"
                 },
@@ -461,7 +462,6 @@
             "type": "object",
             "properties": {
                 "paging": {
-                    "type": "object",
                     "$ref": "#/definitions/model.Paging"
                 },
                 "results": {

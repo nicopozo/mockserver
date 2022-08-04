@@ -33,13 +33,13 @@ func Test_ruleFileRepository_Get(t *testing.T) {
 				key: "a1",
 			},
 			want: &model.Rule{
-				Key:         "a1",
-				Application: "TestApp",
-				Name:        "TestMock",
-				Path:        "/test",
-				Strategy:    "normal",
-				Method:      "DELETE",
-				Status:      "enabled",
+				Key:      "a1",
+				Group:    "TestApp",
+				Name:     "TestMock",
+				Path:     "/test",
+				Strategy: "normal",
+				Method:   "DELETE",
+				Status:   "enabled",
 				Responses: []model.Response{
 					{
 						Body:        "{\"field\":\"value\"}",

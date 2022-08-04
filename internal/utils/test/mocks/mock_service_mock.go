@@ -6,37 +6,38 @@ package mocks
 
 import (
 	context "context"
-	gomock "github.com/golang/mock/gomock"
-	model "github.com/nicopozo/mockserver/internal/model"
 	http "net/http"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
+	model "github.com/nicopozo/mockserver/internal/model"
 )
 
-// MockIMockService is a mock of IMockService interface
-type MockIMockService struct {
+// MockMockService is a mock of MockService interface.
+type MockMockService struct {
 	ctrl     *gomock.Controller
-	recorder *MockIMockServiceMockRecorder
+	recorder *MockMockServiceMockRecorder
 }
 
-// MockIMockServiceMockRecorder is the mock recorder for MockIMockService
-type MockIMockServiceMockRecorder struct {
-	mock *MockIMockService
+// MockMockServiceMockRecorder is the mock recorder for MockMockService.
+type MockMockServiceMockRecorder struct {
+	mock *MockMockService
 }
 
-// NewMockIMockService creates a new mock instance
-func NewMockIMockService(ctrl *gomock.Controller) *MockIMockService {
-	mock := &MockIMockService{ctrl: ctrl}
-	mock.recorder = &MockIMockServiceMockRecorder{mock}
+// NewMockMockService creates a new mock instance.
+func NewMockMockService(ctrl *gomock.Controller) *MockMockService {
+	mock := &MockMockService{ctrl: ctrl}
+	mock.recorder = &MockMockServiceMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockIMockService) EXPECT() *MockIMockServiceMockRecorder {
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockMockService) EXPECT() *MockMockServiceMockRecorder {
 	return m.recorder
 }
 
-// SearchResponseForRequest mocks base method
-func (m *MockIMockService) SearchResponseForRequest(ctx context.Context, request *http.Request, path, body string) (*model.Response, error) {
+// SearchResponseForRequest mocks base method.
+func (m *MockMockService) SearchResponseForRequest(ctx context.Context, request *http.Request, path, body string) (*model.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchResponseForRequest", ctx, request, path, body)
 	ret0, _ := ret[0].(*model.Response)
@@ -44,8 +45,8 @@ func (m *MockIMockService) SearchResponseForRequest(ctx context.Context, request
 	return ret0, ret1
 }
 
-// SearchResponseForRequest indicates an expected call of SearchResponseForRequest
-func (mr *MockIMockServiceMockRecorder) SearchResponseForRequest(ctx, request, path, body interface{}) *gomock.Call {
+// SearchResponseForRequest indicates an expected call of SearchResponseForRequest.
+func (mr *MockMockServiceMockRecorder) SearchResponseForRequest(ctx, request, path, body interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchResponseForRequest", reflect.TypeOf((*MockIMockService)(nil).SearchResponseForRequest), ctx, request, path, body)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchResponseForRequest", reflect.TypeOf((*MockMockService)(nil).SearchResponseForRequest), ctx, request, path, body)
 }

@@ -11,7 +11,7 @@ services:
     tty: true
     command: --init-file /data/application/init.sql
     volumes:
-      - ../../init.sql:/data/application/init.sql
+      - ../../sql/init.sql:/data/application/init.sql
     networks:
       - mocks-network
   mock-service:

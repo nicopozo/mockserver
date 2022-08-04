@@ -126,7 +126,7 @@ func (ruleService *ruleService) Search(ctx context.Context, params map[string]in
 
 	rules, err := ruleService.RuleRepository.Search(ctx, params, paging)
 	if err != nil {
-		return nil, fmt.Errorf("error searching ruel - %w", err)
+		return nil, fmt.Errorf("error searching rule - %w", err)
 	}
 
 	return rules, nil

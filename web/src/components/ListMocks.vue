@@ -4,10 +4,10 @@
     <v-card class="elevation-2">
       <v-container fluid>
         <v-row>
-          <!--APPLICATION FILTER-->
+          <!--GROUP FILTER-->
           <v-col cols="12" md="3">
-            <v-text-field label="Application"
-                          v-model="filters.application"
+            <v-text-field label="Group"
+                          v-model="filters.group"
                           @keyup.enter.native="search()"
                           outlined dense clearable hide-details></v-text-field>
           </v-col>
@@ -107,7 +107,7 @@ export default {
         {text: "Random", value: "random"}
       ],
       filters: {
-        application: null,
+        group: null,
         path: null,
         strategy: null,
         method: null,
@@ -116,7 +116,7 @@ export default {
         columns: [
           {text: "Enabled", value: "status"},
           {text: "Name", value: "name"},
-          {text: "Application", value: "application"},
+          {text: "Group", value: "group"},
           {text: "Path", value: "path", width: "35%"},
           {text: "Strategy", value: "strategy"},
           {text: "Method", value: "method"},
@@ -150,7 +150,7 @@ export default {
     },
     queryParams() {
       const {
-        application,
+        group,
         path,
         strategy,
         method,
@@ -166,8 +166,8 @@ export default {
         offset: (page - 1) * itemsPerPage,
       };
 
-      if (application) {
-        params.application = application;
+      if (group) {
+        params.group = group;
       }
 
       if (path) {
@@ -186,7 +186,7 @@ export default {
     },
     reset() {
       this.filters = {
-        application: null,
+        group: null,
         path: null,
         strategy: null,
         method: null,

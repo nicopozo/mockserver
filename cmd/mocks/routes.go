@@ -2,22 +2,15 @@ package main
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/nicopozo/mockserver/docs"
+	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
 func mapRoutes(router *gin.Engine) {
-	webDist := "../../web/dist"
-
-	if ginMode := os.Getenv("GIN_MODE"); ginMode == "release" {
-		webDist = "web/dist"
-	}
-
-	router.Static("/mock-service/admin", webDist)
+	router.Static("/mock-service/admin", "web/dist")
 
 	applicationContainer := container{}
 
