@@ -12,31 +12,31 @@ import (
 	model "github.com/nicopozo/mockserver/internal/model"
 )
 
-// MockIRuleRepository is a mock of IRuleRepository interface.
-type MockIRuleRepository struct {
+// MockRuleRepository is a mock of RuleRepository interface.
+type MockRuleRepository struct {
 	ctrl     *gomock.Controller
-	recorder *MockIRuleRepositoryMockRecorder
+	recorder *MockRuleRepositoryMockRecorder
 }
 
-// MockIRuleRepositoryMockRecorder is the mock recorder for MockIRuleRepository.
-type MockIRuleRepositoryMockRecorder struct {
-	mock *MockIRuleRepository
+// MockRuleRepositoryMockRecorder is the mock recorder for MockRuleRepository.
+type MockRuleRepositoryMockRecorder struct {
+	mock *MockRuleRepository
 }
 
-// NewMockIRuleRepository creates a new mock instance.
-func NewMockIRuleRepository(ctrl *gomock.Controller) *MockIRuleRepository {
-	mock := &MockIRuleRepository{ctrl: ctrl}
-	mock.recorder = &MockIRuleRepositoryMockRecorder{mock}
+// NewMockRuleRepository creates a new mock instance.
+func NewMockRuleRepository(ctrl *gomock.Controller) *MockRuleRepository {
+	mock := &MockRuleRepository{ctrl: ctrl}
+	mock.recorder = &MockRuleRepositoryMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIRuleRepository) EXPECT() *MockIRuleRepositoryMockRecorder {
+func (m *MockRuleRepository) EXPECT() *MockRuleRepositoryMockRecorder {
 	return m.recorder
 }
 
 // Create mocks base method.
-func (m *MockIRuleRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (m *MockRuleRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, rule)
 	ret0, _ := ret[0].(*model.Rule)
@@ -45,13 +45,13 @@ func (m *MockIRuleRepository) Create(ctx context.Context, rule *model.Rule) (*mo
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockIRuleRepositoryMockRecorder) Create(ctx, rule interface{}) *gomock.Call {
+func (mr *MockRuleRepositoryMockRecorder) Create(ctx, rule interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIRuleRepository)(nil).Create), ctx, rule)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockRuleRepository)(nil).Create), ctx, rule)
 }
 
 // Delete mocks base method.
-func (m *MockIRuleRepository) Delete(ctx context.Context, key string) error {
+func (m *MockRuleRepository) Delete(ctx context.Context, key string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, key)
 	ret0, _ := ret[0].(error)
@@ -59,13 +59,13 @@ func (m *MockIRuleRepository) Delete(ctx context.Context, key string) error {
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockIRuleRepositoryMockRecorder) Delete(ctx, key interface{}) *gomock.Call {
+func (mr *MockRuleRepositoryMockRecorder) Delete(ctx, key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockIRuleRepository)(nil).Delete), ctx, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockRuleRepository)(nil).Delete), ctx, key)
 }
 
 // Get mocks base method.
-func (m *MockIRuleRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
+func (m *MockRuleRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, key)
 	ret0, _ := ret[0].(*model.Rule)
@@ -74,13 +74,13 @@ func (m *MockIRuleRepository) Get(ctx context.Context, key string) (*model.Rule,
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockIRuleRepositoryMockRecorder) Get(ctx, key interface{}) *gomock.Call {
+func (mr *MockRuleRepositoryMockRecorder) Get(ctx, key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockIRuleRepository)(nil).Get), ctx, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockRuleRepository)(nil).Get), ctx, key)
 }
 
 // Search mocks base method.
-func (m *MockIRuleRepository) Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error) {
+func (m *MockRuleRepository) Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Search", ctx, params, paging)
 	ret0, _ := ret[0].(*model.RuleList)
@@ -89,13 +89,13 @@ func (m *MockIRuleRepository) Search(ctx context.Context, params map[string]inte
 }
 
 // Search indicates an expected call of Search.
-func (mr *MockIRuleRepositoryMockRecorder) Search(ctx, params, paging interface{}) *gomock.Call {
+func (mr *MockRuleRepositoryMockRecorder) Search(ctx, params, paging interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockIRuleRepository)(nil).Search), ctx, params, paging)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockRuleRepository)(nil).Search), ctx, params, paging)
 }
 
 // SearchByMethodAndPath mocks base method.
-func (m *MockIRuleRepository) SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error) {
+func (m *MockRuleRepository) SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchByMethodAndPath", ctx, method, path)
 	ret0, _ := ret[0].(*model.Rule)
@@ -104,13 +104,13 @@ func (m *MockIRuleRepository) SearchByMethodAndPath(ctx context.Context, method,
 }
 
 // SearchByMethodAndPath indicates an expected call of SearchByMethodAndPath.
-func (mr *MockIRuleRepositoryMockRecorder) SearchByMethodAndPath(ctx, method, path interface{}) *gomock.Call {
+func (mr *MockRuleRepositoryMockRecorder) SearchByMethodAndPath(ctx, method, path interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchByMethodAndPath", reflect.TypeOf((*MockIRuleRepository)(nil).SearchByMethodAndPath), ctx, method, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchByMethodAndPath", reflect.TypeOf((*MockRuleRepository)(nil).SearchByMethodAndPath), ctx, method, path)
 }
 
 // Update mocks base method.
-func (m *MockIRuleRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (m *MockRuleRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, rule)
 	ret0, _ := ret[0].(*model.Rule)
@@ -119,7 +119,7 @@ func (m *MockIRuleRepository) Update(ctx context.Context, rule *model.Rule) (*mo
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockIRuleRepositoryMockRecorder) Update(ctx, rule interface{}) *gomock.Call {
+func (mr *MockRuleRepositoryMockRecorder) Update(ctx, rule interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockIRuleRepository)(nil).Update), ctx, rule)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockRuleRepository)(nil).Update), ctx, rule)
 }

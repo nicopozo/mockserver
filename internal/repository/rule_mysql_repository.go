@@ -17,7 +17,7 @@ type ruleMySQLRepository struct {
 	db Database
 }
 
-func NewRuleMySQLRepository(db Database) IRuleRepository {
+func NewRuleMySQLRepository(db Database) RuleRepository {
 	return &ruleMySQLRepository{
 		db: db,
 	}

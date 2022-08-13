@@ -4,6 +4,7 @@ import router from './router'
 import vuetify from './plugins/vuetify';
 import confirm from 'vuetify-confirm'
 import title from './mixins/title'
+import '@mdi/font/css/materialdesignicons.css'
 
 Vue.config.productionTip = false;
 Vue.use(confirm, {

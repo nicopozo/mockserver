@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/nicopozo/mockserver/internal/repository"
+	"github.com/stretchr/testify/assert"
 )
 
 //nolint:nosnakecase
@@ -46,9 +47,8 @@ func Test_CreateExpression(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := repository.CreateExpression(tt.args.path); got != tt.want {
-				t.Errorf("CreateExpression() = %v, want %v", got, tt.want)
-			}
+			got := repository.CreateExpression(tt.args.path)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

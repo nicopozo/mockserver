@@ -94,7 +94,7 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 			t.Parallel()
 
 			mockCtrl := gomock.NewController(t)
-			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
+			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().SearchByMethodAndPath(tt.args.ctx, tt.args.request.Method, tt.args.path).

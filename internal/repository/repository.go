@@ -6,7 +6,7 @@ import (
 	"github.com/nicopozo/mockserver/internal/utils/log"
 )
 
-func closeBody(body io.ReadCloser, repository IRuleRepository, logger log.ILogger) {
+func closeBody(body io.ReadCloser, repository RuleRepository, logger log.ILogger) {
 	if err := body.Close(); err != nil {
 		logger.Error(repository, nil, err, "error closing response body")
 	}

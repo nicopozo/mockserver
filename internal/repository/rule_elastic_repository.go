@@ -26,7 +26,7 @@ type ruleElasticRepository struct {
 	client *elasticsearch.Client
 }
 
-func NewRuleElasticRepository() IRuleRepository {
+func NewRuleElasticRepository() RuleRepository {
 	return new(ruleElasticRepository)
 }
 

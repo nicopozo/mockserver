@@ -3,7 +3,6 @@ package controller_test
 import (
 	"errors"
 	"net/http"
-	"reflect"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -13,12 +12,11 @@ import (
 	"github.com/nicopozo/mockserver/internal/model"
 	testutils "github.com/nicopozo/mockserver/internal/utils/test"
 	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
+	"github.com/stretchr/testify/assert"
 )
 
 //nolint:funlen
-func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase
-	t.Parallel()
-
+func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase,paralleltest
 	tests := []struct {
 		name             string
 		want             string
@@ -64,6 +62,27 @@ func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase
 			serviceCallTimes: 1,
 		},
 		{
+			name:       "Should return 400 when service returns InvalidRulesError",
+			want:       "",
+			wantStatus: http.StatusNotFound,
+			wantedErr: &model.Error{
+				Message: "No rule found for path: /test and method: get. no rule found for path",
+				Error:   "Not Found",
+				Status:  http.StatusNotFound,
+				ErrorCause: []model.ErrorCause{
+					{
+						Code:        1030,
+						Description: "Resource Not Found",
+					},
+				},
+			},
+			serviceErr: mockserrors.RuleNotFoundError{
+				Message: "no rule found for path",
+			},
+			serviceResponse:  nil,
+			serviceCallTimes: 1,
+		},
+		{
 			name:       "Should return 500 when service returns error",
 			want:       "",
 			wantStatus: http.StatusInternalServerError,
@@ -86,10 +105,8 @@ func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase
 
 	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			mockCtrl := gomock.NewController(t)
-			mockServiceMock := mocks.NewMockIMockService(mockCtrl)
+			mockServiceMock := mocks.NewMockMockService(mockCtrl)
 			defer mockCtrl.Finish()
 
 			mockServiceMock.EXPECT().SearchResponseForRequest(gomock.Any(), gomock.Any(), "/test", gomock.Any()).
@@ -105,28 +122,20 @@ func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase
 			}
 			mc.Execute(ginContext)
 
-			if tt.wantStatus != response.Status() {
-				t.Errorf("Response status code is not the expected. Expected: %v - Actual: %v",
-					tt.wantStatus, response.Status())
-			}
+			assert.Equal(t, tt.wantStatus, response.Status())
 
 			if tt.wantedErr != nil {
 				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
-				if err != nil {
-					t.Fatalf("Unexpected error occurred getting error from response")
-				}
-				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
-					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
-				}
+
+				assert.Nil(t, err)
+				assert.Equal(t, tt.wantedErr, errorResponse)
 
 				return
 			}
 
 			res := string(response.Bytes)
 
-			if !reflect.DeepEqual(tt.want, res) {
-				t.Errorf("Rule response is not the expected. Expected: %v - Actual: %v", tt.want, res)
-			}
+			assert.Equal(t, tt.want, res)
 		})
 	}
 }

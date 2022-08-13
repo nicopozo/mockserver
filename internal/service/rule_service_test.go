@@ -16,10 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//nolint:funlen,maintidx,nosnakecase
+//nolint:funlen,maintidx,nosnakecase,paralleltest
 func TestRuleService_Save(t *testing.T) {
-	t.Parallel()
-
 	type args struct {
 		rule *model.Rule
 		ctx  context.Context //nolint:containedctx
@@ -246,6 +244,32 @@ func TestRuleService_Save(t *testing.T) {
 			serviceCallTimes: 0,
 		},
 		{
+			name: "Should return InvalidRuleError rule when path does not start with '/'",
+			args: args{
+				ctx: mockscontext.Background(),
+				rule: &model.Rule{
+					Group:    "myapp",
+					Name:     "test_mock",
+					Path:     "invalid/path",
+					Strategy: "normal",
+					Method:   "put",
+					Status:   "enabled",
+					Responses: []model.Response{
+						{
+							Body:        "{\"balance\":5000}",
+							ContentType: "application/json",
+							HTTPStatus:  http.StatusOK,
+							Delay:       100,
+						},
+					},
+				},
+			},
+			want:             nil,
+			wantedErr:        mockserrors.InvalidRulesError{Message: "path must start with '/'"},
+			repositoryErr:    nil,
+			serviceCallTimes: 0,
+		},
+		{
 			name: "Should return InvalidRuleError rule when status",
 			args: args{
 				ctx: mockscontext.Background(),
@@ -409,10 +433,8 @@ func TestRuleService_Save(t *testing.T) {
 	}
 	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			mockCtrl := gomock.NewController(t)
-			ruleRepositoryMock := mocks.NewMockIRuleRepository(mockCtrl)
+			ruleRepositoryMock := mocks.NewMockRuleRepository(mockCtrl)
 			defer mockCtrl.Finish()
 
 			ruleRepositoryMock.EXPECT().Create(gomock.Any(), gomock.Any()).
@@ -522,7 +544,7 @@ func TestRuleService_Get(t *testing.T) {
 	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
-			ruleRepositoryMock := mocks.NewMockIRuleRepository(mockCtrl)
+			ruleRepositoryMock := mocks.NewMockRuleRepository(mockCtrl)
 			defer mockCtrl.Finish()
 
 			ruleRepositoryMock.EXPECT().Get(gomock.Any(), tt.args.key).
@@ -606,7 +628,7 @@ func TestRuleService_Delete(t *testing.T) {
 			t.Parallel()
 
 			mockCtrl := gomock.NewController(t)
-			ruleRepositoryMock := mocks.NewMockIRuleRepository(mockCtrl)
+			ruleRepositoryMock := mocks.NewMockRuleRepository(mockCtrl)
 			defer mockCtrl.Finish()
 
 			ruleRepositoryMock.EXPECT().Delete(gomock.Any(), tt.args.key).Return(tt.repositoryErr).Times(tt.serviceCallTimes)

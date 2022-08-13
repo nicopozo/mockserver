@@ -17,6 +17,7 @@ import (
 	stringutils "github.com/nicopozo/mockserver/internal/utils/string"
 	testutils "github.com/nicopozo/mockserver/internal/utils/test"
 	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
+	"github.com/stretchr/testify/assert"
 )
 
 //nolint:funlen
@@ -121,7 +122,7 @@ func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
 			t.Parallel()
 
 			mockCtrl := gomock.NewController(t)
-			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
+			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Save(gomock.Any(), gomock.Any()).
@@ -147,31 +148,21 @@ func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
 			}
 			rc.Create(ctx)
 
-			if tt.wantStatus != response.Status() {
-				t.Errorf("Response status code is not the expected. Expected: %v - Actual: %v",
-					tt.wantStatus, response.Status())
-			}
+			assert.Equal(t, tt.wantStatus, response.Status())
 
 			if tt.wantedErr != nil {
 				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
-				if err != nil {
-					t.Fatalf("Unexpected error occurred getting error from response")
-				}
-				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
-					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
-				}
+
+				assert.Nil(t, err)
+				assert.Equal(t, tt.wantedErr, errorResponse)
 
 				return
 			}
 
 			rule, err := testutils.GetRuleFromResponse(response.Bytes)
-			if err != nil {
-				t.Fatalf("Unexpected error occurred getting rule from response")
-			}
 
-			if !reflect.DeepEqual(tt.want, rule) {
-				t.Errorf("Rule response is not the expected. Expected: %v - Actual: %v", tt.want, rule)
-			}
+			assert.Nil(t, err)
+			assert.Equal(t, tt.want, rule)
 		})
 	}
 }
@@ -260,7 +251,7 @@ func TestRuleController_Get(t *testing.T) { //nolint:nosnakecase
 			t.Parallel()
 
 			mockCtrl := gomock.NewController(t)
-			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
+			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Get(gomock.Any(), tt.key).
@@ -299,31 +290,21 @@ func TestRuleController_Get(t *testing.T) { //nolint:nosnakecase
 			}
 			rc.Get(ginContext)
 
-			if tt.wantStatus != response.Status() {
-				t.Errorf("Response status code is not the expected. Expected: %v - Actual: %v",
-					tt.wantStatus, response.Status())
-			}
+			assert.Equal(t, tt.wantStatus, response.Status())
 
 			if tt.wantedErr != nil {
 				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
-				if err != nil {
-					t.Fatalf("Unexpected error occurred getting error from response")
-				}
-				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
-					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
-				}
+
+				assert.Nil(t, err)
+				assert.Equal(t, tt.wantedErr, errorResponse)
 
 				return
 			}
 
 			rule, err := testutils.GetRuleFromResponse(response.Bytes)
-			if err != nil {
-				t.Fatalf("Unexpected error occurred getting rule from response")
-			}
 
-			if !reflect.DeepEqual(tt.want, rule) {
-				t.Errorf("Rule response is not the expected. Expected: %v - Actual: %v", tt.want, rule)
-			}
+			assert.Nil(t, err)
+			assert.Equal(t, tt.want, rule)
 		})
 	}
 }
@@ -504,7 +485,7 @@ func TestRuleController_Search(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
-			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
+			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Search(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -575,30 +556,21 @@ func TestRuleController_Search(t *testing.T) {
 			}
 			rc.Search(ginContext)
 
-			if tt.wantStatus != response.Status() {
-				t.Errorf("Response status code is not the expected. Expected: %v - Actual: %v",
-					tt.wantStatus, response.Status())
-			}
+			assert.Equal(t, tt.wantStatus, response.Status())
 
 			if tt.wantedErr != nil {
 				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
-				if err != nil {
-					t.Fatalf("Unexpected error occurred getting error from response")
-				}
-				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
-					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
-				}
+
+				assert.Nil(t, err)
+				assert.Equal(t, tt.wantedErr, errorResponse)
+
 				return
 			}
 
 			rules, err := testutils.GetRuleListFromResponse(response.Bytes)
-			if err != nil {
-				t.Fatalf("Unexpected error occurred getting ruleList from response")
-			}
 
-			if !reflect.DeepEqual(tt.want, rules) {
-				t.Errorf("RuleList response is not the expected. Expected: %v - Actual: %v", tt.want, rules)
-			}
+			assert.Nil(t, err)
+			assert.Equal(t, tt.want, rules)
 		})
 	}
 }
@@ -657,7 +629,7 @@ func TestRuleController_Delete(t *testing.T) {
 			t.Parallel()
 
 			mockCtrl := gomock.NewController(t)
-			ruleServiceMock := mocks.NewMockIRuleService(mockCtrl)
+			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Delete(gomock.Any(), tt.key).Return(tt.serviceErr).Times(tt.serviceCallTimes)
@@ -671,19 +643,13 @@ func TestRuleController_Delete(t *testing.T) {
 			}
 			rc.Delete(ginContext)
 
-			if tt.wantStatus != response.Status() {
-				t.Errorf("Response status code is not the expected. Expected: %v - Actual: %v",
-					tt.wantStatus, response.Status())
-			}
+			assert.Equal(t, tt.wantStatus, response.Status())
 
 			if tt.wantedErr != nil {
 				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
-				if err != nil {
-					t.Fatalf("Unexpected error occurred getting error from response")
-				}
-				if !reflect.DeepEqual(tt.wantedErr, errorResponse) {
-					t.Fatalf("Error response is not the expected. Expected: %v - Actual: %v", tt.wantedErr, errorResponse)
-				}
+
+				assert.Nil(t, err)
+				assert.Equal(t, tt.wantedErr, errorResponse)
 
 				return
 			}

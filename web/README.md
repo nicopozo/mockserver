@@ -1,4 +1,4 @@
-# mocks-frontend
+# Mock Service Frontend
 
 ## Project setup
 ```

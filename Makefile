@@ -21,15 +21,15 @@ run-mysql:
 	sleep 15
 
 run-file:
-	docker-compose -f ./scripts/local/mocks-file/docker-compose.yml up -d --remove-orphans --build
+	docker-compose -f ./scripts/local/mocks-json/docker-compose.yml up -d --remove-orphans --build
 	docker ps
 
 stop-mysql:
-	docker-compose -f ./scripts/ingestor-services/docker-compose.yml stop
+	docker-compose -f ./scripts/local/mocks-mysql/docker-compose.yml stop
 	docker ps
 
 stop-file:
-	docker-compose -f ./scripts/ingestor-services/docker-compose.yml stop
+	docker-compose -f ./scripts/local/mocks-json/docker-compose.yml stop
 	docker ps
 
 pre-commit:

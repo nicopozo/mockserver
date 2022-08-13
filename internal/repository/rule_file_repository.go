@@ -19,7 +19,7 @@ type ruleFileRepository struct {
 	filePath string
 }
 
-func NewRuleFileRepository(filePath string) (IRuleRepository, error) {
+func NewRuleFileRepository(filePath string) (RuleRepository, error) {
 	repo := ruleFileRepository{
 		rules:    make([]model.Rule, 0),
 		filePath: filePath,
@@ -151,23 +151,23 @@ func applies(rule model.Rule, params map[string]any) bool {
 	result := true
 
 	for key, value := range params {
-		formatedValue := strings.ToLower(fmt.Sprintf("%formatedValue", value))
+		formattedValue := strings.ToLower(fmt.Sprintf("%v", value))
 
 		switch key {
-		case "application":
-			result = result && strings.Contains(strings.ToLower(rule.Group), formatedValue)
+		case "group":
+			result = result && strings.Contains(strings.ToLower(rule.Group), formattedValue)
 		case "status":
-			result = result && strings.Contains(strings.ToLower(rule.Status), formatedValue)
+			result = result && strings.Contains(strings.ToLower(rule.Status), formattedValue)
 		case "method":
-			result = result && strings.Contains(strings.ToLower(rule.Method), formatedValue)
+			result = result && strings.Contains(strings.ToLower(rule.Method), formattedValue)
 		case "strategy":
-			result = result && strings.Contains(strings.ToLower(rule.Strategy), formatedValue)
+			result = result && strings.Contains(strings.ToLower(rule.Strategy), formattedValue)
 		case "path":
-			result = result && strings.Contains(strings.ToLower(rule.Path), formatedValue)
+			result = result && strings.Contains(strings.ToLower(rule.Path), formattedValue)
 		case "name":
-			result = result && strings.Contains(strings.ToLower(rule.Name), formatedValue)
+			result = result && strings.Contains(strings.ToLower(rule.Name), formattedValue)
 		case "key":
-			result = result && strings.Contains(strings.ToLower(rule.Key), formatedValue)
+			result = result && strings.Contains(strings.ToLower(rule.Key), formattedValue)
 		}
 	}
 
@@ -179,10 +179,23 @@ func (repository *ruleFileRepository) Delete(ctx context.Context, key string) er
 
 	logger.Debug(repository, nil, "Updating rule.")
 
+	var result []model.Rule
+
 	for index := range repository.rules {
 		if repository.rules[index].Key == key {
-			result := append(repository.rules[0:index], repository.rules[index+1:len(repository.rules)]...) //nolint:gocritic
+			switch index {
+			case 0:
+				result = repository.rules[index+1 : len(repository.rules)]
+			case len(repository.rules) - 1:
+				result = repository.rules[0:index]
+			default:
+				result = repository.rules[0:index]
+				result = append(result, repository.rules[index+1:len(repository.rules)]...)
+			}
+
 			repository.rules = result
+
+			break
 		}
 	}
 

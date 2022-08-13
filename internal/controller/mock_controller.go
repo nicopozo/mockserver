@@ -42,7 +42,7 @@ func (controller *MockController) Execute(context *gin.Context) {
 		}
 
 		if errors.As(err, &ruleserrors.InvalidRulesError{}) {
-			logger.Debug(controller, nil, "No rule found for path: %v and method: %s",
+			logger.Debug(controller, nil, "No valid rule found for path: %v and method: %s",
 				path, context.Request.Method)
 
 			errorResult := model.NewError(model.ValidationError, err.Error())

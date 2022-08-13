@@ -80,6 +80,7 @@ func Test_ruleFileRepository_Get(t *testing.T) {
 					return
 				}
 
+				assert.Nil(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})

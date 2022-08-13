@@ -25,10 +25,10 @@ type RuleService interface {
 }
 
 type ruleService struct {
-	RuleRepository repository.IRuleRepository
+	RuleRepository repository.RuleRepository
 }
 
-func NewRuleService(ruleRepository repository.IRuleRepository) (RuleService, error) {
+func NewRuleService(ruleRepository repository.RuleRepository) (RuleService, error) {
 	if ruleRepository == nil {
 		return nil, fmt.Errorf("rule repository cannot be nil") //nolint:goerr113
 	}
@@ -177,6 +177,12 @@ func validateRule(rule *model.Rule) error {
 	if rule.Path == "" {
 		return mockserrors.InvalidRulesError{
 			Message: "path cannot be empty",
+		}
+	}
+
+	if !strings.HasPrefix(rule.Path, "/") {
+		return mockserrors.InvalidRulesError{
+			Message: "path must start with '/'",
 		}
 	}
 

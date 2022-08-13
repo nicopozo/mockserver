@@ -12,7 +12,7 @@ import (
 //nolint:lll
 //go:generate mockgen -destination=../utils/test/mocks/rule_repository_mock.go -package=mocks -source=./rule_repository.go
 
-type IRuleRepository interface {
+type RuleRepository interface {
 	Create(ctx context.Context, rule *model.Rule) (*model.Rule, error)
 	Update(ctx context.Context, rule *model.Rule) (*model.Rule, error)
 	Get(ctx context.Context, key string) (*model.Rule, error)

@@ -41,27 +41,27 @@ type mockService struct {
 	RuleService RuleService
 }
 
-func (service *mockService) SearchResponseForRequest(ctx context.Context,
+func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 	request *http.Request, path, body string) (*model.Response, error) {
 	logger := mockscontext.Logger(ctx)
 
-	logger.Debug(service, nil, "Entering mockService Execute()")
+	logger.Debug(svc, nil, "Entering mockService Execute()")
 
 	method := strings.ToUpper(request.Method)
 
-	rule, err := service.RuleService.SearchByMethodAndPath(ctx, method, path)
+	rule, err := svc.RuleService.SearchByMethodAndPath(ctx, method, path)
 	if err != nil {
-		logger.Error(service, nil, err, "error searching responses")
+		logger.Error(svc, nil, err, "error searching responses")
 
 		return nil, fmt.Errorf("error searching rule, %w", err)
 	}
 
-	response, err := service.getResponseFromRule(rule, request, body, path)
+	response, err := svc.getResponseFromRule(rule, request, body, path)
 	if err != nil {
 		return nil, err
 	}
 
-	body, err = service.applyVariables(request, body, response, rule, path)
+	body, err = svc.applyVariables(request, body, response, rule, path)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (service *mockService) SearchResponseForRequest(ctx context.Context,
 }
 
 //nolint:cyclop
-func (service *mockService) applyVariables(request *http.Request, reqBody string, response *model.Response,
+func (svc *mockService) applyVariables(request *http.Request, reqBody string, response *model.Response,
 	rule *model.Rule, path string) (string, error) {
 	var err error
 
@@ -81,23 +81,23 @@ func (service *mockService) applyVariables(request *http.Request, reqBody string
 	for _, variable := range rule.Variables {
 		switch variable.Type {
 		case model.VariableTypeHeader:
-			respBody = service.applyHeaderVariables(request, respBody, variable.Name, variable.Key)
+			respBody = svc.applyHeaderVariables(request, respBody, variable.Name, variable.Key)
 		case model.VariableTypeBody:
-			respBody, err = service.applyBodyVariables(reqBody, respBody, variable.Name, variable.Key)
+			respBody, err = svc.applyBodyVariables(reqBody, respBody, variable.Name, variable.Key)
 			if err != nil {
 				return respBody, err
 			}
 		case model.VariableTypeHash:
-			respBody = service.applyHashVariables(respBody, variable.Name)
+			respBody = svc.applyHashVariables(respBody, variable.Name)
 		case model.VariableTypeRandom:
-			respBody = service.applyRandomVariables(respBody, variable.Name)
+			respBody = svc.applyRandomVariables(respBody, variable.Name)
 		case model.VariableTypeQuery:
-			respBody, err = service.applyQueryVariables(request, respBody, variable.Name, variable.Key)
+			respBody, err = svc.applyQueryVariables(request, respBody, variable.Name, variable.Key)
 			if err != nil {
 				return respBody, err
 			}
 		case model.VariableTypePath:
-			respBody, err = service.applyPathVariable(respBody, rule.Path, path, variable.Name, variable.Key)
+			respBody, err = svc.applyPathVariable(respBody, rule.Path, path, variable.Name, variable.Key)
 			if err != nil {
 				return respBody, err
 			}
@@ -107,9 +107,9 @@ func (service *mockService) applyVariables(request *http.Request, reqBody string
 	return respBody, err
 }
 
-func (service *mockService) applyPathVariable(responseBody, rulePath, reqPath, variableName,
+func (svc *mockService) applyPathVariable(responseBody, rulePath, reqPath, variableName,
 	variableKey string) (string, error) {
-	params, err := service.getPathParams(rulePath, reqPath)
+	params, err := svc.getPathParams(rulePath, reqPath)
 	if err != nil {
 		return "", err
 	}
@@ -123,9 +123,9 @@ func (service *mockService) applyPathVariable(responseBody, rulePath, reqPath, v
 	return responseBody, nil
 }
 
-func (service *mockService) applyBodyVariables(reqBody, respBody string, name string,
+func (svc *mockService) applyBodyVariables(reqBody, respBody string, name string,
 	key string) (string, error) {
-	value, err := service.getBodyVariableValue(key, reqBody)
+	value, err := svc.getBodyVariableValue(key, reqBody)
 	if err != nil {
 		return "", err
 	}
@@ -135,17 +135,17 @@ func (service *mockService) applyBodyVariables(reqBody, respBody string, name st
 	return respBody, nil
 }
 
-func (service *mockService) applyRandomVariables(respBody string, name string) string {
-	return strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", name), service.getRandomVariableValue())
+func (svc *mockService) applyRandomVariables(respBody string, name string) string {
+	return strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", name), svc.getRandomVariableValue())
 }
 
-func (service *mockService) applyHashVariables(respBody string, name string) string {
-	return strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", name), service.getHashVariableValue())
+func (svc *mockService) applyHashVariables(respBody string, name string) string {
+	return strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", name), svc.getHashVariableValue())
 }
 
-func (service *mockService) applyQueryVariables(request *http.Request, body string, name string,
+func (svc *mockService) applyQueryVariables(request *http.Request, body string, name string,
 	key string) (string, error) {
-	queryValue, err := service.getQueryVariableValue(key, request)
+	queryValue, err := svc.getQueryVariableValue(key, request)
 	if err != nil {
 		return "", err
 	}
@@ -153,8 +153,8 @@ func (service *mockService) applyQueryVariables(request *http.Request, body stri
 	return strings.ReplaceAll(body, fmt.Sprintf("{%s}", name), queryValue), nil
 }
 
-func (service *mockService) applyHeaderVariables(request *http.Request, body string, name string, key string) string {
-	header := service.getHeaderVariableValue(key, request)
+func (svc *mockService) applyHeaderVariables(request *http.Request, body string, name string, key string) string {
+	header := svc.getHeaderVariableValue(key, request)
 	if header != "" {
 		body = strings.ReplaceAll(body, fmt.Sprintf("{%s}", name), header)
 	}
@@ -163,7 +163,7 @@ func (service *mockService) applyHeaderVariables(request *http.Request, body str
 }
 
 //nolint:cyclop,funlen
-func (service *mockService) getResponseFromRule(rule *model.Rule, request *http.Request, body string,
+func (svc *mockService) getResponseFromRule(rule *model.Rule, request *http.Request, body string,
 	path string) (*model.Response, error) {
 	strategy := rule.Strategy
 
@@ -187,7 +187,7 @@ func (service *mockService) getResponseFromRule(rule *model.Rule, request *http.
 			}
 		}
 
-		sceneName, err := service.getVariableValue(*scene, request, body, rule, path)
+		sceneName, err := svc.getVariableValue(*scene, request, body, rule, path)
 		if err != nil {
 			return nil, err
 		}
@@ -237,11 +237,11 @@ func (service *mockService) getResponseFromRule(rule *model.Rule, request *http.
 	}
 }
 
-func (service *mockService) getHeaderVariableValue(key string, request *http.Request) string {
+func (svc *mockService) getHeaderVariableValue(key string, request *http.Request) string {
 	return request.Header.Get(key)
 }
 
-func (service *mockService) getBodyVariableValue(key, body string) (string, error) {
+func (svc *mockService) getBodyVariableValue(key, body string) (string, error) {
 	apply, err := jsonpath.Prepare(key)
 	if err != nil {
 		return "", fmt.Errorf("invalid JSON path for key %s - %w", key, err)
@@ -260,7 +260,7 @@ func (service *mockService) getBodyVariableValue(key, body string) (string, erro
 	return jsonutils.Marshal(value), nil
 }
 
-func (service *mockService) getHashVariableValue() string {
+func (svc *mockService) getHashVariableValue() string {
 	n := rand.Int63n(max) //nolint:gosec
 	h := sha256.New()
 	h.Write([]byte(fmt.Sprintf("%v", n)))
@@ -269,14 +269,14 @@ func (service *mockService) getHashVariableValue() string {
 	return fmt.Sprintf("%x", bs)
 }
 
-func (service *mockService) getRandomVariableValue() string {
+func (svc *mockService) getRandomVariableValue() string {
 	rand.Seed(time.Now().UnixNano())
 	n := rand.Int63n(max) //nolint:gosec
 
 	return strconv.FormatInt(n, 10) //nolint:gomnd
 }
 
-func (service *mockService) getQueryVariableValue(key string, request *http.Request) (string, error) {
+func (svc *mockService) getQueryVariableValue(key string, request *http.Request) (string, error) {
 	queries, err := url.ParseQuery(request.URL.RawQuery)
 	if err != nil {
 		return "", fmt.Errorf("error parsing queries %w", err)
@@ -293,8 +293,8 @@ func (service *mockService) getQueryVariableValue(key string, request *http.Requ
 	}
 }
 
-func (service *mockService) getPathVariableValue(key, rulePath, reqPath string) (string, error) {
-	pathVariables, err := service.getPathParams(rulePath, reqPath)
+func (svc *mockService) getPathVariableValue(key, rulePath, reqPath string) (string, error) {
+	pathVariables, err := svc.getPathParams(rulePath, reqPath)
 	if err != nil {
 		return "", err
 	}
@@ -308,21 +308,21 @@ func (service *mockService) getPathVariableValue(key, rulePath, reqPath string) 
 	return pathVariables[key], nil
 }
 
-func (service *mockService) getVariableValue(variable model.Variable, request *http.Request, body string,
+func (svc *mockService) getVariableValue(variable model.Variable, request *http.Request, body string,
 	rule *model.Rule, path string) (string, error) {
 	switch variable.Type {
 	case model.VariableTypeHeader:
-		return service.getHeaderVariableValue(variable.Key, request), nil
+		return svc.getHeaderVariableValue(variable.Key, request), nil
 	case model.VariableTypeBody:
-		return service.getBodyVariableValue(variable.Key, body)
+		return svc.getBodyVariableValue(variable.Key, body)
 	case model.VariableTypeHash:
-		return service.getHashVariableValue(), nil
+		return svc.getHashVariableValue(), nil
 	case model.VariableTypeRandom:
-		return service.getRandomVariableValue(), nil
+		return svc.getRandomVariableValue(), nil
 	case model.VariableTypeQuery:
-		return service.getQueryVariableValue(variable.Key, request)
+		return svc.getQueryVariableValue(variable.Key, request)
 	case model.VariableTypePath:
-		return service.getPathVariableValue(variable.Key, rule.Path, path)
+		return svc.getPathVariableValue(variable.Key, rule.Path, path)
 	}
 
 	return "", mockserrors.InvalidRulesError{
@@ -330,7 +330,7 @@ func (service *mockService) getVariableValue(variable model.Variable, request *h
 	}
 }
 
-func (service *mockService) getPathParams(rulePath, reqPath string) (map[string]string, error) {
+func (svc *mockService) getPathParams(rulePath, reqPath string) (map[string]string, error) {
 	u, err := url.Parse(reqPath)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing url, %w", err)

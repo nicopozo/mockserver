@@ -16,7 +16,7 @@ type container struct {
 	mockService service.MockService
 	ruleService service.RuleService
 
-	ruleRepository repository.IRuleRepository
+	ruleRepository repository.RuleRepository
 }
 
 func (c *container) MockController() *controller.MockController {
@@ -75,7 +75,7 @@ func (c *container) RuleService() service.RuleService {
 	return c.ruleService
 }
 
-func (c *container) RuleRepository() repository.IRuleRepository {
+func (c *container) RuleRepository() repository.RuleRepository {
 	if c.ruleRepository == nil {
 		dataSource := os.Getenv("MOCKS_DATASOURCE")
 

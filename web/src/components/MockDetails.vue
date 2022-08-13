@@ -30,7 +30,10 @@
             <v-text-field label="Path"
                           v-model="mock.path"
                           placeholder="Example: /users/{user_id}"
-                          :rules="[v => !!v || 'Path is required', v => /^((?!\?).)*$/.test(v) || 'Type path without query']"
+                          :rules="[
+                              v => !!v || 'Path is required',
+                              v => /^((?!\?).)*$/.test(v) || 'Type path without query',
+                              v => !!v.startsWith('/') || 'Path must start with \'/\'']"
                           required dense outlined/>
             <!--MOCK METHOD-->
             <v-select label="HTTP Method"
@@ -54,6 +57,15 @@
                 Enable mock?
               </template>
             </v-switch>
+          </v-col>
+          <v-col cols="6">
+            <div class="text-center">
+              <v-btn
+                  color="primary"
+                  @click="showExecutionURL()"
+              >Show Execution URL
+              </v-btn>
+            </div>
           </v-col>
         </v-row>
       </v-container>
@@ -179,10 +191,56 @@
       <v-btn depressed color="primary" class="mx-1" @click="submit" :loading="saving">Save</v-btn>
     </v-col>
 
-    <v-snackbar v-model="alert.show" :color="alert.color">{{ alert.text }}</v-snackbar>
+    <v-snackbar v-model="alert.show" :color="alert.color" :timeout="alert.timeout">{{ alert.text }}</v-snackbar>
+
+    <div class="text-center">
+      <v-dialog
+
+          width="500"
+      >
+        <v-card>
+          <v-card-title class="text-h5 grey lighten-2">
+            Execution URL
+          </v-card-title>
+
+          <v-card-text class="text-h6" ref="executionURL">
+            {{ executionURL.value }}
+          </v-card-text>
+        </v-card>
+      </v-dialog>
+    </div>
+
+    <v-dialog
+        transition="dialog-top-transition"
+        max-width="600"
+        v-model="executionURL.show"
+    >
+      <template>
+        <v-card>
+          <v-toolbar
+
+              color="primary"
+              dark
+          >Mock execution URL:
+          </v-toolbar>
+          <v-card-text>
+            <div class="text-h6 pa-12">{{ executionURL.value }}</div>
+          </v-card-text>
+          <v-card-actions class="justify-end">
+            <v-btn
+                text
+                @click="copyExecutionURL()"
+            >Done
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </template>
+    </v-dialog>
+
 
   </v-form>
 </template>
+
 
 <script>
 import axios from "axios";
@@ -230,11 +288,16 @@ export default {
       alert: {
         show: false,
         color: "green",
-        text: ""
+        text: "",
+        timeout: "5000"
       },
       valid: false,
       loading: false,
       saving: false,
+      executionURL: {
+        value: "",
+        show: false
+      }
     };
   },
   methods: {
@@ -298,7 +361,7 @@ export default {
             },
           })
           .then((res) => {
-            this.$router.push({name: 'MockDetails', params:{theKey:res.data.key, theName:res.data.name}});
+            this.$router.push({name: 'MockDetails', params: {theKey: res.data.key, theName: res.data.name}});
           })
           .catch((err) => {
             this.showAlert("Error creating mock", err);
@@ -330,7 +393,7 @@ export default {
       axios
           .delete(this.baseURL() + "/" + this.theKey)
           .then(() => {
-            this.$router.push({ name: 'ListMocks' });
+            this.$router.push({name: 'ListMocks'});
           })
           .catch((err) => {
             this.showAlert("Error deleting mock!", err);
@@ -417,6 +480,37 @@ export default {
         variables: [],
       };
     },
+    showExecutionURL() {
+      let executionURL = this.getExecutionURL()
+      if (executionURL === "") {
+        this.showAlert("Path cannot be empty.", "error");
+      } else {
+        this.executionURL.value = executionURL
+        this.executionURL.show = true
+      }
+    },
+    getExecutionURL() {
+      let path = this.mock.path;
+      if (path === "") {
+        return ""
+      }
+
+      if (!path.startsWith("/")) {
+        path = "/" + path
+      }
+
+      return window.location.protocol + "//" + window.location.host + "/mock-service/mock" + path
+    },
+    copyExecutionURL() {
+      // navigator.clipboard.writeText(this.executionURL.value)
+      //     .then(() => {
+      //       this.showAlert("Successfully copied Execution URL to clipboard", null);
+      //     })
+      //     .catch((err) => {
+      //       this.showAlert("Error copying Execution URL to clipboard", err);
+      //     });
+      this.executionURL.show = false
+    },
     initialize() {
       if (this.theKey) {
         this.loading = true;
@@ -468,7 +562,7 @@ export default {
 }
 
 .description > .v-input__control > .v-input__slot::before {
-  display: none!important;
+  display: none !important;
 }
 
 </style>
