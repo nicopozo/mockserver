@@ -68,7 +68,7 @@ and then run the app witj `./mocks` command (run the [`init database script`](ht
 curl --location --request POST 'localhost:8080/mock-service/rules' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "application": "Users",
+    "group": "Users",
     "name": "Get User",
     "path": "/users/{id}",
     "strategy": "normal",
