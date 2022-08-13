@@ -61,7 +61,7 @@ func Test_log_getMessage(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests { //nolint:paralleltest,varnamelen
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			theLogger := log.NewLogger(tt.fields.trackingID)
 			if got := theLogger.GetMessage(tt.args.message, tt.args.args...); got != tt.want {
