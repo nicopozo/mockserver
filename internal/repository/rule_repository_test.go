@@ -9,8 +9,6 @@ import (
 
 //nolint:nosnakecase
 func Test_CreateExpression(t *testing.T) {
-	t.Parallel()
-
 	type args struct {
 		path string
 	}
@@ -45,8 +43,6 @@ func Test_CreateExpression(t *testing.T) {
 
 	for _, tt := range tests { //nolint:paralleltest
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			got := repository.CreateExpression(tt.args.path)
 			assert.Equal(t, tt.want, got)
 		})

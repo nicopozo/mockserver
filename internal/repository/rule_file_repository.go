@@ -14,12 +14,18 @@ import (
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 )
 
+const defaultFilePath = "/tmp/mocks.json"
+
 type ruleFileRepository struct {
 	rules    []model.Rule
 	filePath string
 }
 
 func NewRuleFileRepository(filePath string) (RuleRepository, error) {
+	if filePath == "" {
+		filePath = defaultFilePath
+	}
+
 	repo := ruleFileRepository{
 		rules:    make([]model.Rule, 0),
 		filePath: filePath,

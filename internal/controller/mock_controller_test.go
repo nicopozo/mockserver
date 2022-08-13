@@ -23,7 +23,7 @@ func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase,paralleltes
 		wantStatus       int
 		wantedErr        *model.Error
 		serviceErr       error
-		serviceResponse  *model.Response
+		serviceResponse  model.Response
 		serviceCallTimes int
 	}{
 		{
@@ -32,7 +32,7 @@ func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase,paralleltes
 			wantStatus: http.StatusOK,
 			wantedErr:  nil,
 			serviceErr: nil,
-			serviceResponse: &model.Response{
+			serviceResponse: model.Response{
 				Body:        "{\"balance\":5000}",
 				ContentType: "application/json",
 				HTTPStatus:  http.StatusOK,
@@ -58,7 +58,7 @@ func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase,paralleltes
 			serviceErr: mockserrors.RuleNotFoundError{
 				Message: "no rule found for path",
 			},
-			serviceResponse:  nil,
+			serviceResponse:  model.Response{},
 			serviceCallTimes: 1,
 		},
 		{
@@ -79,7 +79,7 @@ func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase,paralleltes
 			serviceErr: mockserrors.RuleNotFoundError{
 				Message: "no rule found for path",
 			},
-			serviceResponse:  nil,
+			serviceResponse:  model.Response{},
 			serviceCallTimes: 1,
 		},
 		{
@@ -98,7 +98,7 @@ func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase,paralleltes
 				},
 			},
 			serviceErr:       errors.New("service error"), //nolint:goerr113
-			serviceResponse:  nil,
+			serviceResponse:  model.Response{},
 			serviceCallTimes: 1,
 		},
 	}

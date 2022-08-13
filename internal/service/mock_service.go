@@ -24,7 +24,7 @@ const max = 9999999999
 //go:generate mockgen -destination=../utils/test/mocks/mock_service_mock.go -package=mocks -source=./mock_service.go
 
 type MockService interface {
-	SearchResponseForRequest(ctx context.Context, request *http.Request, path, body string) (*model.Response, error)
+	SearchResponseForRequest(ctx context.Context, request *http.Request, path, body string) (model.Response, error)
 }
 
 func NewMockService(ruleService RuleService) (MockService, error) {
@@ -42,7 +42,7 @@ type mockService struct {
 }
 
 func (svc *mockService) SearchResponseForRequest(ctx context.Context,
-	request *http.Request, path, body string) (*model.Response, error) {
+	request *http.Request, path, body string) (model.Response, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(svc, nil, "Entering mockService Execute()")
@@ -53,17 +53,17 @@ func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 	if err != nil {
 		logger.Error(svc, nil, err, "error searching responses")
 
-		return nil, fmt.Errorf("error searching rule, %w", err)
+		return model.Response{}, fmt.Errorf("error searching rule, %w", err)
 	}
 
 	response, err := svc.getResponseFromRule(rule, request, body, path)
 	if err != nil {
-		return nil, err
+		return model.Response{}, err
 	}
 
 	body, err = svc.applyVariables(request, body, response, rule, path)
 	if err != nil {
-		return nil, err
+		return model.Response{}, err
 	}
 
 	response.Body = body
@@ -72,7 +72,7 @@ func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 }
 
 //nolint:cyclop
-func (svc *mockService) applyVariables(request *http.Request, reqBody string, response *model.Response,
+func (svc *mockService) applyVariables(request *http.Request, reqBody string, response model.Response,
 	rule *model.Rule, path string) (string, error) {
 	var err error
 
@@ -164,12 +164,12 @@ func (svc *mockService) applyHeaderVariables(request *http.Request, body string,
 
 //nolint:cyclop,funlen
 func (svc *mockService) getResponseFromRule(rule *model.Rule, request *http.Request, body string,
-	path string) (*model.Response, error) {
+	path string) (model.Response, error) {
 	strategy := rule.Strategy
 
 	switch strategy {
 	case model.RuleStrategyNormal:
-		return &rule.Responses[0], nil
+		return rule.Responses[0], nil
 	case model.RuleStrategyScene:
 		var scene *model.Variable
 
@@ -182,14 +182,14 @@ func (svc *mockService) getResponseFromRule(rule *model.Rule, request *http.Requ
 		}
 
 		if scene == nil {
-			return nil, mockserrors.InvalidRulesError{
+			return model.Response{}, mockserrors.InvalidRulesError{
 				Message: "rule doesn't have any variable names 'scene'",
 			}
 		}
 
 		sceneName, err := svc.getVariableValue(*scene, request, body, rule, path)
 		if err != nil {
-			return nil, err
+			return model.Response{}, err
 		}
 
 		if sceneName != "" {
@@ -217,10 +217,10 @@ func (svc *mockService) getResponseFromRule(rule *model.Rule, request *http.Requ
 		}
 
 		if respIndex >= 0 {
-			return &rule.Responses[respIndex], nil
+			return rule.Responses[respIndex], nil
 		}
 
-		return nil, mockserrors.InvalidRulesError{
+		return model.Response{}, mockserrors.InvalidRulesError{
 			Message: fmt.Sprintf("rule doesn't have an scene called %s", sceneName),
 		}
 	case model.RuleStrategyRandom:
@@ -229,10 +229,10 @@ func (svc *mockService) getResponseFromRule(rule *model.Rule, request *http.Requ
 		rand.Seed(time.Now().UnixNano())
 		i := rand.Int63n(int64(responsesLen)) // nolint:gosec
 
-		return &rule.Responses[i], nil
+		return rule.Responses[i], nil
 	}
 
-	return nil, mockserrors.InvalidRulesError{
+	return model.Response{}, mockserrors.InvalidRulesError{
 		Message: "rule doesn't have a valid strategy",
 	}
 }

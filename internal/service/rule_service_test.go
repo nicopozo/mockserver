@@ -467,8 +467,6 @@ func TestRuleService_Save(t *testing.T) {
 
 //nolint:funlen,nosnakecase
 func TestRuleService_Get(t *testing.T) {
-	t.Parallel()
-
 	type args struct {
 		ctx context.Context //nolint:containedctx
 		key string
@@ -568,8 +566,6 @@ func TestRuleService_Get(t *testing.T) {
 
 //nolint:funlen,nosnakecase
 func TestRuleService_Delete(t *testing.T) {
-	t.Parallel()
-
 	type args struct {
 		ctx context.Context //nolint:containedctx
 		key string
@@ -625,8 +621,6 @@ func TestRuleService_Delete(t *testing.T) {
 
 	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			mockCtrl := gomock.NewController(t)
 			ruleRepositoryMock := mocks.NewMockRuleRepository(mockCtrl)
 			defer mockCtrl.Finish()

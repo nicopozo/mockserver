@@ -18,8 +18,6 @@ import (
 
 //nolint:funlen,nosnakecase
 func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
-	t.Parallel()
-
 	requestMock, _ := http.NewRequest("PUT", "url", strings.NewReader("body"))
 
 	type args struct {
@@ -29,89 +27,214 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 		body    string
 	}
 
+	type rulesServiceCall struct {
+		searchByMethodAndPathResult *model.Rule
+		searchByMethodAndPathErr    error
+		searchByMethodAndPathTimes  int
+	}
+
+	type want struct {
+		result model.Response
+		err    error
+	}
+
 	tests := []struct {
 		name             string
-		args             args
-		want             *model.Response
-		wantedErr        error
-		ruleServiceRule  *model.Rule
-		ruleServiceErr   error
-		ruleServiceTimes int
+		args             []args
+		rulesServiceCall []rulesServiceCall
+		want             []want
 	}{
 		{
 			name: "Should search response successfully",
-			args: args{
-				ctx:     mockscontext.Background(),
-				request: requestMock,
-				path:    "/test",
-				body:    "body",
+			args: []args{
+				{
+					ctx:     mockscontext.Background(),
+					request: requestMock,
+					path:    "/test",
+					body:    "body",
+				},
 			},
-			want: &model.Response{
-				Body:        "{\"balance\":5000}",
-				ContentType: "application/json",
-				HTTPStatus:  http.StatusOK,
-				Delay:       100,
+			rulesServiceCall: []rulesServiceCall{
+				{
+					searchByMethodAndPathResult: &model.Rule{
+						Key:      "key123",
+						Group:    "myapp",
+						Name:     "test_mock",
+						Path:     "/test",
+						Strategy: "normal",
+						Method:   "PUT",
+						Status:   "enabled",
+						Responses: []model.Response{
+							{
+								Body:        "{\"balance\":5000}",
+								ContentType: "application/json",
+								HTTPStatus:  http.StatusOK,
+								Delay:       100,
+							},
+						},
+					},
+					searchByMethodAndPathErr:   nil,
+					searchByMethodAndPathTimes: 1,
+				},
 			},
-			wantedErr: nil,
-			ruleServiceRule: &model.Rule{
-				Key:      "key123",
-				Group:    "myapp",
-				Name:     "test_mock",
-				Path:     "/test",
-				Strategy: "normal",
-				Method:   "PUT",
-				Status:   "enabled",
-				Responses: []model.Response{
-					{
+			want: []want{
+				{
+					result: model.Response{
 						Body:        "{\"balance\":5000}",
 						ContentType: "application/json",
 						HTTPStatus:  http.StatusOK,
 						Delay:       100,
 					},
+					err: nil,
 				},
 			},
-			ruleServiceErr:   nil,
-			ruleServiceTimes: 1,
+		},
+		{
+			name: "Should search response successfully with successive calls",
+			args: []args{
+				{
+					ctx:     mockscontext.Background(),
+					request: requestMock,
+					path:    "/test/1",
+					body:    "body",
+				},
+				{
+					ctx:     mockscontext.Background(),
+					request: requestMock,
+					path:    "/test/2",
+					body:    "body",
+				},
+			},
+			rulesServiceCall: []rulesServiceCall{
+				{
+					searchByMethodAndPathResult: &model.Rule{
+						Key:      "key123",
+						Group:    "myapp",
+						Name:     "test_mock",
+						Path:     "/test/{id}",
+						Strategy: "normal",
+						Method:   "GET",
+						Status:   "enabled",
+						Variables: []*model.Variable{
+							{
+								Type: "path",
+								Name: "the_id",
+								Key:  "id",
+							},
+						},
+						Responses: []model.Response{
+							{
+								Body:        "{\"id\":{the_id}}",
+								ContentType: "application/json",
+								HTTPStatus:  http.StatusOK,
+								Delay:       100,
+							},
+						},
+					},
+					searchByMethodAndPathErr:   nil,
+					searchByMethodAndPathTimes: 1,
+				},
+				{
+					searchByMethodAndPathResult: &model.Rule{
+						Key:      "key123",
+						Group:    "myapp",
+						Name:     "test_mock",
+						Path:     "/test/{id}",
+						Strategy: "normal",
+						Method:   "PUT",
+						Status:   "enabled",
+						Variables: []*model.Variable{
+							{
+								Type: "path",
+								Name: "the_id",
+								Key:  "id",
+							},
+						},
+						Responses: []model.Response{
+							{
+								Body:        "{\"id\":{the_id}}",
+								ContentType: "application/json",
+								HTTPStatus:  http.StatusOK,
+								Delay:       100,
+							},
+						},
+					},
+					searchByMethodAndPathErr:   nil,
+					searchByMethodAndPathTimes: 1,
+				},
+			},
+			want: []want{
+				{
+					result: model.Response{
+						Body:        "{\"id\":1}",
+						ContentType: "application/json",
+						HTTPStatus:  http.StatusOK,
+						Delay:       100,
+					},
+					err: nil,
+				},
+				{
+					result: model.Response{
+						Body:        "{\"id\":2}",
+						ContentType: "application/json",
+						HTTPStatus:  http.StatusOK,
+						Delay:       100,
+					},
+					err: nil,
+				},
+			},
 		},
 		{
 			name: "Should return error when service returns error",
-			args: args{
-				ctx:     mockscontext.Background(),
-				request: requestMock,
-				path:    "/test",
-				body:    "body",
+			args: []args{
+				{
+					ctx:     mockscontext.Background(),
+					request: requestMock,
+					path:    "/test",
+					body:    "body",
+				},
 			},
-			want:             nil,
-			wantedErr:        fmt.Errorf("error searching rule, %w", errors.New("error in service")), //nolint:goerr113
-			ruleServiceRule:  nil,
-			ruleServiceErr:   errors.New("error in service"), //nolint:goerr113
-			ruleServiceTimes: 1,
+			want: []want{
+				{
+					result: model.Response{},
+					err:    fmt.Errorf("error searching rule, %w", errors.New("error in service")), //nolint:goerr113
+				},
+			},
+			rulesServiceCall: []rulesServiceCall{
+				{
+					searchByMethodAndPathResult: nil,
+					searchByMethodAndPathErr:    errors.New("error in service"), //nolint:goerr113
+					searchByMethodAndPathTimes:  1,
+				},
+			},
 		},
 	}
 
 	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
-			ruleServiceMock.EXPECT().SearchByMethodAndPath(tt.args.ctx, tt.args.request.Method, tt.args.path).
-				Return(tt.ruleServiceRule, tt.ruleServiceErr).Times(tt.ruleServiceTimes)
+			for idx := range tt.args {
+				ruleServiceMock.EXPECT().SearchByMethodAndPath(tt.args[idx].ctx, tt.args[idx].request.Method, tt.args[idx].path).
+					Return(tt.rulesServiceCall[idx].searchByMethodAndPathResult, tt.rulesServiceCall[idx].searchByMethodAndPathErr).
+					Times(tt.rulesServiceCall[idx].searchByMethodAndPathTimes)
 
-			srv, err := service.NewMockService(ruleServiceMock)
-			assert.Nil(t, err)
+				srv, err := service.NewMockService(ruleServiceMock)
+				assert.Nil(t, err)
 
-			got, err := srv.SearchResponseForRequest(tt.args.ctx, tt.args.request, tt.args.path, tt.args.body)
-			if tt.wantedErr != nil {
-				assert.Equal(t, tt.wantedErr, err)
+				got, err := srv.SearchResponseForRequest(
+					tt.args[idx].ctx, tt.args[idx].request, tt.args[idx].path, tt.args[idx].body)
+				if tt.want[idx].err != nil {
+					assert.Equal(t, tt.want[idx].err, err)
 
-				return
+					return
+				}
+
+				assert.Nil(t, err)
+				assert.Equal(t, tt.want[idx].result, got)
 			}
-
-			assert.Nil(t, err)
-			assert.Equal(t, tt.want, got)
 		})
 	}
 }

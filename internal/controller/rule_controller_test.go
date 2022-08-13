@@ -22,8 +22,6 @@ import (
 
 //nolint:funlen
 func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
-	t.Parallel()
-
 	tests := []struct {
 		name             string
 		requestFile      string
@@ -119,8 +117,6 @@ func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
 
 	for _, tt := range tests { // nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()
@@ -169,8 +165,6 @@ func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
 
 //nolint:funlen
 func TestRuleController_Get(t *testing.T) { //nolint:nosnakecase
-	t.Parallel()
-
 	tests := []struct {
 		name             string
 		serviceErr       error
@@ -248,8 +242,6 @@ func TestRuleController_Get(t *testing.T) { //nolint:nosnakecase
 
 	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()
@@ -577,8 +569,6 @@ func TestRuleController_Search(t *testing.T) {
 
 //nolint:nosnakecase,funlen
 func TestRuleController_Delete(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		name             string
 		serviceErr       error
@@ -626,8 +616,6 @@ func TestRuleController_Delete(t *testing.T) {
 
 	for _, tt := range tests { //nolint:paralleltest,varnamelen
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()

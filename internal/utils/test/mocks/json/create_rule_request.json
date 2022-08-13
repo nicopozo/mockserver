@@ -1,5 +1,5 @@
 {
-  "application": "myapp",
+  "group": "myapp",
   "name": "get balance",
   "path": "/myapp/{user}/balance",
   "strategy": "normal",
