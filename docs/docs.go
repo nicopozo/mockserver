@@ -336,6 +336,43 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.Assertion": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "max": {
+                    "type": "number"
+                },
+                "min": {
+                    "type": "number"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "variable_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.AssertionGroup": {
+            "type": "object",
+            "properties": {
+                "assertions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Assertion"
+                    }
+                },
+                "fail_on_error": {
+                    "type": "boolean"
+                }
+            }
+        },
         "model.Error": {
             "type": "object",
             "properties": {
@@ -420,6 +457,15 @@ const docTemplate = `{
         "model.Rule": {
             "type": "object",
             "properties": {
+                "assertion_groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.AssertionGroup"
+                    }
+                },
+                "fail_on_assertions": {
+                    "type": "boolean"
+                },
                 "group": {
                     "type": "string",
                     "example": "payments"

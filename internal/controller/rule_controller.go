@@ -42,7 +42,7 @@ func (controller *RuleController) Create(context *gin.Context) {
 		return
 	}
 
-	rule, err = controller.RuleService.Save(reqContext, rule)
+	serviceRule, err := controller.RuleService.Save(reqContext, *rule)
 
 	if err != nil {
 		switch err.(type) { //nolint:errorlint
@@ -63,7 +63,7 @@ func (controller *RuleController) Create(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusCreated, rule)
+	context.JSON(http.StatusCreated, serviceRule)
 }
 
 // Update a Rule.
@@ -95,7 +95,7 @@ func (controller *RuleController) Update(context *gin.Context) {
 		return
 	}
 
-	rule, err = controller.RuleService.Update(reqContext, key, rule)
+	serviceRule, err := controller.RuleService.Update(reqContext, key, *rule)
 
 	if err != nil {
 		switch err.(type) { //nolint:errorlint
@@ -119,7 +119,7 @@ func (controller *RuleController) Update(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusOK, rule)
+	context.JSON(http.StatusOK, serviceRule)
 }
 
 // UpdateStatus updates a Rule Status.
@@ -151,7 +151,7 @@ func (controller *RuleController) UpdateStatus(context *gin.Context) {
 		return
 	}
 
-	rule, err := controller.RuleService.UpdateStatus(reqContext, key, ruleStatus)
+	serviceRule, err := controller.RuleService.UpdateStatus(reqContext, key, *ruleStatus)
 	if err != nil {
 		switch err.(type) { //nolint:errorlint
 		case ruleserrors.RuleNotFoundError:
@@ -174,7 +174,7 @@ func (controller *RuleController) UpdateStatus(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusOK, rule)
+	context.JSON(http.StatusOK, serviceRule)
 }
 
 // Get a Rule.

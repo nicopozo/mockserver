@@ -51,6 +51,16 @@ func (controller *MockController) Execute(context *gin.Context) {
 			return
 		}
 
+		if errors.As(err, &ruleserrors.AssertionError{}) {
+			logger.Debug(controller, nil, "One or more assertions failed.",
+				path, context.Request.Method)
+
+			errorResult := model.NewError(model.ValidationError, err.Error())
+			context.JSON(http.StatusBadRequest, errorResult)
+
+			return
+		}
+
 		logger.Error(controller, nil, err,
 			"Failed to execute rule for method %v: and path %v", context.Request.Method, path)
 

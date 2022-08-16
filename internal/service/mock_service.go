@@ -56,114 +56,41 @@ func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 		return model.Response{}, fmt.Errorf("error searching rule, %w", err)
 	}
 
+	variables, err := svc.getVariableValues(*request, body, rule, path)
+	if err != nil {
+		return model.Response{}, err
+	}
+
+	assertionResult := svc.applyAssertionsFromRule(rule, variables)
+
+	assertionResult.Print(ctx)
+
+	if assertionResult.Fail {
+		return model.Response{}, assertionResult.GetError()
+	}
+
 	response, err := svc.getResponseFromRule(rule, request, body, path)
 	if err != nil {
 		return model.Response{}, err
 	}
 
-	body, err = svc.applyVariables(request, body, response, rule, path)
-	if err != nil {
-		return model.Response{}, err
-	}
+	body = svc.applyVariables(response.Body, variables)
 
 	response.Body = body
 
 	return response, nil
 }
 
-//nolint:cyclop
-func (svc *mockService) applyVariables(request *http.Request, reqBody string, response model.Response,
-	rule *model.Rule, path string) (string, error) {
-	var err error
-
-	respBody := response.Body
-
-	for _, variable := range rule.Variables {
-		switch variable.Type {
-		case model.VariableTypeHeader:
-			respBody = svc.applyHeaderVariables(request, respBody, variable.Name, variable.Key)
-		case model.VariableTypeBody:
-			respBody, err = svc.applyBodyVariables(reqBody, respBody, variable.Name, variable.Key)
-			if err != nil {
-				return respBody, err
-			}
-		case model.VariableTypeHash:
-			respBody = svc.applyHashVariables(respBody, variable.Name)
-		case model.VariableTypeRandom:
-			respBody = svc.applyRandomVariables(respBody, variable.Name)
-		case model.VariableTypeQuery:
-			respBody, err = svc.applyQueryVariables(request, respBody, variable.Name, variable.Key)
-			if err != nil {
-				return respBody, err
-			}
-		case model.VariableTypePath:
-			respBody, err = svc.applyPathVariable(respBody, rule.Path, path, variable.Name, variable.Key)
-			if err != nil {
-				return respBody, err
-			}
-		}
+func (svc *mockService) applyVariables(respBody string, variables []*model.Variable) string {
+	for _, variable := range variables {
+		respBody = strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", variable.Name), variable.Value)
 	}
 
-	return respBody, err
-}
-
-func (svc *mockService) applyPathVariable(responseBody, rulePath, reqPath, variableName,
-	variableKey string) (string, error) {
-	params, err := svc.getPathParams(rulePath, reqPath)
-	if err != nil {
-		return "", err
-	}
-
-	for paramKey, paramValue := range params {
-		if paramKey == variableKey {
-			return strings.ReplaceAll(responseBody, fmt.Sprintf("{%s}", variableName), paramValue), nil
-		}
-	}
-
-	return responseBody, nil
-}
-
-func (svc *mockService) applyBodyVariables(reqBody, respBody string, name string,
-	key string) (string, error) {
-	value, err := svc.getBodyVariableValue(key, reqBody)
-	if err != nil {
-		return "", err
-	}
-
-	respBody = strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", name), value)
-
-	return respBody, nil
-}
-
-func (svc *mockService) applyRandomVariables(respBody string, name string) string {
-	return strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", name), svc.getRandomVariableValue())
-}
-
-func (svc *mockService) applyHashVariables(respBody string, name string) string {
-	return strings.ReplaceAll(respBody, fmt.Sprintf("{%s}", name), svc.getHashVariableValue())
-}
-
-func (svc *mockService) applyQueryVariables(request *http.Request, body string, name string,
-	key string) (string, error) {
-	queryValue, err := svc.getQueryVariableValue(key, request)
-	if err != nil {
-		return "", err
-	}
-
-	return strings.ReplaceAll(body, fmt.Sprintf("{%s}", name), queryValue), nil
-}
-
-func (svc *mockService) applyHeaderVariables(request *http.Request, body string, name string, key string) string {
-	header := svc.getHeaderVariableValue(key, request)
-	if header != "" {
-		body = strings.ReplaceAll(body, fmt.Sprintf("{%s}", name), header)
-	}
-
-	return body
+	return respBody
 }
 
 //nolint:cyclop,funlen
-func (svc *mockService) getResponseFromRule(rule *model.Rule, request *http.Request, body string,
+func (svc *mockService) getResponseFromRule(rule model.Rule, request *http.Request, body string,
 	path string) (model.Response, error) {
 	strategy := rule.Strategy
 
@@ -252,10 +179,7 @@ func (svc *mockService) getBodyVariableValue(key, body string) (string, error) {
 		return "", fmt.Errorf("error unmarshalling request body. Body: %s: %w", body, err)
 	}
 
-	value, err := apply(reqMap)
-	if err != nil {
-		return "", fmt.Errorf("error getting value from JSON PATH. Request: %v: %w", reqMap, err)
-	}
+	value, _ := apply(reqMap)
 
 	return jsonutils.Marshal(value), nil
 }
@@ -309,7 +233,7 @@ func (svc *mockService) getPathVariableValue(key, rulePath, reqPath string) (str
 }
 
 func (svc *mockService) getVariableValue(variable model.Variable, request *http.Request, body string,
-	rule *model.Rule, path string) (string, error) {
+	rule model.Rule, path string) (string, error) {
 	switch variable.Type {
 	case model.VariableTypeHeader:
 		return svc.getHeaderVariableValue(variable.Key, request), nil
@@ -354,4 +278,34 @@ func (svc *mockService) getPathParams(rulePath, reqPath string) (map[string]stri
 	}
 
 	return params, nil
+}
+
+func (svc *mockService) getVariableValues(request http.Request, body string, rule model.Rule,
+	path string) ([]*model.Variable, error) {
+	variables := rule.Variables
+	for idx := range variables {
+		value, err := svc.getVariableValue(*variables[idx], &request, body, rule, path)
+		if err != nil {
+			return nil, err
+		}
+
+		variables[idx].Value = value
+	}
+
+	return variables, nil
+}
+
+func (svc *mockService) applyAssertionsFromRule(rule model.Rule,
+	variables []*model.Variable) model.AssertionResult {
+	result := model.AssertionResult{Fail: false}
+
+	for _, assertionGroup := range rule.AssertionGroups {
+		for _, assertion := range assertionGroup.Assertions {
+			if msg, ok := assertion.IsValid(variables); !ok {
+				result.AddAssertionError(assertionGroup.FailOnError, msg)
+			}
+		}
+	}
+
+	return result
 }

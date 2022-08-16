@@ -28,7 +28,7 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 	}
 
 	type rulesServiceCall struct {
-		searchByMethodAndPathResult *model.Rule
+		searchByMethodAndPathResult model.Rule
 		searchByMethodAndPathErr    error
 		searchByMethodAndPathTimes  int
 	}
@@ -56,7 +56,7 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 			},
 			rulesServiceCall: []rulesServiceCall{
 				{
-					searchByMethodAndPathResult: &model.Rule{
+					searchByMethodAndPathResult: model.Rule{
 						Key:      "key123",
 						Group:    "myapp",
 						Name:     "test_mock",
@@ -107,7 +107,7 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 			},
 			rulesServiceCall: []rulesServiceCall{
 				{
-					searchByMethodAndPathResult: &model.Rule{
+					searchByMethodAndPathResult: model.Rule{
 						Key:      "key123",
 						Group:    "myapp",
 						Name:     "test_mock",
@@ -135,7 +135,7 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 					searchByMethodAndPathTimes: 1,
 				},
 				{
-					searchByMethodAndPathResult: &model.Rule{
+					searchByMethodAndPathResult: model.Rule{
 						Key:      "key123",
 						Group:    "myapp",
 						Name:     "test_mock",
@@ -202,9 +202,8 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 			},
 			rulesServiceCall: []rulesServiceCall{
 				{
-					searchByMethodAndPathResult: nil,
-					searchByMethodAndPathErr:    errors.New("error in service"), //nolint:goerr113
-					searchByMethodAndPathTimes:  1,
+					searchByMethodAndPathErr:   errors.New("error in service"), //nolint:goerr113
+					searchByMethodAndPathTimes: 1,
 				},
 			},
 		},

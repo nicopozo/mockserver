@@ -12,9 +12,10 @@ const (
 )
 
 type Variable struct {
-	Type string `json:"type" example:"body"`
-	Name string `json:"name" example:"nickname"`
-	Key  string `json:"key" example:"$.nickname"`
+	Type  string `json:"type" example:"body"`
+	Name  string `json:"name" example:"nickname"`
+	Key   string `json:"key" example:"$.nickname"`
+	Value string `json:"-"`
 }
 
 func (variable *Variable) Validate() error {

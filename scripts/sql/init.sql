@@ -1,18 +1,20 @@
 create schema if not exists mockserver;
 
-CREATE TABLE mockserver.`rules`
+CREATE TABLE `rules`
 (
-    `key`         varchar(255) NOT NULL,
-    `group` varchar(255) NOT NULL,
-    `name`        varchar(255) NOT NULL,
-    `path`        varchar(255) NOT NULL,
-    `strategy`    varchar(255) NOT NULL,
-    `method`      varchar(45)  NOT NULL,
-    `status`      varchar(255) NOT NULL,
-    `pattern`     varchar(255) NOT NULL,
+    `key`        varchar(255) NOT NULL,
+    `group`      varchar(255) NOT NULL,
+    `name`       varchar(255) NOT NULL,
+    `path`       varchar(255) NOT NULL,
+    `strategy`   varchar(255) NOT NULL,
+    `method`     varchar(45)  NOT NULL,
+    `status`     varchar(255) NOT NULL,
+    `pattern`    varchar(255) NOT NULL,
+    `assertions` json DEFAULT NULL,
     PRIMARY KEY (`key`),
     UNIQUE KEY `key_UNIQUE` (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 
 CREATE TABLE mockserver.`responses`
 (

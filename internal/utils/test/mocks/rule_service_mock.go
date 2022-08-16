@@ -50,10 +50,10 @@ func (mr *MockRuleServiceMockRecorder) Delete(ctx, key interface{}) *gomock.Call
 }
 
 // Get mocks base method.
-func (m *MockRuleService) Get(ctx context.Context, key string) (*model.Rule, error) {
+func (m *MockRuleService) Get(ctx context.Context, key string) (model.Rule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, key)
-	ret0, _ := ret[0].(*model.Rule)
+	ret0, _ := ret[0].(model.Rule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -65,10 +65,10 @@ func (mr *MockRuleServiceMockRecorder) Get(ctx, key interface{}) *gomock.Call {
 }
 
 // Save mocks base method.
-func (m *MockRuleService) Save(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (m *MockRuleService) Save(ctx context.Context, rule model.Rule) (model.Rule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Save", ctx, rule)
-	ret0, _ := ret[0].(*model.Rule)
+	ret0, _ := ret[0].(model.Rule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -80,10 +80,10 @@ func (mr *MockRuleServiceMockRecorder) Save(ctx, rule interface{}) *gomock.Call 
 }
 
 // Search mocks base method.
-func (m *MockRuleService) Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error) {
+func (m *MockRuleService) Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (model.RuleList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Search", ctx, params, paging)
-	ret0, _ := ret[0].(*model.RuleList)
+	ret0, _ := ret[0].(model.RuleList)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -95,10 +95,10 @@ func (mr *MockRuleServiceMockRecorder) Search(ctx, params, paging interface{}) *
 }
 
 // SearchByMethodAndPath mocks base method.
-func (m *MockRuleService) SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error) {
+func (m *MockRuleService) SearchByMethodAndPath(ctx context.Context, method, path string) (model.Rule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchByMethodAndPath", ctx, method, path)
-	ret0, _ := ret[0].(*model.Rule)
+	ret0, _ := ret[0].(model.Rule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -110,10 +110,10 @@ func (mr *MockRuleServiceMockRecorder) SearchByMethodAndPath(ctx, method, path i
 }
 
 // Update mocks base method.
-func (m *MockRuleService) Update(ctx context.Context, key string, rule *model.Rule) (*model.Rule, error) {
+func (m *MockRuleService) Update(ctx context.Context, key string, rule model.Rule) (model.Rule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, key, rule)
-	ret0, _ := ret[0].(*model.Rule)
+	ret0, _ := ret[0].(model.Rule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -125,10 +125,10 @@ func (mr *MockRuleServiceMockRecorder) Update(ctx, key, rule interface{}) *gomoc
 }
 
 // UpdateStatus mocks base method.
-func (m *MockRuleService) UpdateStatus(ctx context.Context, key string, rule *model.RuleStatus) (*model.Rule, error) {
+func (m *MockRuleService) UpdateStatus(ctx context.Context, key string, rule model.RuleStatus) (model.Rule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateStatus", ctx, key, rule)
-	ret0, _ := ret[0].(*model.Rule)
+	ret0, _ := ret[0].(model.Rule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
