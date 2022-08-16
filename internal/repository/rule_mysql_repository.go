@@ -60,7 +60,7 @@ func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.R
 	var err error
 
 	query := "INSERT INTO rules (`key`, `group`, name, path, strategy, method, status, pattern, assertions) " +
-		"VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
 	trx, err := repository.db.Beginx()
 	if err != nil {
