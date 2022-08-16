@@ -299,11 +299,9 @@ func (svc *mockService) applyAssertionsFromRule(rule model.Rule,
 	variables []*model.Variable) model.AssertionResult {
 	result := model.AssertionResult{Fail: false}
 
-	for _, assertionGroup := range rule.AssertionGroups {
-		for _, assertion := range assertionGroup.Assertions {
-			if msg, ok := assertion.IsValid(variables); !ok {
-				result.AddAssertionError(assertionGroup.FailOnError, msg)
-			}
+	for _, assertion := range rule.Assertions {
+		if msg, ok := assertion.IsValid(variables); !ok {
+			result.AddAssertionError(assertion.FailOnError, msg)
 		}
 	}
 

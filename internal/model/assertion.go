@@ -21,17 +21,12 @@ const (
 )
 
 type Assertion struct {
-	ID           string  `json:"id"`
+	FailOnError  bool    `json:"fail_on_error"`
 	VariableName string  `json:"variable_name"`
 	Type         string  `json:"type"`
 	Value        string  `json:"value"`
 	Min          float64 `json:"min"`
 	Max          float64 `json:"max"`
-}
-
-type AssertionGroup struct {
-	FailOnError bool        `json:"fail_on_error"`
-	Assertions  []Assertion `json:"assertions"`
 }
 
 func (a Assertion) IsValid(variables []*Variable) (string, bool) {
@@ -91,8 +86,8 @@ func (e *AssertionResult) GetError() error {
 func (e *AssertionResult) Print(ctx context.Context) {
 	logger := mockscontext.Logger(ctx)
 
-	for err := range e.assertionErrors {
-		logger.Info(e, nil, "assertion error: %s", err)
+	for _, err := range e.assertionErrors {
+		logger.Info(e, nil, "variable is not the expected: %s", err)
 	}
 
 }

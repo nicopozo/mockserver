@@ -72,7 +72,7 @@ func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.R
 	rule.Key = fmt.Sprintf("%v", guuid.New())
 
 	_, err = trx.Exec(query, rule.Key, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
-		CreateExpression(rule.Path), jsonutils.Marshal(rule.AssertionGroups))
+		CreateExpression(rule.Path), jsonutils.Marshal(rule.Assertions))
 
 	if err != nil {
 		logger.Error(repository, nil, err, "error creating rule in DB")
@@ -109,7 +109,7 @@ func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.R
 	defer repository.commitOrRollback(ctx, trx, err)
 
 	_, err = trx.Exec(query, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
-		CreateExpression(rule.Path), jsonutils.Marshal(rule.AssertionGroups), rule.Key)
+		CreateExpression(rule.Path), jsonutils.Marshal(rule.Assertions), rule.Key)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating rule in DB")
 
@@ -465,23 +465,23 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 		resps = append(resps, newResp)
 	}
 
-	var assertionGroups []*model.AssertionGroup
+	var assertions []*model.Assertion
 
 	if row.Assertions != nil {
-		_ = jsonutils.Unmarshal(strings.NewReader(*row.Assertions), &assertionGroups)
+		_ = jsonutils.Unmarshal(strings.NewReader(*row.Assertions), &assertions)
 	}
 
 	return &model.Rule{
-		Key:             row.Key,
-		Group:           row.Group,
-		Name:            row.Name,
-		Path:            row.Path,
-		Strategy:        row.Strategy,
-		Method:          row.Method,
-		Status:          row.Status,
-		Variables:       vars,
-		Responses:       resps,
-		AssertionGroups: assertionGroups,
+		Key:        row.Key,
+		Group:      row.Group,
+		Name:       row.Name,
+		Path:       row.Path,
+		Strategy:   row.Strategy,
+		Method:     row.Method,
+		Status:     row.Status,
+		Variables:  vars,
+		Responses:  resps,
+		Assertions: assertions,
 	}
 }
 

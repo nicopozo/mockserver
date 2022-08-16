@@ -47,11 +47,14 @@ func GetDB() (*sqlx.DB, error) {
 		database.SetConnMaxLifetime(maxLifeTime)
 
 		for i := 0; i < 10 && (i == 0 || err != nil); i++ {
+			if i > 0 {
+				time.Sleep(10 * time.Second) //nolint:gomnd
+			}
+
 			fmt.Printf("########## CONNECTING TO DB - try i:%v #############\n", i+1) //nolint:forbidigo
 
 			err = database.Ping()
 
-			time.Sleep(10 * time.Second) //nolint:gomnd
 		}
 
 		if err != nil {
