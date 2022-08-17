@@ -122,9 +122,9 @@ func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Save(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+				DoAndReturn(func(ctx context.Context, rule model.Rule) (model.Rule, error) {
 					if tt.serviceErr != nil {
-						return nil, tt.serviceErr
+						return rule, tt.serviceErr
 					}
 
 					rule.Method = strings.ToUpper(rule.Method)
@@ -247,12 +247,12 @@ func TestRuleController_Get(t *testing.T) { //nolint:nosnakecase
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Get(gomock.Any(), tt.key).
-				DoAndReturn(func(ctx context.Context, key string) (*model.Rule, error) {
+				DoAndReturn(func(ctx context.Context, key string) (model.Rule, error) {
 					if tt.serviceErr != nil {
-						return nil, tt.serviceErr
+						return model.Rule{}, tt.serviceErr
 					}
 
-					result := &model.Rule{
+					result := model.Rule{
 						Key:      "myapp_get_4016913947",
 						Group:    "myapp",
 						Name:     "get balance",
@@ -481,16 +481,16 @@ func TestRuleController_Search(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Search(gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error) {
+				DoAndReturn(func(ctx context.Context, params map[string]interface{}, paging model.Paging) (model.RuleList, error) {
 					if tt.serviceErr != nil {
-						return nil, tt.serviceErr
+						return model.RuleList{}, tt.serviceErr
 					}
 
 					expectedPaging := model.Paging{Limit: tt.want.Paging.Limit, Offset: tt.want.Paging.Offset}
 					if !reflect.DeepEqual(expectedPaging, paging) {
 						t.Errorf("Request Paging is not the expected. Expected: %v - Actual: %v", expectedPaging, paging)
 					}
-					return &model.RuleList{
+					return model.RuleList{
 						Paging: model.Paging{
 							Total:  2,
 							Limit:  tt.want.Paging.Limit,

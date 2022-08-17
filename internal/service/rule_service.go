@@ -15,12 +15,12 @@ import (
 //go:generate mockgen -destination=../utils/test/mocks/rule_service_mock.go -package=mocks -source=./rule_service.go
 
 type RuleService interface {
-	Save(ctx context.Context, rule *model.Rule) (*model.Rule, error)
-	Update(ctx context.Context, key string, rule *model.Rule) (*model.Rule, error)
-	UpdateStatus(ctx context.Context, key string, rule *model.RuleStatus) (*model.Rule, error)
-	Get(ctx context.Context, key string) (*model.Rule, error)
-	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error)
-	SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error)
+	Save(ctx context.Context, rule model.Rule) (model.Rule, error)
+	Update(ctx context.Context, key string, rule model.Rule) (model.Rule, error)
+	UpdateStatus(ctx context.Context, key string, rule model.RuleStatus) (model.Rule, error)
+	Get(ctx context.Context, key string) (model.Rule, error)
+	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (model.RuleList, error)
+	SearchByMethodAndPath(ctx context.Context, method, path string) (model.Rule, error)
 	Delete(ctx context.Context, key string) error
 }
 
@@ -38,7 +38,7 @@ func NewRuleService(ruleRepository repository.RuleRepository) (RuleService, erro
 	}, nil
 }
 
-func (ruleService *ruleService) Save(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (ruleService *ruleService) Save(ctx context.Context, rule model.Rule) (model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(ruleService, nil, "Entering ruleService Save()")
@@ -46,18 +46,20 @@ func (ruleService *ruleService) Save(ctx context.Context, rule *model.Rule) (*mo
 	if err := validateRule(rule); err != nil {
 		logger.Error(ruleService, nil, err, "Rule Validation failed")
 
-		return nil, err
+		return model.Rule{}, err
 	}
 
-	rule, err := ruleService.RuleRepository.Create(ctx, formatRule(rule))
+	rule = formatRule(rule)
+
+	repoRule, err := ruleService.RuleRepository.Create(ctx, &rule)
 	if err != nil {
-		return nil, fmt.Errorf("error creating rule - %w", err)
+		return model.Rule{}, fmt.Errorf("error creating rule - %w", err)
 	}
 
-	return rule, nil
+	return *repoRule, nil
 }
 
-func (ruleService *ruleService) Update(ctx context.Context, key string, rule *model.Rule) (*model.Rule, error) {
+func (ruleService *ruleService) Update(ctx context.Context, key string, rule model.Rule) (model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(ruleService, nil, "Entering ruleService Update()")
@@ -65,74 +67,77 @@ func (ruleService *ruleService) Update(ctx context.Context, key string, rule *mo
 	if err := validateRule(rule); err != nil {
 		logger.Error(ruleService, nil, err, "Rule Validation failed")
 
-		return nil, fmt.Errorf("error validating rule - %w", err)
+		return model.Rule{}, fmt.Errorf("error validating rule - %w", err)
 	}
 
 	rule.Key = key
+	rule = formatRule(rule)
 
-	rule, err := ruleService.RuleRepository.Update(ctx, formatRule(rule))
+	repoRule, err := ruleService.RuleRepository.Update(ctx, &rule)
 	if err != nil {
-		return nil, fmt.Errorf("error updating rule - %w", err)
+		return model.Rule{}, fmt.Errorf("error updating rule - %w", err)
 	}
 
-	return rule, nil
+	return *repoRule, nil
 }
 
 func (ruleService *ruleService) UpdateStatus(ctx context.Context, key string,
-	ruleStatus *model.RuleStatus) (*model.Rule, error) {
+	ruleStatus model.RuleStatus) (model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(ruleService, nil, "Entering ruleService Update()")
 
 	if err := ruleStatus.Validate(); err != nil {
-		return nil, fmt.Errorf("error validating rule, %w", err)
+		return model.Rule{}, fmt.Errorf("error validating rule, %w", err)
 	}
 
 	rule, err := ruleService.Get(ctx, key)
 	if err != nil {
-		return nil, err
+		return model.Rule{}, err
 	}
 
 	rule.Status = ruleStatus.Status
 
-	rule, err = ruleService.RuleRepository.Update(ctx, formatRule(rule))
+	rule = formatRule(rule)
+
+	repoRule, err := ruleService.RuleRepository.Update(ctx, &rule)
 	if err != nil {
-		return nil, fmt.Errorf("error updating rule status - %w", err)
+		return model.Rule{}, fmt.Errorf("error updating rule status - %w", err)
 	}
 
-	return rule, nil
+	return *repoRule, nil
 }
 
-func (ruleService *ruleService) Get(ctx context.Context, key string) (*model.Rule, error) {
+func (ruleService *ruleService) Get(ctx context.Context, key string) (model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(ruleService, nil, "Entering TaskService Get()")
 
-	result, err := ruleService.RuleRepository.Get(ctx, key)
+	repoRule, err := ruleService.RuleRepository.Get(ctx, key)
 	if err != nil {
 		logger.Error(ruleService, nil, err, "error getting task")
 
-		return nil, fmt.Errorf("error getting rule, %w", err)
+		return model.Rule{}, fmt.Errorf("error getting rule, %w", err)
 	}
 
-	return result, nil
+	return *repoRule, nil
 }
 
 func (ruleService *ruleService) Search(ctx context.Context, params map[string]interface{},
-	paging model.Paging) (*model.RuleList, error) {
+	paging model.Paging) (model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(ruleService, nil, "Entering ruleService Search()")
 
-	rules, err := ruleService.RuleRepository.Search(ctx, params, paging)
+	ReposRules, err := ruleService.RuleRepository.Search(ctx, params, paging)
 	if err != nil {
-		return nil, fmt.Errorf("error searching rule - %w", err)
+		return model.RuleList{}, fmt.Errorf("error searching rule - %w", err)
 	}
 
-	return rules, nil
+	return *ReposRules, nil
 }
 
-func (ruleService *ruleService) SearchByMethodAndPath(ctx context.Context, method, path string) (*model.Rule, error) {
+func (ruleService *ruleService) SearchByMethodAndPath(ctx context.Context, method, path string) (model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(ruleService, nil, "Entering ruleService Search()")
@@ -141,10 +146,10 @@ func (ruleService *ruleService) SearchByMethodAndPath(ctx context.Context, metho
 	if err != nil {
 		logger.Error(ruleService, nil, err, "error searching rules")
 
-		return nil, fmt.Errorf("error searching rule, %w", err)
+		return model.Rule{}, fmt.Errorf("error searching rule, %w", err)
 	}
 
-	return result, nil
+	return *result, nil
 }
 
 func (ruleService *ruleService) Delete(ctx context.Context, key string) error {
@@ -161,13 +166,7 @@ func (ruleService *ruleService) Delete(ctx context.Context, key string) error {
 }
 
 //nolint:cyclop
-func validateRule(rule *model.Rule) error {
-	if rule == nil {
-		return mockserrors.InvalidRulesError{
-			Message: "rule cannot be nil",
-		}
-	}
-
+func validateRule(rule model.Rule) error {
 	if rule.Name == "" {
 		return mockserrors.InvalidRulesError{
 			Message: "name cannot be empty",
@@ -209,6 +208,10 @@ func validateRule(rule *model.Rule) error {
 		return err
 	}
 
+	if err := validateAssertions(rule.Assertions); err != nil {
+		return err
+	}
+
 	return validateResponses(rule.Responses)
 }
 
@@ -244,6 +247,20 @@ func validateVariables(variables []*model.Variable) error {
 	return nil
 }
 
+func validateAssertions(assertions []*model.Assertion) error {
+	if assertions == nil {
+		return nil
+	}
+
+	for _, assertion := range assertions {
+		if err := assertion.Validate(); err != nil {
+			return fmt.Errorf("error validating assertions, %w", err)
+		}
+	}
+
+	return nil
+}
+
 func validateHTTPMethod(method string) error {
 	if method == "" {
 		return mockserrors.InvalidRulesError{
@@ -262,7 +279,7 @@ func validateHTTPMethod(method string) error {
 	}
 }
 
-func formatRule(rule *model.Rule) *model.Rule {
+func formatRule(rule model.Rule) model.Rule {
 	rule.Method = strings.ToUpper(rule.Method)
 
 	if rule.Status == "" {

@@ -26,6 +26,10 @@ func Unmarshal(body io.Reader, model interface{}) error {
 func Marshal(model interface{}) string {
 	result := ""
 
+	if model == nil {
+		return result
+	}
+
 	out, err := json.Marshal(model)
 	if err == nil {
 		result = string(out)

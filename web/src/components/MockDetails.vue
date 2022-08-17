@@ -185,6 +185,91 @@
       </v-container>
     </v-card>
 
+    <!--ASSERTIONS-->
+    <br>
+    <v-card>
+      <v-container fluid>
+
+        <v-card class="elevation-3 py-0 my-2" style="border-color: #aaa" v-for="(assertion, index) in mock.assertions"
+                v-bind:key="index">
+          <v-container fluid>
+            <v-card-title class="px-0 py-0 pb-2">
+              Assertion {{ index + 1 }}
+              <v-spacer/>
+              <!--REMOVE ASSERTION BUTTON-->
+              <v-btn icon color="red" @click="removeAssertion(index)">
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </v-card-title>
+            <v-row>
+              <v-col cols="4">
+                <!--ASSERTION TYPE-->
+                <v-select label="Type"
+                          v-model="assertion.type"
+                          :items="assertionTypes"
+                          :rules="[v => !!v || 'Type is required']"
+                          v-on:change="updateAssertions()"
+                          required outlined dense/>
+              </v-col>
+              <v-col cols="4">
+                <!--VARIABLE NAME-->
+                <v-text-field label="Variable Name"
+                              v-model="assertion.variable_name"
+                              :rules="[v => !!v || 'Variable Name is required']"
+                              required outlined dense/>
+              </v-col>
+              <v-col cols="4">
+                <!--VARIABLE VALUE-->
+                <v-text-field label="Value"
+                              v-model="assertion.value"
+                              :rules="isAssertionFieldRequired(assertion, 'value') ? [v => !!v || 'Key is required'] : []"
+                              outlined dense
+                              :disabled="!isAssertionFieldRequired(assertion, 'value')"
+                              :required="isAssertionFieldRequired(assertion, 'value')"
+                />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="4">
+                <!--Fail on error-->
+                <v-switch v-model="assertion.fail_on_error"
+                          hide-details class="v-input--reverse mx-0 my-0">
+                  <template #label>
+                    Return error on failure
+                  </template>
+                </v-switch>
+              </v-col>
+              <v-col cols="4">
+                <!--RANGE MIN-->
+                <v-text-field label="Range Min"
+                              v-model.number="assertion.min"
+                              placeholder="Range Min"
+                              :rules="isAssertionFieldRequired(assertion, 'min') ? [v => v < assertion.max  || 'Range Min is required and lower than Max'] : []"
+                              :disabled="!isAssertionFieldRequired(assertion, 'min')"
+                              :required="isAssertionFieldRequired(assertion, 'min')"
+                              outlined dense type="number"/>
+              </v-col>
+              <v-col cols="4">
+                <!--RANGE MAX-->
+                <v-text-field label="Range Max"
+                              v-model.number="assertion.max"
+                              placeholder="Range Max"
+                              :rules="isAssertionFieldRequired(assertion, 'max') ? [v => v > assertion.min || 'Range Max is required and greater than Min'] : []"
+                              :disabled="!isAssertionFieldRequired(assertion, 'max')"
+                              :required="isAssertionFieldRequired(assertion, 'max')"
+                              outlined dense type="number"/>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card>
+
+
+        <v-col cols="12" class="text-right">
+          <v-btn depressed color="primary" @click="addAssertion()">New Assertion</v-btn>
+        </v-col>
+      </v-container>
+    </v-card>
+
     <v-col cols="12" class="text-right">
       <v-btn depressed color="error" class="mx-1" @click="submitDelete" v-if="theKey">Delete</v-btn>
       <v-btn depressed color="warning" class="mx-1" @click="resetForm">Reset</v-btn>
@@ -284,6 +369,13 @@ export default {
         {text: "Random", value: "random"},
         {text: "Hash", value: "hash"},
         {text: "Path", value: "path"},
+      ],
+      assertionTypes: [
+        {text: "Equals", value: "equals"},
+        {text: "Is string", value: "string"},
+        {text: "Is number", value: "number"},
+        {text: "Is present", value: "present"},
+        {text: "Numeric Range", value: "range"},
       ],
       alert: {
         show: false,
@@ -418,6 +510,24 @@ export default {
     removeVariable(i) {
       this.mock.variables.splice(i, 1);
     },
+    addAssertion() {
+      let newAssertion = {
+        fail_on_error: true,
+        type: "equals",
+        variable_name: "",
+        value: "",
+        min:0,
+        max:0
+      };
+      if (!this.mock.assertions) {
+        this.mock.assertions = [newAssertion];
+      } else {
+        this.mock.assertions.push(newAssertion);
+      }
+    },
+    removeAssertion(i) {
+      this.mock.assertions.splice(i, 1);
+    },
     addResponse() {
       let newResponse = {
         body: "",
@@ -449,11 +559,38 @@ export default {
         }
       });
     },
+    updateAssertions() {
+      this.mock.assertions.forEach(a => {
+        if (a.type !== "range") {
+          a.min = 0;
+          a.max = 0;
+        } else {
+          a.min = 0;
+          a.max = 1;
+
+          if (a.type !== "equals") {
+            a.value = "";
+          }
+        }
+
+
+      });
+    },
     isResponseSceneRequired(mock) {
       return mock.strategy === "scene";
     },
     isVariableTypeRequired(variable) {
       return variable.type === 'body' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
+    },
+    isAssertionFieldRequired(assertion, field) {
+      switch (assertion.type) {
+        case "equals":
+          return field === "value"
+        case "range":
+          return field === "min" || field === "max";
+        default:
+          return false;
+      }
     },
     getResponseDescriptionPrefix(index) {
       return "Response " + (index + 1).toString() + ": "
@@ -478,6 +615,7 @@ export default {
           },
         ],
         variables: [],
+        assertions: [],
       };
     },
     showExecutionURL() {

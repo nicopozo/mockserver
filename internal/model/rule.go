@@ -19,15 +19,16 @@ const (
 )
 
 type Rule struct {
-	Key       string      `json:"key" example:"payments_get_556032950"`
-	Group     string      `json:"group" example:"payments"`
-	Name      string      `json:"name" example:"get payment"`
-	Path      string      `json:"path" example:"/v1/payments/{payment_id}"`
-	Strategy  string      `json:"strategy" example:"normal"`
-	Method    string      `json:"method" example:"GET"`
-	Status    string      `json:"status" example:"enabled"`
-	Responses []Response  `json:"responses"`
-	Variables []*Variable `json:"variables"`
+	Key        string       `json:"key" example:"payments_get_556032950"`
+	Group      string       `json:"group" example:"payments"`
+	Name       string       `json:"name" example:"get payment"`
+	Path       string       `json:"path" example:"/v1/payments/{payment_id}"`
+	Strategy   string       `json:"strategy" example:"normal"`
+	Method     string       `json:"method" example:"GET"`
+	Status     string       `json:"status" example:"enabled"`
+	Responses  []Response   `json:"responses"`
+	Variables  []*Variable  `json:"variables"`
+	Assertions []*Assertion `json:"assertions"`
 }
 
 type RuleList struct {

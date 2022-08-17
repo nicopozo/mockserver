@@ -1,4 +1,2 @@
 .idea
 web/node_modules
-web/dist
-mocks.json

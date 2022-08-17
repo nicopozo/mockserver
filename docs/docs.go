@@ -336,6 +336,29 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.Assertion": {
+            "type": "object",
+            "properties": {
+                "fail_on_error": {
+                    "type": "boolean"
+                },
+                "max": {
+                    "type": "number"
+                },
+                "min": {
+                    "type": "number"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "variable_name": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Error": {
             "type": "object",
             "properties": {
@@ -420,6 +443,12 @@ const docTemplate = `{
         "model.Rule": {
             "type": "object",
             "properties": {
+                "assertions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Assertion"
+                    }
+                },
                 "group": {
                     "type": "string",
                     "example": "payments"
