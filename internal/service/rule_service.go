@@ -208,6 +208,10 @@ func validateRule(rule model.Rule) error {
 		return err
 	}
 
+	if err := validateAssertions(rule.Assertions); err != nil {
+		return err
+	}
+
 	return validateResponses(rule.Responses)
 }
 
@@ -237,6 +241,20 @@ func validateVariables(variables []*model.Variable) error {
 	for _, variable := range variables {
 		if err := variable.Validate(); err != nil {
 			return fmt.Errorf("error validating variable, %w", err)
+		}
+	}
+
+	return nil
+}
+
+func validateAssertions(assertions []*model.Assertion) error {
+	if assertions == nil {
+		return nil
+	}
+
+	for _, assertion := range assertions {
+		if err := assertion.Validate(); err != nil {
+			return fmt.Errorf("error validating assertions, %w", err)
 		}
 	}
 

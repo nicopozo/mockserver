@@ -29,7 +29,7 @@ type Assertion struct {
 	Max          float64 `json:"max"`
 }
 
-func (a Assertion) IsValid(variables []*Variable) (string, bool) { //nolint:cyclop
+func (a Assertion) Assert(variables []*Variable) (string, bool) { //nolint:cyclop
 	variable := getVariable(variables, a.VariableName)
 	if variable == nil {
 		return fmt.Sprintf("no variable found with name '%s'", a.VariableName), false
@@ -65,6 +65,27 @@ func (a Assertion) IsValid(variables []*Variable) (string, bool) { //nolint:cycl
 	}
 
 	return "", true
+}
+
+func (a Assertion) Validate() error {
+	switch a.Type {
+	case AssertionTypeNumber, AssertionTypeString, AssertionTypeIsPresent:
+		return nil
+	case AssertionTypeEquals:
+		if a.Value == "" {
+			return mockserrors.InvalidRulesError{Message: "value is required when type is 'equals'"}
+		}
+
+		return nil
+	case AssertionTypeRange:
+		if a.Min >= a.Max {
+			return mockserrors.InvalidRulesError{Message: "range min must be lower than max"}
+		}
+
+		return nil
+	}
+
+	return mockserrors.InvalidRulesError{Message: fmt.Sprintf("type '%s' is not valid", a.Type)}
 }
 
 type AssertionResult struct {

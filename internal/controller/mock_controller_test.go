@@ -66,18 +66,18 @@ func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase,paralleltes
 			want:       "",
 			wantStatus: http.StatusNotFound,
 			wantedErr: &model.Error{
-				Message: "No rule found for path: /test and method: get. no rule found for path",
-				Error:   "Not Found",
-				Status:  http.StatusNotFound,
+				Message: "invalid rule",
+				Error:   "Bad Request",
+				Status:  http.StatusBadRequest,
 				ErrorCause: []model.ErrorCause{
 					{
-						Code:        1030,
-						Description: "Resource Not Found",
+						Code:        1001,
+						Description: "Request validation failed",
 					},
 				},
 			},
-			serviceErr: mockserrors.RuleNotFoundError{
-				Message: "no rule found for path",
+			serviceErr: mockserrors.InvalidRulesError{
+				Message: "invalid rule",
 			},
 			serviceResponse:  model.Response{},
 			serviceCallTimes: 1,
@@ -98,6 +98,27 @@ func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase,paralleltes
 				},
 			},
 			serviceErr:       errors.New("service error"), //nolint:goerr113
+			serviceResponse:  model.Response{},
+			serviceCallTimes: 1,
+		},
+		{
+			name:       "Should return 400 when service returns InvalidRulesError",
+			want:       "",
+			wantStatus: http.StatusBadRequest,
+			wantedErr: &model.Error{
+				Message: "[\"error description\"]",
+				Error:   "Bad Request",
+				Status:  http.StatusBadRequest,
+				ErrorCause: []model.ErrorCause{
+					{
+						Code:        1001,
+						Description: "Request validation failed",
+					},
+				},
+			},
+			serviceErr: mockserrors.AssertionError{
+				Errors: []string{"error description"},
+			},
 			serviceResponse:  model.Response{},
 			serviceCallTimes: 1,
 		},
