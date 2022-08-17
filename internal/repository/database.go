@@ -54,7 +54,6 @@ func GetDB() (*sqlx.DB, error) {
 			fmt.Printf("########## CONNECTING TO DB - try i:%v #############\n", i+1) //nolint:forbidigo
 
 			err = database.Ping()
-
 		}
 
 		if err != nil {

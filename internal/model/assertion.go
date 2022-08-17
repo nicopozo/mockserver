@@ -29,7 +29,7 @@ type Assertion struct {
 	Max          float64 `json:"max"`
 }
 
-func (a Assertion) IsValid(variables []*Variable) (string, bool) {
+func (a Assertion) IsValid(variables []*Variable) (string, bool) { //nolint:cyclop
 	variable := getVariable(variables, a.VariableName)
 	if variable == nil {
 		return fmt.Sprintf("no variable found with name '%s'", a.VariableName), false
@@ -37,11 +37,11 @@ func (a Assertion) IsValid(variables []*Variable) (string, bool) {
 
 	switch a.Type {
 	case AssertionTypeNumber:
-		if _, err := strconv.ParseFloat(strings.Trim(variable.Value, `"`), floatSize); err != nil {
+		if !isNumber(strings.Trim(variable.Value, `"`)) {
 			return fmt.Sprintf("variable '%s' is not a valid number", a.VariableName), false
 		}
 	case AssertionTypeString:
-		if _, err := strconv.ParseFloat(variable.Value, floatSize); err == nil {
+		if isNumber(variable.Value) {
 			return fmt.Sprintf("variable '%s' is not a valid string", a.VariableName), false
 		}
 	case AssertionTypeEquals:
@@ -55,7 +55,7 @@ func (a Assertion) IsValid(variables []*Variable) (string, bool) {
 			return fmt.Sprintf("variable '%s' is not a valid number", a.VariableName), false
 		}
 
-		if v < a.Min || v > a.Min {
+		if v < a.Min || v > a.Max {
 			return fmt.Sprintf("variable '%s' is not in a valid number range", a.VariableName), false
 		}
 	case AssertionTypeIsPresent:
@@ -89,7 +89,6 @@ func (e *AssertionResult) Print(ctx context.Context) {
 	for _, err := range e.assertionErrors {
 		logger.Info(e, nil, "variable is not the expected: %s", err)
 	}
-
 }
 
 func getVariable(variables []*Variable, name string) *Variable {
@@ -100,4 +99,12 @@ func getVariable(variables []*Variable, name string) *Variable {
 	}
 
 	return nil
+}
+
+func isNumber(value string) bool {
+	if _, err := strconv.ParseFloat(value, floatSize); err != nil {
+		return false
+	}
+
+	return true
 }

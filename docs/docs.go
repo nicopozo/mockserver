@@ -339,8 +339,8 @@ const docTemplate = `{
         "model.Assertion": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "string"
+                "fail_on_error": {
+                    "type": "boolean"
                 },
                 "max": {
                     "type": "number"
@@ -356,20 +356,6 @@ const docTemplate = `{
                 },
                 "variable_name": {
                     "type": "string"
-                }
-            }
-        },
-        "model.AssertionGroup": {
-            "type": "object",
-            "properties": {
-                "assertions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Assertion"
-                    }
-                },
-                "fail_on_error": {
-                    "type": "boolean"
                 }
             }
         },
@@ -457,14 +443,11 @@ const docTemplate = `{
         "model.Rule": {
             "type": "object",
             "properties": {
-                "assertion_groups": {
+                "assertions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.AssertionGroup"
+                        "$ref": "#/definitions/model.Assertion"
                     }
-                },
-                "fail_on_assertions": {
-                    "type": "boolean"
                 },
                 "group": {
                     "type": "string",

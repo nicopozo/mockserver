@@ -2,8 +2,8 @@ basePath: /mock-server
 definitions:
   model.Assertion:
     properties:
-      id:
-        type: string
+      fail_on_error:
+        type: boolean
       max:
         type: number
       min:
@@ -14,15 +14,6 @@ definitions:
         type: string
       variable_name:
         type: string
-    type: object
-  model.AssertionGroup:
-    properties:
-      assertions:
-        items:
-          $ref: '#/definitions/model.Assertion'
-        type: array
-      fail_on_error:
-        type: boolean
     type: object
   model.Error:
     properties:
@@ -84,12 +75,10 @@ definitions:
     type: object
   model.Rule:
     properties:
-      assertion_groups:
+      assertions:
         items:
-          $ref: '#/definitions/model.AssertionGroup'
+          $ref: '#/definitions/model.Assertion'
         type: array
-      fail_on_assertions:
-        type: boolean
       group:
         example: payments
         type: string

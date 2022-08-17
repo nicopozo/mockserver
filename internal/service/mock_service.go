@@ -66,7 +66,7 @@ func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 	assertionResult.Print(ctx)
 
 	if assertionResult.Fail {
-		return model.Response{}, assertionResult.GetError()
+		return model.Response{}, assertionResult.GetError() //nolint:wrapcheck
 	}
 
 	response, err := svc.getResponseFromRule(rule, request, body, path)
