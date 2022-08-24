@@ -442,17 +442,17 @@ func newWhereClause(params map[string]interface{}) (string, error) {
 func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *model.Rule {
 	vars := make([]*model.Variable, 0)
 
-	for _, v := range variables {
+	for _, variable := range variables {
 		newVar := model.Variable{
-			Type: v.Type,
-			Name: v.Name,
-			Key:  v.Key,
+			Type: variable.Type,
+			Name: variable.Name,
+			Key:  variable.Key,
 		}
 
 		var assertions []*model.Assertion
 
-		if v.Assertions != nil {
-			_ = jsonutils.Unmarshal(strings.NewReader(*v.Assertions), &assertions)
+		if variable.Assertions != nil {
+			_ = jsonutils.Unmarshal(strings.NewReader(*variable.Assertions), &assertions)
 			newVar.Assertions = assertions
 		}
 
