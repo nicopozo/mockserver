@@ -8,17 +8,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+//nolint:maintidx
 func TestAssertion_Assert(t *testing.T) {
 	type assertionsFields struct {
-		VariableName string
-		Type         string
-		Value        string
-		Min          float64
-		Max          float64
+		Type  string
+		Value string
+		Min   float64
+		Max   float64
 	}
 
 	type args struct {
-		variables []*model.Variable
+		variables *model.Variable
 	}
 
 	type want struct {
@@ -35,17 +35,14 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'present' and value is present",
 			assertionsFields: assertionsFields{
-				VariableName: "limit",
-				Type:         "present",
+				Type: "present",
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "limit",
-						Key:   "limit",
-						Value: "30",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "limit",
+					Key:   "limit",
+					Value: "30",
 				},
 			},
 			want: want{
@@ -53,40 +50,16 @@ func TestAssertion_Assert(t *testing.T) {
 			},
 		},
 		{
-			name: "Should validate successfully type is 'present' and value is not present",
-			assertionsFields: assertionsFields{
-				VariableName: "amount",
-				Type:         "present",
-			},
-			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "limit",
-						Key:   "limit",
-						Value: "30",
-					},
-				},
-			},
-			want: want{
-				msg:     "no variable found with name 'amount'",
-				isValid: false,
-			},
-		},
-		{
 			name: "Should validate successfully type is 'present' and value is empty",
 			assertionsFields: assertionsFields{
-				VariableName: "limit",
-				Type:         "present",
+				Type: "present",
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "limit",
-						Key:   "limit",
-						Value: "",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "limit",
+					Key:   "limit",
+					Value: "",
 				},
 			},
 			want: want{
@@ -97,17 +70,14 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'number' and value is a valid number",
 			assertionsFields: assertionsFields{
-				VariableName: "limit",
-				Type:         "number",
+				Type: "number",
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "limit",
-						Key:   "limit",
-						Value: "30",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "limit",
+					Key:   "limit",
+					Value: "30",
 				},
 			},
 			want: want{
@@ -117,17 +87,14 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'number' and value is not a valid number",
 			assertionsFields: assertionsFields{
-				VariableName: "limit",
-				Type:         "number",
+				Type: "number",
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "limit",
-						Key:   "limit",
-						Value: "not_a_number",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "limit",
+					Key:   "limit",
+					Value: "not_a_number",
 				},
 			},
 			want: want{
@@ -138,17 +105,14 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'string' and value is a valid string",
 			assertionsFields: assertionsFields{
-				VariableName: "username",
-				Type:         "string",
+				Type: "string",
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "username",
-						Key:   "username",
-						Value: "user01",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "username",
+					Key:   "username",
+					Value: "user01",
 				},
 			},
 			want: want{
@@ -158,17 +122,14 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'string' and value is not a valid string",
 			assertionsFields: assertionsFields{
-				VariableName: "username",
-				Type:         "string",
+				Type: "string",
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "username",
-						Key:   "username",
-						Value: "01",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "username",
+					Key:   "username",
+					Value: "01",
 				},
 			},
 			want: want{
@@ -179,18 +140,15 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'equals' and value is the expected",
 			assertionsFields: assertionsFields{
-				VariableName: "username",
-				Type:         "equals",
-				Value:        "user01",
+				Type:  "equals",
+				Value: "user01",
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "username",
-						Key:   "username",
-						Value: "user01",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "username",
+					Key:   "username",
+					Value: "user01",
 				},
 			},
 			want: want{
@@ -200,18 +158,15 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'equals' and value is not the expected",
 			assertionsFields: assertionsFields{
-				VariableName: "username",
-				Type:         "equals",
-				Value:        "user01",
+				Type:  "equals",
+				Value: "user01",
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "username",
-						Key:   "username",
-						Value: "user02",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "username",
+					Key:   "username",
+					Value: "user02",
 				},
 			},
 			want: want{
@@ -222,19 +177,16 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'range' and value is in range",
 			assertionsFields: assertionsFields{
-				VariableName: "limit",
-				Type:         "range",
-				Min:          0,
-				Max:          100,
+				Type: "range",
+				Min:  0,
+				Max:  100,
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "limit",
-						Key:   "limit",
-						Value: "30",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "limit",
+					Key:   "limit",
+					Value: "30",
 				},
 			},
 			want: want{
@@ -244,19 +196,16 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'range' and value is = Min Value",
 			assertionsFields: assertionsFields{
-				VariableName: "limit",
-				Type:         "range",
-				Min:          0,
-				Max:          100,
+				Type: "range",
+				Min:  0,
+				Max:  100,
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "limit",
-						Key:   "limit",
-						Value: "0",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "limit",
+					Key:   "limit",
+					Value: "0",
 				},
 			},
 			want: want{
@@ -266,19 +215,16 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'range' and value is = Max Value",
 			assertionsFields: assertionsFields{
-				VariableName: "limit",
-				Type:         "range",
-				Min:          0,
-				Max:          100,
+				Type: "range",
+				Min:  0,
+				Max:  100,
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "limit",
-						Key:   "limit",
-						Value: "100",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "limit",
+					Key:   "limit",
+					Value: "100",
 				},
 			},
 			want: want{
@@ -288,19 +234,16 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'range' and value is under Min Value",
 			assertionsFields: assertionsFields{
-				VariableName: "limit",
-				Type:         "range",
-				Min:          0,
-				Max:          100,
+				Type: "range",
+				Min:  0,
+				Max:  100,
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "limit",
-						Key:   "limit",
-						Value: "-100",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "limit",
+					Key:   "limit",
+					Value: "-100",
 				},
 			},
 			want: want{
@@ -311,19 +254,16 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'range' and value is over Max Value",
 			assertionsFields: assertionsFields{
-				VariableName: "limit",
-				Type:         "range",
-				Min:          0,
-				Max:          100,
+				Type: "range",
+				Min:  0,
+				Max:  100,
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "limit",
-						Key:   "limit",
-						Value: "300",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "limit",
+					Key:   "limit",
+					Value: "300",
 				},
 			},
 			want: want{
@@ -334,19 +274,16 @@ func TestAssertion_Assert(t *testing.T) {
 		{
 			name: "Should validate successfully type is 'range' and value is not a valid number",
 			assertionsFields: assertionsFields{
-				VariableName: "limit",
-				Type:         "range",
-				Min:          0,
-				Max:          100,
+				Type: "range",
+				Min:  0,
+				Max:  100,
 			},
 			args: args{
-				variables: []*model.Variable{
-					{
-						Type:  "query",
-						Name:  "limit",
-						Key:   "limit",
-						Value: "not_a_number",
-					},
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "limit",
+					Key:   "limit",
+					Value: "not_a_number",
 				},
 			},
 			want: want{
@@ -358,11 +295,10 @@ func TestAssertion_Assert(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := model.Assertion{
-				VariableName: tt.assertionsFields.VariableName,
-				Type:         tt.assertionsFields.Type,
-				Value:        tt.assertionsFields.Value,
-				Min:          tt.assertionsFields.Min,
-				Max:          tt.assertionsFields.Max,
+				Type:  tt.assertionsFields.Type,
+				Value: tt.assertionsFields.Value,
+				Min:   tt.assertionsFields.Min,
+				Max:   tt.assertionsFields.Max,
 			}
 			msg, isValid := a.Assert(tt.args.variables)
 
@@ -379,6 +315,7 @@ func TestAssertion_Validate(t *testing.T) {
 		Min   float64
 		Max   float64
 	}
+
 	tests := []struct {
 		name             string
 		assertionsFields assertionsFields
@@ -446,6 +383,7 @@ func TestAssertion_Validate(t *testing.T) {
 			wantErr: mockserrors.InvalidRulesError{Message: "type 'invalid_type' is not valid"},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := model.Assertion{

@@ -16,11 +16,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//nolint:funlen,maintidx,nosnakecase,paralleltest
+//nolint:maintidx
 func TestRuleService_Save(t *testing.T) {
 	type args struct {
 		rule model.Rule
-		ctx  context.Context //nolint:containedctx
+		ctx  context.Context
 	}
 
 	tests := []struct {
@@ -176,8 +176,8 @@ func TestRuleService_Save(t *testing.T) {
 					},
 				},
 			},
-			wantedErr:        fmt.Errorf("error creating rule - %w", errors.New("error saving rule")), //nolint:goerr113
-			repositoryErr:    errors.New("error saving rule"),                                         //nolint:goerr113
+			wantedErr:        fmt.Errorf("error creating rule - %w", errors.New("error saving rule")),
+			repositoryErr:    errors.New("error saving rule"),
 			serviceCallTimes: 1,
 		},
 		{
@@ -411,7 +411,7 @@ func TestRuleService_Save(t *testing.T) {
 			serviceCallTimes: 0,
 		},
 	}
-	for _, tt := range tests { //nolint:paralleltest,varnamelen
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			ruleRepositoryMock := mocks.NewMockRuleRepository(mockCtrl)
@@ -445,10 +445,9 @@ func TestRuleService_Save(t *testing.T) {
 	}
 }
 
-//nolint:funlen,nosnakecase
 func TestRuleService_Get(t *testing.T) {
 	type args struct {
-		ctx context.Context //nolint:containedctx
+		ctx context.Context
 		key string
 	}
 
@@ -511,13 +510,13 @@ func TestRuleService_Get(t *testing.T) {
 				ctx: mockscontext.Background(),
 				key: "key123",
 			},
-			wantedErr:        fmt.Errorf("error getting rule, %w", errors.New("error getting rule")), //nolint:goerr113
-			repositoryErr:    errors.New("error getting rule"),                                       //nolint:goerr113
+			wantedErr:        fmt.Errorf("error getting rule, %w", errors.New("error getting rule")),
+			repositoryErr:    errors.New("error getting rule"),
 			serviceCallTimes: 1,
 		},
 	}
 
-	for _, tt := range tests { //nolint:paralleltest,varnamelen
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			ruleRepositoryMock := mocks.NewMockRuleRepository(mockCtrl)
@@ -542,10 +541,9 @@ func TestRuleService_Get(t *testing.T) {
 	}
 }
 
-//nolint:funlen,nosnakecase
 func TestRuleService_Delete(t *testing.T) {
 	type args struct {
-		ctx context.Context //nolint:containedctx
+		ctx context.Context
 		key string
 	}
 
@@ -591,13 +589,13 @@ func TestRuleService_Delete(t *testing.T) {
 				key: "key123",
 			},
 			want:             nil,
-			wantedErr:        fmt.Errorf("error deleting rule - %w", errors.New("error deleting rule")), //nolint:goerr113
-			repositoryErr:    errors.New("error deleting rule"),                                         //nolint:goerr113
+			wantedErr:        fmt.Errorf("error deleting rule - %w", errors.New("error deleting rule")),
+			repositoryErr:    errors.New("error deleting rule"),
 			serviceCallTimes: 1,
 		},
 	}
 
-	for _, tt := range tests { //nolint:paralleltest,varnamelen
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			ruleRepositoryMock := mocks.NewMockRuleRepository(mockCtrl)

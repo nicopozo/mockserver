@@ -1,22 +1,20 @@
 create schema if not exists mockserver;
 
-CREATE TABLE `rules`
+CREATE TABLE `mockserver`.`rules`
 (
-    `key`        varchar(255) NOT NULL,
-    `group`      varchar(255) NOT NULL,
-    `name`       varchar(255) NOT NULL,
-    `path`       varchar(255) NOT NULL,
-    `strategy`   varchar(255) NOT NULL,
-    `method`     varchar(45)  NOT NULL,
-    `status`     varchar(255) NOT NULL,
-    `pattern`    varchar(255) NOT NULL,
-    `assertions` json DEFAULT NULL,
+    `key`      varchar(255) NOT NULL,
+    `group`    varchar(255) NOT NULL,
+    `name`     varchar(255) NOT NULL,
+    `path`     varchar(255) NOT NULL,
+    `strategy` varchar(255) NOT NULL,
+    `method`   varchar(45)  NOT NULL,
+    `status`   varchar(255) NOT NULL,
+    `pattern`  varchar(255) NOT NULL,
     PRIMARY KEY (`key`),
     UNIQUE KEY `key_UNIQUE` (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-
-CREATE TABLE mockserver.`responses`
+CREATE TABLE `mockserver`.`responses`
 (
     `id`           bigint       NOT NULL AUTO_INCREMENT,
     `body`         longtext     NOT NULL,
@@ -30,14 +28,15 @@ CREATE TABLE mockserver.`responses`
     CONSTRAINT `rules` FOREIGN KEY (`rule_key`) REFERENCES `rules` (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-CREATE TABLE mockserver.`variables`
+CREATE TABLE `mockserver`.`variables`
 (
-    `id`       bigint       NOT NULL AUTO_INCREMENT,
-    `type`     varchar(255) NOT NULL,
-    `name`     varchar(255) NOT NULL,
-    `key`      varchar(255) NOT NULL,
-    `rule_key` varchar(255) NOT NULL,
+    `id`         bigint       NOT NULL AUTO_INCREMENT,
+    `type`       varchar(255) NOT NULL,
+    `name`       varchar(255) NOT NULL,
+    `key`        varchar(255) NOT NULL,
+    `rule_key`   varchar(255) NOT NULL,
+    `assertions` json DEFAULT NULL,
     PRIMARY KEY (`id`),
-    KEY        `rule_idx` (`rule_key`),
+    KEY          `rule_idx` (`rule_key`),
     CONSTRAINT `rule` FOREIGN KEY (`rule_key`) REFERENCES `rules` (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

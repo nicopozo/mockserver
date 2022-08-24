@@ -3,7 +3,6 @@ package controller
 import (
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -85,7 +84,7 @@ func (controller *MockController) extractExecutionBody(logger log.ILogger, body 
 		return "<nil>"
 	}
 
-	bodyContents, err := ioutil.ReadAll(body)
+	bodyContents, err := io.ReadAll(body)
 	if err != nil {
 		logger.Error(controller, nil, err, "Error extracting body from execution: "+err.Error())
 

@@ -43,7 +43,6 @@ func (controller *RuleController) Create(context *gin.Context) {
 	}
 
 	serviceRule, err := controller.RuleService.Save(reqContext, *rule)
-
 	if err != nil {
 		switch err.(type) { //nolint:errorlint
 		case ruleserrors.InvalidRulesError:
@@ -96,7 +95,6 @@ func (controller *RuleController) Update(context *gin.Context) {
 	}
 
 	serviceRule, err := controller.RuleService.Update(reqContext, key, *rule)
-
 	if err != nil {
 		switch err.(type) { //nolint:errorlint
 		case ruleserrors.RuleNotFoundError:

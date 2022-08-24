@@ -119,7 +119,8 @@ func (repository *ruleFileRepository) Get(ctx context.Context, key string) (*mod
 }
 
 func (repository *ruleFileRepository) Search(ctx context.Context, params map[string]interface{},
-	paging model.Paging) (*model.RuleList, error) {
+	paging model.Paging,
+) (*model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(repository, nil, "Searching rules.")
@@ -209,7 +210,8 @@ func (repository *ruleFileRepository) Delete(ctx context.Context, key string) er
 }
 
 func (repository *ruleFileRepository) SearchByMethodAndPath(ctx context.Context, method string,
-	path string) (*model.Rule, error) {
+	path string,
+) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(repository, nil, "Searching by method and path rule.")

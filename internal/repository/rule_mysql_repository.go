@@ -25,23 +25,23 @@ func NewRuleMySQLRepository(db Database) RuleRepository {
 }
 
 type RuleRow struct {
-	Key        string  `db:"key"`
-	Group      string  `db:"group"`
-	Name       string  `db:"name"`
-	Path       string  `db:"path"`
-	Strategy   string  `db:"strategy"`
-	Method     string  `db:"method"`
-	Status     string  `db:"status"`
-	Pattern    string  `db:"pattern"`
-	Assertions *string `db:"assertions"`
+	Key      string `db:"key"`
+	Group    string `db:"group"`
+	Name     string `db:"name"`
+	Path     string `db:"path"`
+	Strategy string `db:"strategy"`
+	Method   string `db:"method"`
+	Status   string `db:"status"`
+	Pattern  string `db:"pattern"`
 }
 
 type VariableRow struct {
-	ID      int64  `db:"id"`
-	Type    string `db:"type"`
-	Name    string `db:"name"`
-	Key     string `db:"key"`
-	RuleKey string `db:"rule_key"`
+	ID         int64   `db:"id"`
+	Type       string  `db:"type"`
+	Name       string  `db:"name"`
+	Key        string  `db:"key"`
+	RuleKey    string  `db:"rule_key"`
+	Assertions *string `db:"assertions"`
 }
 
 type ResponseRow struct {
@@ -59,8 +59,8 @@ func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.R
 
 	var err error
 
-	query := "INSERT INTO rules (`key`, `group`, name, path, strategy, method, status, pattern, assertions) " +
-		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	query := "INSERT INTO rules (`key`, `group`, name, path, strategy, method, status, pattern) " +
+		" VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 
 	trx, err := repository.db.Beginx()
 	if err != nil {
@@ -72,7 +72,7 @@ func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.R
 	rule.Key = fmt.Sprintf("%v", guuid.New())
 
 	_, err = trx.Exec(query, rule.Key, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
-		CreateExpression(rule.Path), jsonutils.Marshal(rule.Assertions))
+		CreateExpression(rule.Path))
 
 	if err != nil {
 		logger.Error(repository, nil, err, "error creating rule in DB")
@@ -98,7 +98,7 @@ func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.R
 
 	var err error
 
-	query := "UPDATE rules SET `group`=?, name=?, path=?, strategy=?, method=?, status=?, pattern=?, assertions=?" +
+	query := "UPDATE rules SET `group`=?, name=?, path=?, strategy=?, method=?, status=?, pattern=?" +
 		" WHERE `key`=?"
 
 	trx, err := repository.db.Beginx()
@@ -109,7 +109,7 @@ func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.R
 	defer repository.commitOrRollback(ctx, trx, err)
 
 	_, err = trx.Exec(query, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
-		CreateExpression(rule.Path), jsonutils.Marshal(rule.Assertions), rule.Key)
+		CreateExpression(rule.Path), rule.Key)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating rule in DB")
 
@@ -202,7 +202,7 @@ func (repository *ruleMySQLRepository) Get(ctx context.Context, key string) (*mo
 
 	var variables []VariableRow
 
-	query = "SELECT id, type, name, `key`, rule_key FROM variables WHERE rule_key = ?"
+	query = "SELECT id, type, name, `key`, rule_key, assertions FROM variables WHERE rule_key = ?"
 
 	err = repository.db.Select(&variables, query, key)
 
@@ -229,7 +229,8 @@ func (repository *ruleMySQLRepository) Get(ctx context.Context, key string) (*mo
 }
 
 func (repository *ruleMySQLRepository) Search(ctx context.Context, params map[string]interface{},
-	paging model.Paging) (*model.RuleList, error) {
+	paging model.Paging,
+) (*model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var rows []RuleRow
@@ -322,7 +323,8 @@ func (repository *ruleMySQLRepository) Delete(ctx context.Context, key string) e
 }
 
 func (repository *ruleMySQLRepository) SearchByMethodAndPath(ctx context.Context, method string,
-	path string) (*model.Rule, error) {
+	path string,
+) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
@@ -340,7 +342,7 @@ func (repository *ruleMySQLRepository) SearchByMethodAndPath(ctx context.Context
 	}
 
 	for _, row := range rows {
-		var regex = regexp.MustCompile(row.Pattern)
+		regex := regexp.MustCompile(row.Pattern)
 
 		if regex.MatchString(path) {
 			if row.Status == model.RuleStatusEnabled {
@@ -357,11 +359,17 @@ func (repository *ruleMySQLRepository) SearchByMethodAndPath(ctx context.Context
 func (repository *ruleMySQLRepository) insertVariables(ctx context.Context, rule *model.Rule, trx *sqlx.Tx) error {
 	logger := mockscontext.Logger(ctx)
 
-	query := "INSERT INTO variables (type, name, `key`, rule_key) VALUES (?, ?, ?, ?)"
+	query := "INSERT INTO variables (type, name, `key`, rule_key, assertions) VALUES (?, ?, ?, ?, ?)"
 
-	for _, v := range rule.Variables {
-		_, err := trx.Exec(query, v.Type, v.Name, v.Key, rule.Key)
+	for _, variable := range rule.Variables {
+		var assertions *string
 
+		if variable.Assertions != nil {
+			a := jsonutils.Marshal(variable.Assertions)
+			assertions = &a
+		}
+
+		_, err := trx.Exec(query, variable.Type, variable.Name, variable.Key, rule.Key, assertions)
 		if err != nil {
 			logger.Error(repository, nil, err, "error creating rule variable in DB")
 
@@ -379,7 +387,6 @@ func (repository *ruleMySQLRepository) insertResponses(ctx context.Context, rule
 
 	for _, r := range rule.Responses {
 		_, err := trx.Exec(query, r.Body, r.ContentType, r.HTTPStatus, r.Delay, r.Scene, rule.Key)
-
 		if err != nil {
 			logger.Error(repository, nil, err, "error creating rule response in DB")
 
@@ -442,6 +449,13 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 			Key:  v.Key,
 		}
 
+		var assertions []*model.Assertion
+
+		if v.Assertions != nil {
+			_ = jsonutils.Unmarshal(strings.NewReader(*v.Assertions), &assertions)
+			newVar.Assertions = assertions
+		}
+
 		vars = append(vars, &newVar)
 	}
 
@@ -465,23 +479,16 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 		resps = append(resps, newResp)
 	}
 
-	var assertions []*model.Assertion
-
-	if row.Assertions != nil {
-		_ = jsonutils.Unmarshal(strings.NewReader(*row.Assertions), &assertions)
-	}
-
 	return &model.Rule{
-		Key:        row.Key,
-		Group:      row.Group,
-		Name:       row.Name,
-		Path:       row.Path,
-		Strategy:   row.Strategy,
-		Method:     row.Method,
-		Status:     row.Status,
-		Variables:  vars,
-		Responses:  resps,
-		Assertions: assertions,
+		Key:       row.Key,
+		Group:     row.Group,
+		Name:      row.Name,
+		Path:      row.Path,
+		Strategy:  row.Strategy,
+		Method:    row.Method,
+		Status:    row.Status,
+		Variables: vars,
+		Responses: resps,
 	}
 }
 

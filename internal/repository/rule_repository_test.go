@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//nolint:nosnakecase
 func Test_CreateExpression(t *testing.T) {
 	type args struct {
 		path string

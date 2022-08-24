@@ -8,6 +8,6 @@ services:
       - MOCKS_DATASOURCE=file
       - MOCKS_FILE=/tmp/mocks.json
     ports:
-      - '8080:8080'
+      - '9090:8080'
     volumes:
       - /tmp:/tmp

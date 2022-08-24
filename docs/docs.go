@@ -353,9 +353,6 @@ const docTemplate = `{
                 },
                 "value": {
                     "type": "string"
-                },
-                "variable_name": {
-                    "type": "string"
                 }
             }
         },
@@ -443,12 +440,6 @@ const docTemplate = `{
         "model.Rule": {
             "type": "object",
             "properties": {
-                "assertions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Assertion"
-                    }
-                },
                 "group": {
                     "type": "string",
                     "example": "payments"
@@ -517,6 +508,12 @@ const docTemplate = `{
         "model.Variable": {
             "type": "object",
             "properties": {
+                "assertions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Assertion"
+                    }
+                },
                 "key": {
                     "type": "string",
                     "example": "$.nickname"

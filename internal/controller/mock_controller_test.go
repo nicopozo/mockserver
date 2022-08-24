@@ -15,8 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//nolint:funlen
-func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase,paralleltest
+func TestMockController_Execute(t *testing.T) {
 	tests := []struct {
 		name             string
 		want             string
@@ -97,7 +96,7 @@ func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase,paralleltes
 					},
 				},
 			},
-			serviceErr:       errors.New("service error"), //nolint:goerr113
+			serviceErr:       errors.New("service error"),
 			serviceResponse:  model.Response{},
 			serviceCallTimes: 1,
 		},
@@ -124,7 +123,7 @@ func TestMockController_Execute(t *testing.T) { //nolint:nosnakecase,paralleltes
 		},
 	}
 
-	for _, tt := range tests { //nolint:paralleltest,varnamelen
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			mockServiceMock := mocks.NewMockMockService(mockCtrl)

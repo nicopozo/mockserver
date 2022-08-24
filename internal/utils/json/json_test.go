@@ -33,7 +33,7 @@ func TestUnmarshal(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests { //nolint:paralleltest,varnamelen
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := &dto{}
 

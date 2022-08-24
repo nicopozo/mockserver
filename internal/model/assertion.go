@@ -21,46 +21,40 @@ const (
 )
 
 type Assertion struct {
-	FailOnError  bool    `json:"fail_on_error"`
-	VariableName string  `json:"variable_name"`
-	Type         string  `json:"type"`
-	Value        string  `json:"value"`
-	Min          float64 `json:"min"`
-	Max          float64 `json:"max"`
+	FailOnError bool    `json:"fail_on_error"`
+	Type        string  `json:"type"`
+	Value       string  `json:"value"`
+	Min         float64 `json:"min"`
+	Max         float64 `json:"max"`
 }
 
-func (a Assertion) Assert(variables []*Variable) (string, bool) { //nolint:cyclop
-	variable := getVariable(variables, a.VariableName)
-	if variable == nil {
-		return fmt.Sprintf("no variable found with name '%s'", a.VariableName), false
-	}
-
+func (a Assertion) Assert(variable *Variable) (string, bool) { //nolint:cyclop
 	switch a.Type {
 	case AssertionTypeNumber:
 		if !isNumber(strings.Trim(variable.Value, `"`)) {
-			return fmt.Sprintf("variable '%s' is not a valid number", a.VariableName), false
+			return fmt.Sprintf("variable '%s' is not a valid number", variable.Name), false
 		}
 	case AssertionTypeString:
 		if isNumber(variable.Value) {
-			return fmt.Sprintf("variable '%s' is not a valid string", a.VariableName), false
+			return fmt.Sprintf("variable '%s' is not a valid string", variable.Name), false
 		}
 	case AssertionTypeEquals:
 		if strings.TrimSpace(variable.Value) != strings.TrimSpace(a.Value) {
 			return fmt.Sprintf("variable '%s' value is '%s' but expected was '%s'",
-				a.VariableName, variable.Value, a.Value), false
+				variable.Name, variable.Value, a.Value), false
 		}
 	case AssertionTypeRange:
 		v, err := strconv.ParseFloat(variable.Value, floatSize)
 		if err != nil {
-			return fmt.Sprintf("variable '%s' is not a valid number", a.VariableName), false
+			return fmt.Sprintf("variable '%s' is not a valid number", variable.Name), false
 		}
 
 		if v < a.Min || v > a.Max {
-			return fmt.Sprintf("variable '%s' is not in a valid number range", a.VariableName), false
+			return fmt.Sprintf("variable '%s' is not in a valid number range", variable.Name), false
 		}
 	case AssertionTypeIsPresent:
 		if strings.TrimSpace(variable.Value) == "" {
-			return fmt.Sprintf("variable '%s' is not present in request", a.VariableName), false
+			return fmt.Sprintf("variable '%s' is not present in request", variable.Name), false
 		}
 	}
 
@@ -110,16 +104,6 @@ func (e *AssertionResult) Print(ctx context.Context) {
 	for _, err := range e.assertionErrors {
 		logger.Info(e, nil, "variable is not the expected: %s", err)
 	}
-}
-
-func getVariable(variables []*Variable, name string) *Variable {
-	for _, variable := range variables {
-		if variable.Name == name {
-			return variable
-		}
-	}
-
-	return nil
 }
 
 func isNumber(value string) bool {

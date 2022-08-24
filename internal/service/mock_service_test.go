@@ -16,12 +16,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//nolint:funlen,nosnakecase
 func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 	requestMock, _ := http.NewRequest("PUT", "url", strings.NewReader("body"))
 
 	type args struct {
-		ctx     context.Context //nolint:containedctx
+		ctx     context.Context
 		request *http.Request
 		path    string
 		body    string
@@ -197,19 +196,19 @@ func TestMockService_SearchResponseForMethodAndPath(t *testing.T) {
 			want: []want{
 				{
 					result: model.Response{},
-					err:    fmt.Errorf("error searching rule, %w", errors.New("error in service")), //nolint:goerr113
+					err:    fmt.Errorf("error searching rule, %w", errors.New("error in service")),
 				},
 			},
 			rulesServiceCall: []rulesServiceCall{
 				{
-					searchByMethodAndPathErr:   errors.New("error in service"), //nolint:goerr113
+					searchByMethodAndPathErr:   errors.New("error in service"),
 					searchByMethodAndPathTimes: 1,
 				},
 			},
 		},
 	}
 
-	for _, tt := range tests { //nolint:paralleltest,varnamelen
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)

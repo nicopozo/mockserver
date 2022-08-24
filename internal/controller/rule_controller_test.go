@@ -20,8 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//nolint:funlen
-func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
+func TestRuleController_Create(t *testing.T) {
 	tests := []struct {
 		name             string
 		requestFile      string
@@ -97,7 +96,7 @@ func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
 		{
 			name:        "Should return 500 when service returns unexpected error",
 			requestFile: "../utils/test/mocks/json/create_rule_request.json",
-			serviceErr:  errors.New("error in service"), //nolint:goerr113
+			serviceErr:  errors.New("error in service"),
 			wantStatus:  http.StatusInternalServerError,
 			want:        nil,
 			wantedErr: &model.Error{
@@ -115,7 +114,7 @@ func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
 		},
 	}
 
-	for _, tt := range tests { // nolint:paralleltest,varnamelen
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
@@ -163,8 +162,7 @@ func TestRuleController_Create(t *testing.T) { //nolint:nosnakecase
 	}
 }
 
-//nolint:funlen
-func TestRuleController_Get(t *testing.T) { //nolint:nosnakecase
+func TestRuleController_Get(t *testing.T) {
 	tests := []struct {
 		name             string
 		serviceErr       error
@@ -202,7 +200,7 @@ func TestRuleController_Get(t *testing.T) { //nolint:nosnakecase
 
 		{
 			name:       "Should return 500 when service returns error",
-			serviceErr: errors.New("error in service"), //nolint:goerr113
+			serviceErr: errors.New("error in service"),
 			want:       nil,
 			wantStatus: http.StatusInternalServerError,
 			wantedErr: &model.Error{
@@ -240,7 +238,7 @@ func TestRuleController_Get(t *testing.T) { //nolint:nosnakecase
 		},
 	}
 
-	for _, tt := range tests { //nolint:paralleltest,varnamelen
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
@@ -301,7 +299,7 @@ func TestRuleController_Get(t *testing.T) { //nolint:nosnakecase
 	}
 }
 
-//nolint
+// nolint
 func TestRuleController_Search(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -567,7 +565,6 @@ func TestRuleController_Search(t *testing.T) {
 	}
 }
 
-//nolint:nosnakecase,funlen
 func TestRuleController_Delete(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -588,7 +585,7 @@ func TestRuleController_Delete(t *testing.T) {
 
 		{
 			name:       "Should return 500 when service returns error",
-			serviceErr: errors.New("error in service"), //nolint:goerr113
+			serviceErr: errors.New("error in service"),
 			wantStatus: http.StatusInternalServerError,
 			wantedErr: &model.Error{
 				Status:  http.StatusInternalServerError,
@@ -614,7 +611,7 @@ func TestRuleController_Delete(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests { //nolint:paralleltest,varnamelen
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
