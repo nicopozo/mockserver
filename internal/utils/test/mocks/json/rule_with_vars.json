@@ -1,0 +1,44 @@
+{
+  "key": "05bdfc2f-fed3-4d80-ae0a-68f24badf56a",
+  "group": "payments",
+  "name": "New Payment",
+  "path": "/v1/{user_id}/payments",
+  "strategy": "normal",
+  "method": "POST",
+  "status": "enabled",
+  "responses": [
+    {
+      "body": "{\"user_id\": {user_id},\"amount\": {amount}, \"client_id\" : \"{client_id}\", \"currency\" : \"{currency}\"}",
+      "content_type": "application/json",
+      "http_status": 200,
+      "delay": 0,
+      "scene": ""
+    }
+  ],
+  "variables": [
+    {
+      "type": "path",
+      "name": "user_id",
+      "key": "user_id",
+      "assertions": [ ]
+    },
+    {
+      "type": "body",
+      "name": "amount",
+      "key": "$.amount",
+      "assertions": [ ]
+    },
+    {
+      "type": "query",
+      "name": "currency",
+      "key": "currency",
+      "assertions": [ ]
+    },
+    {
+      "type": "header",
+      "name": "client_id",
+      "key": "Client-Id",
+      "assertions": [ ]
+    }
+  ]
+}

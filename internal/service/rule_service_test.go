@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//nolint:maintidx
 func TestRuleService_Save(t *testing.T) {
 	type args struct {
 		rule model.Rule

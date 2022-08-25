@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//nolint:maintidx
 func TestAssertion_Assert(t *testing.T) {
 	type assertionsFields struct {
 		Type  string

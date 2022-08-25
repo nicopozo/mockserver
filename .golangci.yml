@@ -112,6 +112,8 @@ issues:
         - varnamelen
         - nosnakecase
         - containedctx
+        - maintidx
+        - lll
     - linters:
         - lll
       source: "^//go:generate "
