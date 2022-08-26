@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nicopozo/mockserver/internal/model"
@@ -21,7 +21,7 @@ type Body struct {
 func (Body) Close() error { return nil }
 
 func GetJSONFromFile(filename string) (string, error) {
-	contentBytes, err := ioutil.ReadFile(filename)
+	contentBytes, err := os.ReadFile(filename)
 	if err != nil {
 		return "", fmt.Errorf("error file, %w", err)
 	}

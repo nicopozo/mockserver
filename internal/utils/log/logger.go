@@ -62,29 +62,28 @@ func NewLogger(trackingID string) ILogger {
 	return iLogger
 }
 
-func (theLogger *log) Info(source interface{}, tags map[string]string, message string, args ...interface{}) {
-	theLogger.logrus.Infof("%s - %v", theLogger.GetMessage(message, args...), theLogger.getTags(source, tags))
+func (logger *log) Info(source interface{}, tags map[string]string, message string, args ...interface{}) {
+	logger.logrus.Infof("%s - %v", logger.GetMessage(message, args...), logger.getTags(source, tags))
 }
 
-func (theLogger *log) Warn(source interface{}, tags map[string]string, message string, args ...interface{}) {
-	theLogger.logrus.Warnf("%s - %v", theLogger.GetMessage(message, args...), theLogger.getTags(source, tags))
+func (logger *log) Warn(source interface{}, tags map[string]string, message string, args ...interface{}) {
+	logger.logrus.Warnf("%s - %v", logger.GetMessage(message, args...), logger.getTags(source, tags))
 }
 
-func (theLogger *log) Error(source interface{}, tags map[string]string, err error,
-	message string, args ...interface{}) {
-	theLogger.logrus.Errorf("%s - error: %s - %v", theLogger.GetMessage(message, args...), err.Error(),
-		theLogger.getTags(source, tags))
+func (logger *log) Error(source interface{}, tags map[string]string, err error, message string, args ...interface{}) {
+	logger.logrus.Errorf("%s - error: %s - %v", logger.GetMessage(message, args...), err.Error(),
+		logger.getTags(source, tags))
 }
 
-func (theLogger *log) Debug(source interface{}, tags map[string]string, message string, args ...interface{}) {
-	theLogger.logrus.Debugf("%s - %v", theLogger.GetMessage(message, args...), theLogger.getTags(source, tags))
+func (logger *log) Debug(source interface{}, tags map[string]string, message string, args ...interface{}) {
+	logger.logrus.Debugf("%s - %v", logger.GetMessage(message, args...), logger.getTags(source, tags))
 }
 
-func (theLogger *log) GetTrackingID() string {
-	return theLogger.trackingID
+func (logger *log) GetTrackingID() string {
+	return logger.trackingID
 }
 
-func (theLogger *log) GetMessage(message string, args ...interface{}) string {
+func (logger *log) GetMessage(message string, args ...interface{}) string {
 	if len(args) > 0 {
 		return fmt.Sprintf(message, args...)
 	}
@@ -111,7 +110,7 @@ func getClass(source interface{}) string {
 	return ""
 }
 
-func (theLogger *log) getTags(source interface{}, tags map[string]string) []string {
+func (logger *log) getTags(source interface{}, tags map[string]string) []string {
 	var res []string
 
 	index := 0
@@ -126,7 +125,7 @@ func (theLogger *log) getTags(source interface{}, tags map[string]string) []stri
 		}
 	}
 
-	res[index] = fmt.Sprintf("TRACKING_ID:%v", theLogger.trackingID)
+	res[index] = fmt.Sprintf("TRACKING_ID:%v", logger.trackingID)
 	res[index+1] = fmt.Sprintf("Class:%v", getClass(source))
 
 	return res

@@ -82,7 +82,8 @@ func (ruleService *ruleService) Update(ctx context.Context, key string, rule mod
 }
 
 func (ruleService *ruleService) UpdateStatus(ctx context.Context, key string,
-	ruleStatus model.RuleStatus) (model.Rule, error) {
+	ruleStatus model.RuleStatus,
+) (model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(ruleService, nil, "Entering ruleService Update()")
@@ -124,7 +125,8 @@ func (ruleService *ruleService) Get(ctx context.Context, key string) (model.Rule
 }
 
 func (ruleService *ruleService) Search(ctx context.Context, params map[string]interface{},
-	paging model.Paging) (model.RuleList, error) {
+	paging model.Paging,
+) (model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(ruleService, nil, "Entering ruleService Search()")
@@ -208,10 +210,6 @@ func validateRule(rule model.Rule) error {
 		return err
 	}
 
-	if err := validateAssertions(rule.Assertions); err != nil {
-		return err
-	}
-
 	return validateResponses(rule.Responses)
 }
 
@@ -241,20 +239,6 @@ func validateVariables(variables []*model.Variable) error {
 	for _, variable := range variables {
 		if err := variable.Validate(); err != nil {
 			return fmt.Errorf("error validating variable, %w", err)
-		}
-	}
-
-	return nil
-}
-
-func validateAssertions(assertions []*model.Assertion) error {
-	if assertions == nil {
-		return nil
-	}
-
-	for _, assertion := range assertions {
-		if err := assertion.Validate(); err != nil {
-			return fmt.Errorf("error validating assertions, %w", err)
 		}
 	}
 

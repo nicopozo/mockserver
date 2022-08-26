@@ -42,7 +42,8 @@ type mockService struct {
 }
 
 func (svc *mockService) SearchResponseForRequest(ctx context.Context,
-	request *http.Request, path, body string) (model.Response, error) {
+	request *http.Request, path, body string,
+) (model.Response, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(svc, nil, "Entering mockService Execute()")
@@ -56,12 +57,12 @@ func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 		return model.Response{}, fmt.Errorf("error searching rule, %w", err)
 	}
 
-	variables, err := svc.getVariableValues(*request, body, rule, path)
+	variableValues, err := svc.getVariableValues(*request, body, rule, path)
 	if err != nil {
 		return model.Response{}, err
 	}
 
-	assertionResult := svc.applyAssertionsFromRule(rule, variables)
+	assertionResult := svc.applyAssertionsFromRule(rule, variableValues)
 
 	assertionResult.Print(ctx)
 
@@ -74,7 +75,7 @@ func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 		return model.Response{}, err
 	}
 
-	body = svc.applyVariables(response.Body, variables)
+	body = svc.applyVariables(response.Body, variableValues)
 
 	response.Body = body
 
@@ -91,7 +92,8 @@ func (svc *mockService) applyVariables(respBody string, variables []*model.Varia
 
 //nolint:cyclop,funlen
 func (svc *mockService) getResponseFromRule(rule model.Rule, request *http.Request, body string,
-	path string) (model.Response, error) {
+	path string,
+) (model.Response, error) {
 	strategy := rule.Strategy
 
 	switch strategy {
@@ -212,9 +214,7 @@ func (svc *mockService) getQueryVariableValue(key string, request *http.Request)
 		}
 	}
 
-	return "", mockserrors.InvalidRulesError{
-		Message: fmt.Sprintf("no query param found with key %s", key),
-	}
+	return "", nil
 }
 
 func (svc *mockService) getPathVariableValue(key, rulePath, reqPath string) (string, error) {
@@ -223,17 +223,12 @@ func (svc *mockService) getPathVariableValue(key, rulePath, reqPath string) (str
 		return "", err
 	}
 
-	if pathVariables[key] == "" {
-		return "", mockserrors.InvalidRulesError{
-			Message: fmt.Sprintf("no path param found with key %s", key),
-		}
-	}
-
 	return pathVariables[key], nil
 }
 
 func (svc *mockService) getVariableValue(variable model.Variable, request *http.Request, body string,
-	rule model.Rule, path string) (string, error) {
+	rule model.Rule, path string,
+) (string, error) {
 	switch variable.Type {
 	case model.VariableTypeHeader:
 		return svc.getHeaderVariableValue(variable.Key, request), nil
@@ -263,6 +258,12 @@ func (svc *mockService) getPathParams(rulePath, reqPath string) (map[string]stri
 	values := strings.Split(u.Path, "/")
 	pathParts := strings.Split(rulePath, "/")
 
+	if len(values) != len(pathParts) {
+		return nil, mockserrors.InvalidRulesError{
+			Message: "request path does not apply for rule path",
+		}
+	}
+
 	params := make(map[string]string)
 
 	for index, part := range pathParts {
@@ -281,7 +282,8 @@ func (svc *mockService) getPathParams(rulePath, reqPath string) (map[string]stri
 }
 
 func (svc *mockService) getVariableValues(request http.Request, body string, rule model.Rule,
-	path string) ([]*model.Variable, error) {
+	path string,
+) ([]*model.Variable, error) {
 	variables := rule.Variables
 	for idx := range variables {
 		value, err := svc.getVariableValue(*variables[idx], &request, body, rule, path)
@@ -295,15 +297,29 @@ func (svc *mockService) getVariableValues(request http.Request, body string, rul
 	return variables, nil
 }
 
-func (svc *mockService) applyAssertionsFromRule(rule model.Rule,
-	variables []*model.Variable) model.AssertionResult {
+func (svc *mockService) applyAssertionsFromRule(rule model.Rule, variables []*model.Variable) model.AssertionResult {
 	result := model.AssertionResult{Fail: false}
 
-	for _, assertion := range rule.Assertions {
-		if msg, ok := assertion.Assert(variables); !ok {
-			result.AddAssertionError(assertion.FailOnError, msg)
+	for _, variable := range rule.Variables {
+		for _, assertion := range variable.Assertions {
+			variableValue := getVariableValue(variables, variable.Name)
+			if variableValue != nil {
+				if msg, ok := assertion.Assert(variableValue); !ok {
+					result.AddAssertionError(assertion.FailOnError, msg)
+				}
+			}
 		}
 	}
 
 	return result
+}
+
+func getVariableValue(variables []*model.Variable, name string) *model.Variable {
+	for _, variable := range variables {
+		if variable.Name == name {
+			return variable
+		}
+	}
+
+	return nil
 }

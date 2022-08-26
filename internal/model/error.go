@@ -16,19 +16,17 @@ const (
 	NotImplementedError       = 1031
 )
 
-var (
-	//nolint:gochecknoglobals
-	causeMap = map[int]causeMapping{
-		InternalError:             {status: http.StatusInternalServerError, message: "Internal server error"},
-		ValidationError:           {status: http.StatusBadRequest, message: "Request validation failed"},
-		TransactionInProcessError: {status: http.StatusBadRequest, message: "Transaction in process"},
-		Conflict:                  {status: http.StatusConflict, message: "Resource in conflict"},
-		InvalidUserError:          {status: http.StatusBadRequest, message: "Invalid user"},
-		ServiceUnavailableError:   {status: http.StatusBadGateway, message: "Service Unavailable"},
-		ResourceNotFoundError:     {status: http.StatusNotFound, message: "Resource Not Found"},
-		NotImplementedError:       {status: http.StatusNotImplemented, message: "Not Implemented"},
-	}
-)
+//nolint:gochecknoglobals
+var causeMap = map[int]causeMapping{
+	InternalError:             {status: http.StatusInternalServerError, message: "Internal server error"},
+	ValidationError:           {status: http.StatusBadRequest, message: "Request validation failed"},
+	TransactionInProcessError: {status: http.StatusBadRequest, message: "Transaction in process"},
+	Conflict:                  {status: http.StatusConflict, message: "Resource in conflict"},
+	InvalidUserError:          {status: http.StatusBadRequest, message: "Invalid user"},
+	ServiceUnavailableError:   {status: http.StatusBadGateway, message: "Service Unavailable"},
+	ResourceNotFoundError:     {status: http.StatusNotFound, message: "Resource Not Found"},
+	NotImplementedError:       {status: http.StatusNotImplemented, message: "Not Implemented"},
+}
 
 type ErrorCause struct {
 	Code        int64  `json:"code" example:"1030"`

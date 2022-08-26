@@ -13,10 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// nolint:funlen,nosnakecase,paralleltest
 func Test_ruleFileRepository_Get(t *testing.T) {
 	type args struct {
-		ctx context.Context //nolint:containedctx
+		ctx context.Context
 		key string
 	}
 
@@ -64,7 +63,7 @@ func Test_ruleFileRepository_Get(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests { //nolint:paralleltest,varnamelen
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			name := getMocksFile()
 			defer func(fileName string) { _ = os.Remove(fileName) }(name)
@@ -88,7 +87,7 @@ func Test_ruleFileRepository_Get(t *testing.T) {
 }
 
 func getMocksFile() string {
-	dest, err := os.OpenFile("mocks.json", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600) //nolint:nosnakecase
+	dest, err := os.OpenFile("mocks.json", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o600)
 	if err != nil {
 		panic(err)
 	}

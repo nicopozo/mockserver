@@ -9,7 +9,6 @@ import (
 	"github.com/nicopozo/mockserver/internal/model"
 )
 
-//nolint:lll
 //go:generate mockgen -destination=../utils/test/mocks/rule_repository_mock.go -package=mocks -source=./rule_repository.go
 
 type RuleRepository interface {

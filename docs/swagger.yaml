@@ -12,8 +12,6 @@ definitions:
         type: string
       value:
         type: string
-      variable_name:
-        type: string
     type: object
   model.Error:
     properties:
@@ -75,10 +73,6 @@ definitions:
     type: object
   model.Rule:
     properties:
-      assertions:
-        items:
-          $ref: '#/definitions/model.Assertion'
-        type: array
       group:
         example: payments
         type: string
@@ -126,6 +120,10 @@ definitions:
     type: object
   model.Variable:
     properties:
+      assertions:
+        items:
+          $ref: '#/definitions/model.Assertion'
+        type: array
       key:
         example: $.nickname
         type: string
@@ -144,7 +142,7 @@ info:
   description: Mock Server is intended to serve mocks for different APIs during development
     process.
   title: Mock Server
-  version: "1.0"
+  version: 2.0.0
 paths:
   /rules:
     get:

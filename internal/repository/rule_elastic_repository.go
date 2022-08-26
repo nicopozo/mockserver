@@ -39,7 +39,8 @@ func (repository *ruleElasticRepository) Create(ctx context.Context, rule *model
 }
 
 func (repository *ruleElasticRepository) save(ctx context.Context, rule *model.Rule,
-	isUpdate bool) (*model.Rule, error) {
+	isUpdate bool,
+) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
@@ -131,9 +132,10 @@ func (repository *ruleElasticRepository) Get(ctx context.Context, key string) (*
 	return rule, nil
 }
 
-// nolint:funlen
+//nolint:funlen,cyclop
 func (repository *ruleElasticRepository) Search(ctx context.Context, params map[string]interface{},
-	paging model.Paging) (*model.RuleList, error) {
+	paging model.Paging,
+) (*model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)
 
 	// Build the request body.
@@ -245,7 +247,7 @@ func (repository *ruleElasticRepository) Delete(ctx context.Context, key string)
 	}
 
 	for index, pattern := range patternList.Patterns {
-		var regex = regexp.MustCompile(pattern.PathExpression)
+		regex := regexp.MustCompile(pattern.PathExpression)
 		if regex.MatchString(rule.Path) {
 			for i, ruleKey := range pattern.RuleKeys {
 				if ruleKey == key {
@@ -297,7 +299,8 @@ func (repository *ruleElasticRepository) Delete(ctx context.Context, key string)
 }
 
 func (repository *ruleElasticRepository) SearchByMethodAndPath(ctx context.Context, method string,
-	path string) (*model.Rule, error) {
+	path string,
+) (*model.Rule, error) {
 	var err error
 
 	patternList, err := repository.getExpressionsByMethod(ctx, method)
@@ -306,7 +309,7 @@ func (repository *ruleElasticRepository) SearchByMethodAndPath(ctx context.Conte
 	}
 
 	for _, pattern := range patternList.Patterns {
-		var regex = regexp.MustCompile(pattern.PathExpression)
+		regex := regexp.MustCompile(pattern.PathExpression)
 
 		if regex.MatchString(path) {
 			for _, ruleKey := range pattern.RuleKeys {
@@ -324,7 +327,8 @@ func (repository *ruleElasticRepository) SearchByMethodAndPath(ctx context.Conte
 }
 
 func (repository *ruleElasticRepository) getExpressionsByMethod(ctx context.Context,
-	method string) (*model.PatternList, error) {
+	method string,
+) (*model.PatternList, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
@@ -468,7 +472,8 @@ func (repository *ruleElasticRepository) createPatterns(ctx context.Context, rul
 }
 
 func (repository *ruleElasticRepository) saveExpression(ctx context.Context, method string,
-	list *model.PatternList) error {
+	list *model.PatternList,
+) error {
 	logger := mockscontext.Logger(ctx)
 
 	saveReq := esapi.IndexRequest{

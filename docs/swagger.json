@@ -10,7 +10,7 @@
             "name": "Nicolas Pozo",
             "email": "nicopozo@gmail.com"
         },
-        "version": "1.0"
+        "version": "2.0.0"
     },
     "host": "localhost:8080",
     "basePath": "/mock-server",
@@ -349,9 +349,6 @@
                 },
                 "value": {
                     "type": "string"
-                },
-                "variable_name": {
-                    "type": "string"
                 }
             }
         },
@@ -439,12 +436,6 @@
         "model.Rule": {
             "type": "object",
             "properties": {
-                "assertions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Assertion"
-                    }
-                },
                 "group": {
                     "type": "string",
                     "example": "payments"
@@ -513,6 +504,12 @@
         "model.Variable": {
             "type": "object",
             "properties": {
+                "assertions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Assertion"
+                    }
+                },
                 "key": {
                     "type": "string",
                     "example": "$.nickname"

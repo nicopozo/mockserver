@@ -353,9 +353,6 @@ const docTemplate = `{
                 },
                 "value": {
                     "type": "string"
-                },
-                "variable_name": {
-                    "type": "string"
                 }
             }
         },
@@ -443,12 +440,6 @@ const docTemplate = `{
         "model.Rule": {
             "type": "object",
             "properties": {
-                "assertions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Assertion"
-                    }
-                },
                 "group": {
                     "type": "string",
                     "example": "payments"
@@ -517,6 +508,12 @@ const docTemplate = `{
         "model.Variable": {
             "type": "object",
             "properties": {
+                "assertions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Assertion"
+                    }
+                },
                 "key": {
                     "type": "string",
                     "example": "$.nickname"
@@ -536,7 +533,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "2.0.0",
 	Host:             "localhost:8080",
 	BasePath:         "/mock-server",
 	Schemes:          []string{"http"},

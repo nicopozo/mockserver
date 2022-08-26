@@ -6,7 +6,6 @@ import (
 	"github.com/nicopozo/mockserver/internal/utils/log"
 )
 
-//nolint:nosnakecase,funlen
 func Test_log_getMessage(t *testing.T) {
 	type fields struct {
 		trackingID string
