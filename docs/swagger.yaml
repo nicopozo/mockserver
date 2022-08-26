@@ -142,7 +142,7 @@ info:
   description: Mock Server is intended to serve mocks for different APIs during development
     process.
   title: Mock Server
-  version: "1.0"
+  version: 2.0.0
 paths:
   /rules:
     get:
