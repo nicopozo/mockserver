@@ -25,14 +25,15 @@ func NewRuleMySQLRepository(db Database) RuleRepository {
 }
 
 type RuleRow struct {
-	Key      string `db:"key"`
-	Group    string `db:"group"`
-	Name     string `db:"name"`
-	Path     string `db:"path"`
-	Strategy string `db:"strategy"`
-	Method   string `db:"method"`
-	Status   string `db:"status"`
-	Pattern  string `db:"pattern"`
+	Key               string `db:"key"`
+	Group             string `db:"group"`
+	Name              string `db:"name"`
+	Path              string `db:"path"`
+	Strategy          string `db:"strategy"`
+	Method            string `db:"method"`
+	Status            string `db:"status"`
+	Pattern           string `db:"pattern"`
+	NextResponseIndex int    `db:"next_response_index"`
 }
 
 type VariableRow struct {
@@ -59,8 +60,8 @@ func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.R
 
 	var err error
 
-	query := "INSERT INTO rules (`key`, `group`, name, path, strategy, method, status, pattern) " +
-		" VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+	query := "INSERT INTO rules (`key`, `group`, name, path, strategy, method, status, pattern, next_response_index) " +
+		" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
 	trx, err := repository.db.Beginx()
 	if err != nil {
@@ -72,7 +73,7 @@ func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.R
 	rule.Key = fmt.Sprintf("%v", guuid.New())
 
 	_, err = trx.Exec(query, rule.Key, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
-		CreateExpression(rule.Path))
+		CreateExpression(rule.Path), rule.NextResponseIndex)
 
 	if err != nil {
 		logger.Error(repository, nil, err, "error creating rule in DB")
@@ -98,8 +99,8 @@ func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.R
 
 	var err error
 
-	query := "UPDATE rules SET `group`=?, name=?, path=?, strategy=?, method=?, status=?, pattern=?" +
-		" WHERE `key`=?"
+	query := "UPDATE rules SET `group`=?, name=?, path=?, strategy=?, method=?, status=?, pattern=?, " +
+		" next_response_index=? WHERE `key`=?"
 
 	trx, err := repository.db.Beginx()
 	if err != nil {
@@ -109,7 +110,7 @@ func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.R
 	defer repository.commitOrRollback(ctx, trx, err)
 
 	_, err = trx.Exec(query, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
-		CreateExpression(rule.Path), rule.Key)
+		CreateExpression(rule.Path), rule.NextResponseIndex, rule.Key)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating rule in DB")
 
@@ -480,15 +481,16 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 	}
 
 	return &model.Rule{
-		Key:       row.Key,
-		Group:     row.Group,
-		Name:      row.Name,
-		Path:      row.Path,
-		Strategy:  row.Strategy,
-		Method:    row.Method,
-		Status:    row.Status,
-		Variables: vars,
-		Responses: resps,
+		Key:               row.Key,
+		Group:             row.Group,
+		Name:              row.Name,
+		Path:              row.Path,
+		Strategy:          row.Strategy,
+		Method:            row.Method,
+		Status:            row.Status,
+		Variables:         vars,
+		Responses:         resps,
+		NextResponseIndex: row.NextResponseIndex,
 	}
 }
 

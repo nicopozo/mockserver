@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -17,8 +18,13 @@ import (
 const defaultFilePath = "/tmp/mocks.json"
 
 type ruleFileRepository struct {
-	rules    []model.Rule
+	rules    []fileRule
 	filePath string
+}
+
+type fileRule struct {
+	model.Rule
+	NextResponseIndex int `json:"next_response_index"`
 }
 
 func NewRuleFileRepository(filePath string) (RuleRepository, error) {
@@ -27,7 +33,7 @@ func NewRuleFileRepository(filePath string) (RuleRepository, error) {
 	}
 
 	repo := ruleFileRepository{
-		rules:    make([]model.Rule, 0),
+		rules:    make([]fileRule, 0),
 		filePath: filePath,
 	}
 
@@ -51,7 +57,7 @@ func NewRuleFileRepository(filePath string) (RuleRepository, error) {
 
 	defer func(f *os.File) { _ = f.Close() }(file)
 
-	repo.rules = make([]model.Rule, 0)
+	repo.rules = make([]fileRule, 0)
 
 	stat, err := file.Stat()
 	if err != nil {
@@ -59,7 +65,7 @@ func NewRuleFileRepository(filePath string) (RuleRepository, error) {
 	}
 
 	if stat.Size() > 0 {
-		rules, err := model.UnmarshalRules(file)
+		rules, err := unmarshalRules(file)
 		if err != nil {
 			return nil, fmt.Errorf("error creating file repository when unmarshaling file: %s - %w", filePath, err)
 		}
@@ -77,7 +83,12 @@ func (repository *ruleFileRepository) Create(ctx context.Context, rule *model.Ru
 
 	rule.Key = fmt.Sprintf("%v", guuid.New())
 
-	repository.rules = append(repository.rules, *rule)
+	fRule := fileRule{
+		Rule:              *rule,
+		NextResponseIndex: rule.NextResponseIndex,
+	}
+
+	repository.rules = append(repository.rules, fRule)
 
 	return rule, repository.SaveFile()
 }
@@ -89,7 +100,10 @@ func (repository *ruleFileRepository) Update(ctx context.Context, rule *model.Ru
 
 	for index := range repository.rules {
 		if repository.rules[index].Key == rule.Key {
-			repository.rules[index] = *rule
+			repository.rules[index] = fileRule{
+				Rule:              *rule,
+				NextResponseIndex: rule.NextResponseIndex,
+			}
 		}
 	}
 
@@ -103,7 +117,10 @@ func (repository *ruleFileRepository) Get(ctx context.Context, key string) (*mod
 
 	for index := range repository.rules {
 		if repository.rules[index].Key == key {
-			return &repository.rules[index], nil
+			result := &repository.rules[index].Rule
+			result.NextResponseIndex = repository.rules[index].NextResponseIndex
+
+			return result, nil
 		}
 	}
 
@@ -132,8 +149,11 @@ func (repository *ruleFileRepository) Search(ctx context.Context, params map[str
 	filtered := make([]*model.Rule, 0)
 
 	for index := range repository.rules {
-		if applies(repository.rules[index], params) {
-			filtered = append(filtered, &repository.rules[index])
+		if applies(repository.rules[index].Rule, params) {
+			result := &repository.rules[index].Rule
+			result.NextResponseIndex = repository.rules[index].NextResponseIndex
+
+			filtered = append(filtered, result)
 		}
 	}
 
@@ -186,7 +206,7 @@ func (repository *ruleFileRepository) Delete(ctx context.Context, key string) er
 
 	logger.Debug(repository, nil, "Updating rule.")
 
-	var result []model.Rule
+	var result []fileRule
 
 	for index := range repository.rules {
 		if repository.rules[index].Key == key {
@@ -221,7 +241,10 @@ func (repository *ruleFileRepository) SearchByMethodAndPath(ctx context.Context,
 		regex := regexp.MustCompile(expr)
 
 		if rule.Method == method && rule.Status == model.RuleStatusEnabled && regex.MatchString(path) {
-			return &rule, nil
+			result := rule.Rule
+			result.NextResponseIndex = rule.NextResponseIndex
+
+			return &result, nil
 		}
 	}
 
@@ -246,4 +269,15 @@ func (repository *ruleFileRepository) SaveFile() error {
 	}
 
 	return nil
+}
+
+func unmarshalRules(content io.Reader) ([]fileRule, error) {
+	rules := new([]fileRule)
+
+	err := jsonutils.Unmarshal(content, rules)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling content, %w", err)
+	}
+
+	return *rules, nil
 }

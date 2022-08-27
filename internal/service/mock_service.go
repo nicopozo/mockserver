@@ -70,7 +70,7 @@ func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 		return model.Response{}, assertionResult.GetError() //nolint:wrapcheck
 	}
 
-	response, err := svc.getResponseFromRule(rule, request, body, path)
+	response, err := svc.getResponseFromRule(ctx, rule, request, body, path)
 	if err != nil {
 		return model.Response{}, err
 	}
@@ -90,79 +90,95 @@ func (svc *mockService) applyVariables(respBody string, variables []*model.Varia
 	return respBody
 }
 
-//nolint:cyclop,funlen
-func (svc *mockService) getResponseFromRule(rule model.Rule, request *http.Request, body string,
+func (svc *mockService) getResponseFromRule(ctx context.Context, rule model.Rule, request *http.Request, body,
 	path string,
 ) (model.Response, error) {
 	strategy := rule.Strategy
 
 	switch strategy {
 	case model.RuleStrategyNormal:
-		return rule.Responses[0], nil
+		return svc.getFirstResponse(rule)
 	case model.RuleStrategyScene:
-		var scene *model.Variable
-
-		for _, variable := range rule.Variables {
-			if variable.Name == model.RuleStrategyScene {
-				scene = variable
-
-				break
-			}
-		}
-
-		if scene == nil {
-			return model.Response{}, mockserrors.InvalidRulesError{
-				Message: "rule doesn't have any variable names 'scene'",
-			}
-		}
-
-		sceneName, err := svc.getVariableValue(*scene, request, body, rule, path)
-		if err != nil {
-			return model.Response{}, err
-		}
-
-		if sceneName != "" {
-			first := string(sceneName[0])
-			last := string(sceneName[len(sceneName)-1])
-
-			// if it is a BODY variable, it is returned as JSON. So, I delete the "" from the beginning and the end
-			if first == "\"" && last == "\"" {
-				sceneName = sceneName[1 : len(sceneName)-1]
-			}
-		}
-
-		respIndex := -1
-
-		for index, resp := range rule.Responses {
-			if resp.Scene == sceneName {
-				respIndex = index
-
-				break
-			}
-
-			if strings.ToLower(resp.Scene) == "default" {
-				respIndex = index
-			}
-		}
-
-		if respIndex >= 0 {
-			return rule.Responses[respIndex], nil
-		}
-
-		return model.Response{}, mockserrors.InvalidRulesError{
-			Message: fmt.Sprintf("rule doesn't have an scene called %s", sceneName),
-		}
+		return svc.getResponseByScene(rule, request, body, path)
 	case model.RuleStrategyRandom:
-		responsesLen := len(rule.Responses)
-
-		rand.Seed(time.Now().UnixNano())
-		i := rand.Int63n(int64(responsesLen)) // nolint:gosec
-
-		return rule.Responses[i], nil
+		return svc.getRandomResponse(rule)
+	case model.RuleStrategySequential:
+		return svc.getNextResponse(ctx, rule)
 	}
 
 	return model.Response{}, mockserrors.InvalidRulesError{
 		Message: "rule doesn't have a valid strategy",
+	}
+}
+
+func (svc *mockService) getFirstResponse(rule model.Rule) (model.Response, error) {
+	return rule.Responses[0], nil
+}
+
+func (svc *mockService) getRandomResponse(rule model.Rule) (model.Response, error) {
+	responsesLen := len(rule.Responses)
+
+	rand.Seed(time.Now().UnixNano())
+	i := rand.Int63n(int64(responsesLen)) // nolint:gosec
+
+	return rule.Responses[i], nil
+}
+
+// nolint:cyclop
+func (svc *mockService) getResponseByScene(rule model.Rule, request *http.Request, body,
+	path string,
+) (model.Response, error) {
+	var scene *model.Variable
+
+	for _, variable := range rule.Variables {
+		if variable.Name == model.RuleStrategyScene {
+			scene = variable
+
+			break
+		}
+	}
+
+	if scene == nil {
+		return model.Response{}, mockserrors.InvalidRulesError{
+			Message: "rule doesn't have any variable names 'scene'",
+		}
+	}
+
+	sceneName, err := svc.getVariableValue(*scene, request, body, rule, path)
+	if err != nil {
+		return model.Response{}, err
+	}
+
+	if sceneName != "" {
+		first := string(sceneName[0])
+		last := string(sceneName[len(sceneName)-1])
+
+		// if it is a BODY variable, it is returned as JSON. So, I delete the "" from the beginning and the end
+		if first == "\"" && last == "\"" {
+			sceneName = sceneName[1 : len(sceneName)-1]
+		}
+	}
+
+	respIndex := -1
+
+	for index, resp := range rule.Responses {
+		if resp.Scene == sceneName {
+			respIndex = index
+
+			break
+		}
+
+		if strings.ToLower(resp.Scene) == "default" {
+			respIndex = index
+		}
+	}
+
+	if respIndex >= 0 {
+		return rule.Responses[respIndex], nil
+	}
+
+	return model.Response{}, mockserrors.InvalidRulesError{
+		Message: fmt.Sprintf("rule doesn't have an scene called %s", sceneName),
 	}
 }
 
@@ -312,6 +328,23 @@ func (svc *mockService) applyAssertionsFromRule(rule model.Rule, variables []*mo
 	}
 
 	return result
+}
+
+func (svc *mockService) getNextResponse(ctx context.Context, rule model.Rule) (model.Response, error) {
+	currentIndex := rule.NextResponseIndex
+
+	if currentIndex >= len(rule.Responses) {
+		currentIndex = 0
+	}
+
+	rule.NextResponseIndex = currentIndex + 1
+
+	rule, err := svc.RuleService.Update(ctx, rule.Key, rule)
+	if err != nil {
+		return model.Response{}, fmt.Errorf("error updating next response - %w", err)
+	}
+
+	return rule.Responses[currentIndex], nil
 }
 
 func getVariableValue(variables []*model.Variable, name string) *model.Variable {
