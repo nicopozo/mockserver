@@ -1,0 +1,40 @@
+POST {{host}}/mock-service/rules/538171cb-27da-49b8-b115-9c45632f0aa1
+Content-Type: application/json
+
+{
+  "key": "538171cb-27da-49b8-b115-9c45632f0aa1",
+  "group": "Payments",
+  "name": "Get Payment",
+  "path": "/v1/payments/{id}",
+  "strategy": "normal",
+  "method": "GET",
+  "status": "enabled",
+  "responses": [
+    {
+      "body": "{\"id\":{the_id}}",
+      "content_type": "application/json",
+      "http_status": 200,
+      "delay": 0,
+      "scene": ""
+    }
+  ],
+  "variables": [
+    {
+      "type": "path",
+      "name": "the_id",
+      "key": "id"
+    }
+  ],
+  "assertions": [
+    {
+      "fail_on_error": false,
+      "variable_name": "the_id",
+      "type": "number",
+      "value": "",
+      "min": 0,
+      "max": 0
+    }
+  ]
+}
+
+###

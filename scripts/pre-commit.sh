@@ -1,6 +1,6 @@
 #!/bin/bash
 
-swag init -g cmd/mocks/main.go
+swag init -g cmd/mocks/main.go -o ./api
 
 go mod tidy
 

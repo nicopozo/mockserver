@@ -1,0 +1,4 @@
+GET {{host}}/mock-service/mock/users/12334
+Accept: application/json
+
+###

@@ -352,6 +352,7 @@ export default {
         {text: "Normal", value: "normal"},
         {text: "Scene", value: "scene"},
         {text: "Random", value: "random"},
+        {text: "Sequential", value: "sequential"},
       ],
       varTypes: [
         {text: "Body", value: "body"},

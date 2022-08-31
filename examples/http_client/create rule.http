@@ -1,0 +1,23 @@
+POST {{host}}/mock-service/rules
+Content-Type: application/json
+
+{
+  "group": "Hola",
+  "name": "Hola",
+  "path": "/test/hola",
+  "strategy": "normal",
+  "method": "GET",
+  "status": "enabled",
+  "responses": [
+    {
+      "body": "body",
+      "content_type": "application/json",
+      "http_status": 200,
+      "delay": 0,
+      "scene": ""
+    }
+  ],
+  "variables": []
+}
+
+###
