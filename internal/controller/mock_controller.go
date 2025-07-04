@@ -44,7 +44,7 @@ func (controller *MockController) Execute(context *gin.Context) {
 			logger.Debug(controller, nil, "No valid rule found for path: %v and method: %s",
 				path, context.Request.Method)
 
-			errorResult := model.NewError(model.ValidationError, err.Error())
+			errorResult := model.NewError(model.ValidationError, "%s", err.Error())
 			context.JSON(http.StatusNotFound, errorResult)
 
 			return
@@ -54,7 +54,7 @@ func (controller *MockController) Execute(context *gin.Context) {
 			logger.Debug(controller, nil, "One or more assertions failed.",
 				path, context.Request.Method)
 
-			errorResult := model.NewError(model.ValidationError, err.Error())
+			errorResult := model.NewError(model.ValidationError, "%s", err.Error())
 			context.JSON(http.StatusBadRequest, errorResult)
 
 			return
