@@ -37,7 +37,7 @@ func GetDB() (*sqlx.DB, error) {
 		database, err = sqlx.Open("mysql", getDBString()+"?parseTime=true&charset=utf8")
 
 		if err != nil {
-			fmt.Printf("########## DB ERROR: " + err.Error() + " #############\n") //nolint:forbidigo
+			fmt.Printf("########## DB ERROR: %s #############\n", err.Error()) //nolint:forbidigo
 
 			return nil, fmt.Errorf("error connecting DB: %w", err)
 		}
@@ -57,7 +57,7 @@ func GetDB() (*sqlx.DB, error) {
 		}
 
 		if err != nil {
-			fmt.Printf("########## DB ERROR: " + err.Error() + " #############\n") //nolint:forbidigo
+			fmt.Printf("########## DB ERROR: %s #############\n", err.Error()) //nolint:forbidigo
 
 			database = nil
 			err = fmt.Errorf("error DB ping: %w", err)
