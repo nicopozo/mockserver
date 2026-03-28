@@ -10,7 +10,7 @@
   "dependencies": {
     "@mdi/font": "^7.0.96",
     "@mdi/js": "^7.0.96",
-    "axios": "^0.30.0",
+    "axios": "^1.13.5",
     "core-js": "^3.6.5",
     "vue": "^3.5.17",
     "vue-router": "^3.3.4",
@@ -22,7 +22,7 @@
     "@vue/cli-plugin-eslint": "~5.0.8",
     "@vue/cli-service": "~5.0.8",
     "babel-eslint": "^10.1.0",
-    "eslint": "^6.7.2",
+    "eslint": "^9.39.1",
     "eslint-plugin-vue": "^6.2.2",
     "sass": "^1.32.0",
     "sass-loader": "^10.0.0",
