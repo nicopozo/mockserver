@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -35,7 +36,6 @@ func GetDB() (*sqlx.DB, error) {
 	var err error
 	if database == nil {
 		database, err = sqlx.Open("mysql", getDBString()+"?parseTime=true&charset=utf8")
-
 		if err != nil {
 			fmt.Printf("########## DB ERROR: %s #############\n", err.Error()) //nolint:forbidigo
 
@@ -48,12 +48,12 @@ func GetDB() (*sqlx.DB, error) {
 
 		for i := 0; i < 10 && (i == 0 || err != nil); i++ {
 			if i > 0 {
-				time.Sleep(10 * time.Second) //nolint:gomnd
+				time.Sleep(10 * time.Second) //nolint:mnd
 			}
 
 			fmt.Printf("########## CONNECTING TO DB - try i:%v #############\n", i+1) //nolint:forbidigo
 
-			err = database.Ping()
+			err = database.PingContext(context.Background())
 		}
 
 		if err != nil {

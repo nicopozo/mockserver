@@ -1,13 +1,8 @@
+version: "2"
 run:
-  skip-dirs:
-    - internal/utils/test/mocks
-  skip-files:
-    - ".*\\.my\\.go$"
-    - lib/bad.go
-  go: '1.19'
-
+  go: "1.19"
 linters:
-  disable-all: true
+  default: none
   enable:
     - asasalint
     - asciicheck
@@ -16,24 +11,19 @@ linters:
     - containedctx
     - contextcheck
     - cyclop
-    - deadcode
     - decorder
-    - depguard
     - dogsled
     - dupl
     - durationcheck
+    - err113
     - errcheck
     - errchkjson
     - errname
     - errorlint
-    - execinquery
     - exhaustive
-    #- exhaustruct
-    - exportloopref
     - forbidigo
     - forcetypeassert
     - funlen
-    - gci
     - gochecknoglobals
     - gochecknoinits
     - gocognit
@@ -42,27 +32,20 @@ linters:
     - gocyclo
     - godot
     - godox
-    - goerr113
-    - gofmt
-    - gofumpt
     - goheader
-    - goimports
-    - gomnd
     - gomoddirectives
     - gomodguard
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
     - grouper
-    - ifshort
     - importas
     - ineffassign
-    #- ireturn
     - lll
     - maintidx
     - makezero
     - misspell
+    - mnd
     - nakedret
     - nestif
     - nilerr
@@ -71,62 +54,74 @@ linters:
     - noctx
     - nolintlint
     - nonamedreturns
-    - nosnakecase
     - nosprintfhostport
     - prealloc
     - predeclared
     - promlinter
-    #- revive
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
-    - structcheck
-    - stylecheck
     - tagliatelle
-    - tenv
     - testpackage
     - thelper
     - tparallel
-    - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - varnamelen
     - wastedassign
     - whitespace
     - wrapcheck
-    - wsl
-  fast: true
-
-issues:
-  exclude-rules:
-    # Exclude some linters from running on tests files.
-    - path: _test\.go
-      linters:
-        - goerr113
-        - funlen
-        - paralleltest
-        - tparallel
-        - varnamelen
-        - nosnakecase
-        - containedctx
-        - maintidx
-        - lll
-    - linters:
-        - lll
-      source: "^//go:generate "
-
-linters-settings:
-  tagliatelle:
-    # Check the struck tag name case.
-    case:
-      # Use the struct field name to check the name of the struct tag.
-      # Default: false
-      use-field-name: true
-      rules:
-        # Any struct tag type can be used.
-        # Support string case: `camel`, `pascal`, `kebab`, `snake`, `goCamel`, `goPascal`, `goKebab`, `goSnake`, `upper`, `lower`
-        json: snake
-        yaml: snake
-        xml: snake
+    - wsl_v5
+  settings:
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+          xml: snake
+          yaml: snake
+        use-field-name: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - containedctx
+          - err113
+          - funlen
+          - lll
+          - maintidx
+          - nosnakecase
+          - paralleltest
+          - tparallel
+          - varnamelen
+        path: _test\.go
+      - linters:
+          - lll
+        source: '^//go:generate '
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - internal/utils/test/mocks
+      - ".*\\.my\\.go$"
+      - lib/bad.go
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - internal/utils/test/mocks
+      - ".*\\.my\\.go$"
+      - lib/bad.go

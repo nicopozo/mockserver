@@ -858,6 +858,7 @@ func TestMockService_SearchResponseForRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
+
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
@@ -887,7 +888,7 @@ func TestMockService_SearchResponseForRequest(t *testing.T) {
 
 //nolint:unparam
 func getMockRequest(method, url, body string, headers map[string][]string, queries map[string]string) *http.Request {
-	requestMock, _ := http.NewRequest(method, url, strings.NewReader(body))
+	requestMock, _ := http.NewRequestWithContext(context.Background(), method, url, strings.NewReader(body))
 
 	if headers != nil {
 		requestMock.Header = headers

@@ -93,8 +93,8 @@ func (logger *log) GetMessage(message string, args ...interface{}) string {
 
 func newRequestID() string {
 	requestID := ""
-	logID, err := uuid.NewV4()
 
+	logID, err := uuid.NewV4()
 	if err == nil {
 		requestID = logID.String()
 	}

@@ -1,0 +1,289 @@
+internal/repository/rule_elastic_repository.go:64:20: Non-inherited new context, use function like `context.WithXXX` instead (contextcheck)
+	res, err := req.Do(context.Background(), repository.getElasticClient())
+	                  ^
+internal/repository/rule_elastic_repository.go:96:35: Non-inherited new context, use function like `context.WithXXX` instead (contextcheck)
+	getRuleResp, err := getRuleReq.Do(context.Background(), repository.getElasticClient())
+	                                 ^
+internal/repository/rule_elastic_repository.go:180:28: Non-inherited new context, use function like `context.WithXXX` instead (contextcheck)
+		client.Search.WithContext(context.Background()),
+		                         ^
+cmd/mocks/container.go:7:2: import 'github.com/nicopozo/mockserver/internal/controller' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/controller"
+	^
+cmd/mocks/container.go:8:2: import 'github.com/nicopozo/mockserver/internal/repository' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/repository"
+	^
+cmd/mocks/container.go:9:2: import 'github.com/nicopozo/mockserver/internal/service' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/service"
+	^
+cmd/mocks/main.go:6:2: import 'github.com/gin-contrib/cors' is not allowed from list 'Main' (depguard)
+	"github.com/gin-contrib/cors"
+	^
+cmd/mocks/main.go:7:2: import 'github.com/gin-gonic/gin' is not allowed from list 'Main' (depguard)
+	"github.com/gin-gonic/gin"
+	^
+cmd/mocks/main.go:8:2: import 'github.com/nicopozo/mockserver/internal/model' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/model"
+	^
+cmd/mocks/routes.go:7:2: import 'github.com/nicopozo/mockserver/api' is not allowed from list 'Main' (depguard)
+	_ "github.com/nicopozo/mockserver/api"
+	^
+cmd/mocks/routes.go:8:2: import 'github.com/swaggo/files' is not allowed from list 'Main' (depguard)
+	swaggerFiles "github.com/swaggo/files"
+	^
+cmd/mocks/routes.go:9:2: import 'github.com/swaggo/gin-swagger' is not allowed from list 'Main' (depguard)
+	ginSwagger "github.com/swaggo/gin-swagger"
+	^
+internal/context/context.go:6:2: import 'github.com/gin-gonic/gin' is not allowed from list 'Main' (depguard)
+	"github.com/gin-gonic/gin"
+	^
+internal/context/context.go:7:2: import 'github.com/nicopozo/mockserver/internal/utils/log' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/utils/log"
+	^
+internal/controller/mock_controller.go:10:2: import 'github.com/nicopozo/mockserver/internal/context' is not allowed from list 'Main' (depguard)
+	mockscontext "github.com/nicopozo/mockserver/internal/context"
+	^
+internal/controller/mock_controller.go:13:2: import 'github.com/nicopozo/mockserver/internal/service' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/service"
+	^
+internal/controller/mock_controller.go:14:2: import 'github.com/nicopozo/mockserver/internal/utils/log' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/utils/log"
+	^
+internal/controller/mock_controller_test.go:9:2: import 'github.com/golang/mock/gomock' is not allowed from list 'Main' (depguard)
+	"github.com/golang/mock/gomock"
+	^
+internal/controller/mock_controller_test.go:10:2: import 'github.com/nicopozo/mockserver/internal/controller' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/controller"
+	^
+internal/controller/mock_controller_test.go:11:2: import 'github.com/nicopozo/mockserver/internal/errors' is not allowed from list 'Main' (depguard)
+	mockserrors "github.com/nicopozo/mockserver/internal/errors"
+	^
+internal/controller/mock_controller_test.go:12:2: import 'github.com/nicopozo/mockserver/internal/model' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/model"
+	^
+internal/controller/mock_controller_test.go:13:2: import 'github.com/nicopozo/mockserver/internal/utils/test' is not allowed from list 'Main' (depguard)
+	testutils "github.com/nicopozo/mockserver/internal/utils/test"
+	^
+internal/controller/mock_controller_test.go:14:2: import 'github.com/nicopozo/mockserver/internal/utils/test/mocks' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
+	^
+internal/controller/mock_controller_test.go:15:2: import 'github.com/stretchr/testify/assert' is not allowed from list 'Main' (depguard)
+	"github.com/stretchr/testify/assert"
+	^
+internal/controller/rule_controller.go:8:2: import 'github.com/nicopozo/mockserver/internal/context' is not allowed from list 'Main' (depguard)
+	mockscontext "github.com/nicopozo/mockserver/internal/context"
+	^
+internal/controller/rule_controller.go:11:2: import 'github.com/nicopozo/mockserver/internal/service' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/service"
+	^
+internal/controller/rule_controller.go:12:2: import 'github.com/nicopozo/mockserver/internal/utils/json' is not allowed from list 'Main' (depguard)
+	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
+	^
+internal/controller/rule_controller_test.go:13:2: import 'github.com/golang/mock/gomock' is not allowed from list 'Main' (depguard)
+	"github.com/golang/mock/gomock"
+	^
+internal/controller/rule_controller_test.go:14:2: import 'github.com/nicopozo/mockserver/internal/controller' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/controller"
+	^
+internal/controller/rule_controller_test.go:15:2: import 'github.com/nicopozo/mockserver/internal/errors' is not allowed from list 'Main' (depguard)
+	mockserrors "github.com/nicopozo/mockserver/internal/errors"
+	^
+internal/controller/rule_controller_test.go:17:2: import 'github.com/nicopozo/mockserver/internal/utils/string' is not allowed from list 'Main' (depguard)
+	stringutils "github.com/nicopozo/mockserver/internal/utils/string"
+	^
+internal/controller/rule_controller_test.go:18:2: import 'github.com/nicopozo/mockserver/internal/utils/test' is not allowed from list 'Main' (depguard)
+	testutils "github.com/nicopozo/mockserver/internal/utils/test"
+	^
+internal/controller/rule_controller_test.go:19:2: import 'github.com/nicopozo/mockserver/internal/utils/test/mocks' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
+	^
+internal/controller/rule_controller_test.go:20:2: import 'github.com/stretchr/testify/assert' is not allowed from list 'Main' (depguard)
+	"github.com/stretchr/testify/assert"
+	^
+internal/model/assertion_test.go:6:2: import 'github.com/nicopozo/mockserver/internal/errors' is not allowed from list 'Main' (depguard)
+	mockserrors "github.com/nicopozo/mockserver/internal/errors"
+	^
+internal/model/assertion_test.go:8:2: import 'github.com/stretchr/testify/assert' is not allowed from list 'Main' (depguard)
+	"github.com/stretchr/testify/assert"
+	^
+internal/repository/database.go:10:2: import 'github.com/go-sql-driver/mysql' is not allowed from list 'Main' (depguard)
+	_ "github.com/go-sql-driver/mysql"
+	^
+internal/repository/database.go:11:2: import 'github.com/jmoiron/sqlx' is not allowed from list 'Main' (depguard)
+	"github.com/jmoiron/sqlx"
+	^
+internal/repository/rule_elastic_repository.go:14:2: import 'github.com/elastic/go-elasticsearch/v7' is not allowed from list 'Main' (depguard)
+	"github.com/elastic/go-elasticsearch/v7"
+	^
+internal/repository/rule_file_repository_test.go:12:2: import 'github.com/nicopozo/mockserver/internal/repository' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/repository"
+	^
+internal/repository/rule_repository_test.go:6:2: import 'github.com/nicopozo/mockserver/internal/repository' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/repository"
+	^
+internal/service/mock_service_test.go:11:2: import 'github.com/golang/mock/gomock' is not allowed from list 'Main' (depguard)
+	"github.com/golang/mock/gomock"
+	^
+internal/service/mock_service_test.go:12:2: import 'github.com/nicopozo/mockserver/internal/context' is not allowed from list 'Main' (depguard)
+	mockscontext "github.com/nicopozo/mockserver/internal/context"
+	^
+internal/service/mock_service_test.go:16:2: import 'github.com/nicopozo/mockserver/internal/utils/json' is not allowed from list 'Main' (depguard)
+	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
+	^
+internal/service/mock_service_test.go:17:2: import 'github.com/nicopozo/mockserver/internal/utils/test' is not allowed from list 'Main' (depguard)
+	testutils "github.com/nicopozo/mockserver/internal/utils/test"
+	^
+internal/utils/json/json_test.go:9:2: import 'github.com/nicopozo/mockserver/internal/utils/json' is not allowed from list 'Main' (depguard)
+	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
+	^
+internal/utils/log/logger.go:9:2: import 'github.com/gofrs/uuid' is not allowed from list 'Main' (depguard)
+	"github.com/gofrs/uuid"
+	^
+internal/utils/log/logger.go:10:2: import 'github.com/sirupsen/logrus' is not allowed from list 'Main' (depguard)
+	"github.com/sirupsen/logrus"
+	^
+internal/utils/log/logger_test.go:6:2: import 'github.com/nicopozo/mockserver/internal/utils/log' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/utils/log"
+	^
+internal/utils/string/string_test.go:6:2: import 'github.com/nicopozo/mockserver/internal/utils/string' is not allowed from list 'Main' (depguard)
+	stringutils "github.com/nicopozo/mockserver/internal/utils/string"
+	^
+internal/utils/test/test_utils.go:12:2: import 'github.com/gin-gonic/gin' is not allowed from list 'Main' (depguard)
+	"github.com/gin-gonic/gin"
+	^
+internal/utils/test/test_utils.go:13:2: import 'github.com/nicopozo/mockserver/internal/model' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/model"
+	^
+internal/utils/test/test_utils.go:14:2: import 'github.com/nicopozo/mockserver/internal/utils/test/mocks' is not allowed from list 'Main' (depguard)
+	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
+	^
+internal/repository/rule_elastic_repository.go:80:15: do not define dynamic errors, use wrapped static errors instead: "errors.New(\"error saving rule - \" + newStr)" (err113)
+		return nil, errors.New("error saving rule - " + newStr) //nolint:goerr113
+		            ^
+internal/repository/rule_elastic_repository.go:115:33: do not define dynamic errors, use wrapped static errors instead: "errors.New(\"http status != 200: Actual: \" + getRuleResp.String())" (err113)
+		logger.Error(repository, nil, errors.New("http status != 200: Actual: "+getRuleResp.String()), //nolint:goerr113
+		                              ^
+internal/repository/rule_elastic_repository.go:122:15: do not define dynamic errors, use wrapped static errors instead: "errors.New(\"error getting expressions from Elastic Search - \" + newStr)" (err113)
+		return nil, errors.New("error getting expressions from Elastic Search - " + newStr) //nolint:goerr113
+		            ^
+internal/repository/rule_elastic_repository.go:150:17: do not define dynamic errors, use wrapped static errors instead: "fmt.Errorf(\"param method must be string\")" (err113)
+				return nil, fmt.Errorf("param method must be string") //nolint:goerr113
+				            ^
+internal/repository/rule_elastic_repository.go:201:33: do not define dynamic errors, use wrapped static errors instead: "errors.New(\"http status != 200: Actual: \" + searchRuleResp.String())" (err113)
+		logger.Error(repository, nil, errors.New("http status != 200: Actual: "+searchRuleResp.String()),
+		                              ^
+internal/repository/rule_elastic_repository.go:208:15: do not define dynamic errors, use wrapped static errors instead: "errors.New(\"error searching rules from Elastic Search - \" + newStr)" (err113)
+		return nil, errors.New("error searching rules from Elastic Search - " + newStr) //nolint:goerr113
+		            ^
+internal/repository/rule_elastic_repository.go:295:10: do not define dynamic errors, use wrapped static errors instead: "errors.New(\"error deleting rule - \" + newStr)" (err113)
+		return errors.New("error deleting rule - " + newStr) //nolint:goerr113
+		       ^
+internal/repository/rule_elastic_repository.go:366:15: do not define dynamic errors, use wrapped static errors instead: "errors.New(\"error getting expressions from Elastic Search - \" + newStr)" (err113)
+		return nil, errors.New("error getting expressions from Elastic Search - " + newStr) //nolint:goerr113
+		            ^
+internal/repository/rule_elastic_repository.go:409:16: do not define dynamic errors, use wrapped static errors instead: "errors.New(\"error getting expressions from Elastic Search - \" + newStr)" (err113)
+			return nil, errors.New("error getting expressions from Elastic Search - " + newStr) //nolint:goerr113
+			            ^
+internal/repository/rule_elastic_repository.go:502:10: do not define dynamic errors, use wrapped static errors instead: "errors.New(\"error saving Pattern - \" + newStr)" (err113)
+		return errors.New("error saving Pattern - " + newStr) //nolint:goerr113
+		       ^
+internal/service/mock_service.go:32:15: do not define dynamic errors, use wrapped static errors instead: "fmt.Errorf(\"rule service cannot be nil\")" (err113)
+		return nil, fmt.Errorf("rule service cannot be nil") //nolint:goerr113
+		            ^
+internal/service/rule_service.go:33:15: do not define dynamic errors, use wrapped static errors instead: "fmt.Errorf(\"rule repository cannot be nil\")" (err113)
+		return nil, fmt.Errorf("rule repository cannot be nil") //nolint:goerr113
+		            ^
+internal/repository/database.go:38:1: File is not properly formatted (gofumpt)
+
+^
+internal/repository/rule_mysql_repository.go:77:1: File is not properly formatted (gofumpt)
+
+^
+internal/repository/rule_file_repository.go:160:26: G115: integer overflow conversion int -> int32 (gosec)
+	if paging.Offset > int32(len(filtered)) {
+	                        ^
+internal/repository/rule_file_repository.go:165:15: G115: integer overflow conversion int -> int32 (gosec)
+	if to > int32(len(filtered)) {
+	             ^
+internal/repository/rule_file_repository.go:166:13: G115: integer overflow conversion int -> int32 (gosec)
+		to = int32(len(filtered))
+		          ^
+internal/repository/database.go:51:16: Magic number: 10, in <argument> detected (mnd)
+				time.Sleep(10 * time.Second) //nolint:gomnd
+				           ^
+internal/repository/database.go:56:23: (*database/sql.DB).Ping must not be called. use (*database/sql.DB).PingContext (noctx)
+			err = database.Ping()
+			                   ^
+internal/repository/rule_mysql_repository.go:75:19: (*database/sql.Tx).Exec must not be called. use (*database/sql.Tx).ExecContext (noctx)
+	_, err = trx.Exec(query, rule.Key, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
+	                 ^
+internal/repository/rule_mysql_repository.go:112:19: (*database/sql.Tx).Exec must not be called. use (*database/sql.Tx).ExecContext (noctx)
+	_, err = trx.Exec(query, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
+	                 ^
+internal/repository/rule_mysql_repository.go:156:22: (*database/sql.Tx).Exec must not be called. use (*database/sql.Tx).ExecContext (noctx)
+	if _, err := tx.Exec(query, key); err != nil {
+	                    ^
+internal/service/mock_service_test.go:890:35: net/http.NewRequest must not be called. use net/http.NewRequestWithContext (noctx)
+	requestMock, _ := http.NewRequest(method, url, strings.NewReader(body))
+	                                 ^
+internal/controller/rule_controller_test.go:302:1: directive `// nolint` should be written without leading space as `//nolint` (nolintlint)
+// nolint
+^
+internal/repository/rule_elastic_repository.go:235:1: directive `// nolint:funlen,cyclop` should be written without leading space as `//nolint:funlen,cyclop` (nolintlint)
+// nolint:funlen,cyclop
+^
+internal/repository/rule_elastic_repository.go:379:1: directive `// nolint:funlen,cyclop` should be written without leading space as `//nolint:funlen,cyclop` (nolintlint)
+// nolint:funlen,cyclop
+^
+internal/service/mock_service.go:122:40: directive `// nolint:gosec` should be written without leading space as `//nolint:gosec` (nolintlint)
+	i := rand.Int63n(int64(responsesLen)) // nolint:gosec
+	                                      ^
+internal/service/mock_service.go:127:1: directive `// nolint:cyclop` should be written without leading space as `//nolint:cyclop` (nolintlint)
+// nolint:cyclop
+^
+internal/repository/rule_mysql_repository.go:444:2: Consider preallocating vars with capacity len(variables) (prealloc)
+	vars := make([]*model.Variable, 0)
+	^
+internal/repository/rule_mysql_repository.go:463:2: Consider preallocating resps with capacity len(responses) (prealloc)
+	resps := make([]model.Response, 0)
+	^
+internal/service/mock_service.go:22:7: const max has same name as predeclared identifier (predeclared)
+const max = 9999999999
+      ^
+internal/service/mock_service.go:121:2: SA1019: rand.Seed has been deprecated since Go 1.20 and an alternative has been available since Go 1.0: As of Go 1.20 there is no reason to call Seed with a random value. Programs that call Seed with a known value to get a specific sequence of results should use New(NewSource(seed)) to obtain a local random generator. (staticcheck)
+	rand.Seed(time.Now().UnixNano())
+	^
+internal/service/mock_service.go:208:2: QF1012: Use fmt.Fprintf(...) instead of Write([]byte(fmt.Sprintf(...))) (staticcheck)
+	h.Write([]byte(fmt.Sprintf("%v", n)))
+	^
+internal/service/mock_service.go:215:2: SA1019: rand.Seed has been deprecated since Go 1.20 and an alternative has been available since Go 1.0: As of Go 1.20 there is no reason to call Seed with a random value. Programs that call Seed with a known value to get a specific sequence of results should use New(NewSource(seed)) to obtain a local random generator. (staticcheck)
+	rand.Seed(time.Now().UnixNano())
+	^
+internal/repository/rule_mysql_repository.go:437:3: assignments should only be cuddled with other assignments (wsl)
+		index++
+		^
+internal/repository/rule_mysql_repository.go:506:4: assignments should only be cuddled with other assignments (wsl)
+			_ = trx.Rollback()
+			^
+internal/utils/string/string_test.go:43:4: if statements should only be cuddled with assignments (wsl)
+			if got := stringutils.ArraysContains(tt.args.array, tt.args.str); got != tt.want {
+			^
+internal/utils/string/string_test.go:78:4: assignments should only be cuddled with other assignments (wsl)
+			got := stringutils.Hash(tt.args.s)
+			^
+internal/utils/string/string_test.go:79:4: only one cuddle assignment allowed before if statement (wsl)
+			if got != tt.want {
+			^
+92 issues:
+* contextcheck: 3
+* depguard: 50
+* err113: 12
+* gofumpt: 2
+* gosec: 3
+* mnd: 1
+* noctx: 5
+* nolintlint: 5
+* prealloc: 2
+* predeclared: 1
+* staticcheck: 3
+* wsl: 5

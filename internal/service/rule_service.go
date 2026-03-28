@@ -30,7 +30,7 @@ type ruleService struct {
 
 func NewRuleService(ruleRepository repository.RuleRepository) (RuleService, error) {
 	if ruleRepository == nil {
-		return nil, fmt.Errorf("rule repository cannot be nil") //nolint:goerr113
+		return nil, fmt.Errorf("rule repository cannot be nil") //nolint:err113
 	}
 
 	return &ruleService{

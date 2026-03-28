@@ -157,13 +157,13 @@ func (repository *ruleFileRepository) Search(ctx context.Context, params map[str
 		}
 	}
 
-	if paging.Offset > int32(len(filtered)) {
+	if int(paging.Offset) > len(filtered) {
 		return ruleList, nil
 	}
 
-	to := paging.Offset + paging.Limit
-	if to > int32(len(filtered)) {
-		to = int32(len(filtered))
+	to := int(paging.Offset) + int(paging.Limit)
+	if to > len(filtered) {
+		to = len(filtered)
 	}
 
 	ruleList.Results = filtered[paging.Offset:to]

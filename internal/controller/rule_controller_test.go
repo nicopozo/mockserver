@@ -117,6 +117,7 @@ func TestRuleController_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
+
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
@@ -241,6 +242,7 @@ func TestRuleController_Get(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
+
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
@@ -299,7 +301,7 @@ func TestRuleController_Get(t *testing.T) {
 	}
 }
 
-// nolint
+//nolint
 func TestRuleController_Search(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -614,6 +616,7 @@ func TestRuleController_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
+
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
 			defer mockCtrl.Finish()
 
