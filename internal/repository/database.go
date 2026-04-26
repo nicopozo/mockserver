@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	// mysql driver.
@@ -68,12 +70,23 @@ func GetDB() (*sqlx.DB, error) {
 }
 
 func getDBString() string {
+	if mysqlURL := os.Getenv("MYSQL_URL"); mysqlURL != "" {
+		u, err := url.Parse(mysqlURL)
+		if err == nil && u.Scheme == "mysql" {
+			password, _ := u.User.Password()
+			dbName := strings.TrimPrefix(u.Path, "/")
+			return fmt.Sprintf("%s:%s@tcp(%s)/%s", u.User.Username(), password, u.Host, dbName)
+		}
+		return mysqlURL
+	}
+
 	user := getEnv("DB_USER", "root")
 	password := getEnv("DB_PASSWORD", "password")
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "3306")
+	dbName := getEnv("DB_NAME", "mockserver")
 
-	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/mockserver", user, password, host, port)
+	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, port, dbName)
 
 	return connStr
 }
