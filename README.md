@@ -6,7 +6,7 @@ A simple mock server in Go.
 
 ## Installation
 
-#### With Dockers
+### With Dockers
 
 Running this project with Dockers is the best and easiest option.
 
@@ -23,12 +23,21 @@ docker run -v /tmp:/tmp -e MOCKS_FILE=/tmp/mocks.json -p 8080:8080 --name mock-s
 ```
 
 Alternatively, Mock Service can be run with MySQL database:
-```sh
-docker run -e MOCKS_DATASOURCE=mysql -e DB_USER={{user}} -e DB_PASSWORD={{password}} - DB_HOST={{host}} -e DB_PORT={{port}} -p 8080:8080 --name mock-service mock-service
-```
-Database must contain a schema `mockserver` with required tables. Follow[`this link`](https://github.com/nicopozo/mockserver/blob/master/scripts/init.sql "Init sql script") to get the creation script.
 
-#### By compiling with Go
+```sh
+docker run -e MOCKS_DATASOURCE=mysql -e DB_USER={{user}} -e DB_PASSWORD={{password}} -e DB_HOST={{host}} -e DB_PORT={{port}} -e DB_NAME={{db_name}} -p 8080:8080 --name mock-service mock-service
+```
+
+If you are deploying to a PaaS like Railway, you can alternatively use `MYSQL_URL` directly:
+
+```sh
+docker run -e MOCKS_DATASOURCE=mysql -e MYSQL_URL=mysql://user:password@host:port/db_name -p 8080:8080 --name mock-service mock-service
+```
+
+Database must contain a schema `mockserver` (or the one specified in `DB_NAME`/`MYSQL_URL`) with required tables. Follow[`this link`](https://github.com/nicopozo/mockserver/blob/master/scripts/init.sql "Init sql script") to get the creation script.
+
+### By compiling with Go
+
 Mock Service can be compiled and run without the need of a Dockers installation. In order to compile this application, we need Go 1.18 installed.
 
 ```sh
@@ -56,13 +65,21 @@ export DB_USER={{user}}
 export DB_PASSWORD={{password}} 
 export DB_HOST={{host}}
 export DB_PORT={{port}}
+export DB_NAME={{db_name}}
 ```
 
-and then run the app witj `./mocks` command (run the [`init database script`](https://github.com/nicopozo/mockserver/blob/master/scripts/init.sql "Init sql script") before running the app).
+Alternatively, you can provide a full connection URL (e.g. if deploying to Railway):
+
+```sh
+export MOCKS_DATASOURCE=mysql
+export MYSQL_URL="mysql://user:password@host:port/db_name"
+```
+
+and then run the app with `./mocks` command (run the [`init database script`](https://github.com/nicopozo/mockserver/blob/master/scripts/init.sql "Init sql script") before running the app).
 
 ## How to use it
 
-#### Create a new mock
+### Create a new mock
 
 ```sh
 curl --location --request POST 'localhost:8080/mock-service/rules' \
@@ -93,12 +110,14 @@ curl --location --request POST 'localhost:8080/mock-service/rules' \
 }'
 ```
 
-#### Execute the mock for the path set in the previously created mock
+### Execute the mock for the path set in the previously created mock
+
 ```sh
 curl --location --request GET 'http://localhost:8080/mock-service/mock/users/123'
 ```
 
 This example will return the following response:
+
 ```json
 {
     "user_id": "123"
