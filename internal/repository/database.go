@@ -1,9 +1,12 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	// mysql driver.
@@ -35,7 +38,6 @@ func GetDB() (*sqlx.DB, error) {
 	var err error
 	if database == nil {
 		database, err = sqlx.Open("mysql", getDBString()+"?parseTime=true&charset=utf8")
-
 		if err != nil {
 			fmt.Printf("########## DB ERROR: %s #############\n", err.Error()) //nolint:forbidigo
 
@@ -48,12 +50,12 @@ func GetDB() (*sqlx.DB, error) {
 
 		for i := 0; i < 10 && (i == 0 || err != nil); i++ {
 			if i > 0 {
-				time.Sleep(10 * time.Second) //nolint:gomnd
+				time.Sleep(10 * time.Second) //nolint:mnd
 			}
 
 			fmt.Printf("########## CONNECTING TO DB - try i:%v #############\n", i+1) //nolint:forbidigo
 
-			err = database.Ping()
+			err = database.PingContext(context.Background())
 		}
 
 		if err != nil {
@@ -68,12 +70,23 @@ func GetDB() (*sqlx.DB, error) {
 }
 
 func getDBString() string {
+	if mysqlURL := os.Getenv("MYSQL_URL"); mysqlURL != "" {
+		u, err := url.Parse(mysqlURL)
+		if err == nil && u.Scheme == "mysql" {
+			password, _ := u.User.Password()
+			dbName := strings.TrimPrefix(u.Path, "/")
+			return fmt.Sprintf("%s:%s@tcp(%s)/%s", u.User.Username(), password, u.Host, dbName)
+		}
+		return mysqlURL
+	}
+
 	user := getEnv("DB_USER", "root")
 	password := getEnv("DB_PASSWORD", "password")
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "3306")
+	dbName := getEnv("DB_NAME", "mockserver")
 
-	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/mockserver", user, password, host, port)
+	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, port, dbName)
 
 	return connStr
 }

@@ -40,6 +40,7 @@ func TestArrayContains(t *testing.T) {
 	for _, tt := range tests { //nolint:paralleltest
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
 			if got := stringutils.ArraysContains(tt.args.array, tt.args.str); got != tt.want {
 				t.Errorf("Contains() = %v, want %v", got, tt.want)
 			}
@@ -75,6 +76,7 @@ func TestHash(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
 			got := stringutils.Hash(tt.args.s)
 			if got != tt.want {
 				t.Errorf("Hash() = %v, want %v", got, tt.want)

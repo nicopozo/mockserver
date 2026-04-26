@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
@@ -19,7 +18,7 @@ import (
 	"github.com/yalp/jsonpath"
 )
 
-const max = 9999999999
+const maxRand = 9999999999
 
 //go:generate mockgen -destination=../utils/test/mocks/mock_service_mock.go -package=mocks -source=./mock_service.go
 
@@ -29,7 +28,7 @@ type MockService interface {
 
 func NewMockService(ruleService RuleService) (MockService, error) {
 	if ruleService == nil {
-		return nil, fmt.Errorf("rule service cannot be nil") //nolint:goerr113
+		return nil, fmt.Errorf("rule service cannot be nil") //nolint:err113
 	}
 
 	return &mockService{
@@ -118,13 +117,12 @@ func (svc *mockService) getFirstResponse(rule model.Rule) (model.Response, error
 func (svc *mockService) getRandomResponse(rule model.Rule) (model.Response, error) {
 	responsesLen := len(rule.Responses)
 
-	rand.Seed(time.Now().UnixNano())
-	i := rand.Int63n(int64(responsesLen)) // nolint:gosec
+	i := rand.Int63n(int64(responsesLen)) //nolint:gosec
 
 	return rule.Responses[i], nil
 }
 
-// nolint:cyclop
+//nolint:cyclop
 func (svc *mockService) getResponseByScene(rule model.Rule, request *http.Request, body,
 	path string,
 ) (model.Response, error) {
@@ -203,19 +201,18 @@ func (svc *mockService) getBodyVariableValue(key, body string) (string, error) {
 }
 
 func (svc *mockService) getHashVariableValue() string {
-	n := rand.Int63n(max) //nolint:gosec
+	n := rand.Int63n(maxRand) //nolint:gosec
 	h := sha256.New()
-	h.Write([]byte(fmt.Sprintf("%v", n)))
+	fmt.Fprintf(h, "%v", n)
 	bs := h.Sum(nil)
 
 	return fmt.Sprintf("%x", bs)
 }
 
 func (svc *mockService) getRandomVariableValue() string {
-	rand.Seed(time.Now().UnixNano())
-	n := rand.Int63n(max) //nolint:gosec
+	n := rand.Int63n(maxRand) //nolint:gosec
 
-	return strconv.FormatInt(n, 10) //nolint:gomnd
+	return strconv.FormatInt(n, 10)
 }
 
 func (svc *mockService) getQueryVariableValue(key string, request *http.Request) (string, error) {

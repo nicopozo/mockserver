@@ -413,6 +413,7 @@ func TestRuleService_Save(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
+
 			ruleRepositoryMock := mocks.NewMockRuleRepository(mockCtrl)
 			defer mockCtrl.Finish()
 
@@ -518,6 +519,7 @@ func TestRuleService_Get(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
+
 			ruleRepositoryMock := mocks.NewMockRuleRepository(mockCtrl)
 			defer mockCtrl.Finish()
 
@@ -597,6 +599,7 @@ func TestRuleService_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
+
 			ruleRepositoryMock := mocks.NewMockRuleRepository(mockCtrl)
 			defer mockCtrl.Finish()
 

@@ -72,9 +72,8 @@ func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.R
 
 	rule.Key = fmt.Sprintf("%v", guuid.New())
 
-	_, err = trx.Exec(query, rule.Key, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
-		CreateExpression(rule.Path), rule.NextResponseIndex)
-
+	_, err = trx.ExecContext(ctx, query, rule.Key, rule.Group, rule.Name, rule.Path,
+		rule.Strategy, rule.Method, rule.Status, CreateExpression(rule.Path), rule.NextResponseIndex)
 	if err != nil {
 		logger.Error(repository, nil, err, "error creating rule in DB")
 
@@ -109,7 +108,7 @@ func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.R
 
 	defer repository.commitOrRollback(ctx, trx, err)
 
-	_, err = trx.Exec(query, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
+	_, err = trx.ExecContext(ctx, query, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
 		CreateExpression(rule.Path), rule.NextResponseIndex, rule.Key)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating rule in DB")
@@ -153,7 +152,7 @@ func (repository *ruleMySQLRepository) deleteResponses(ctx context.Context, key 
 
 	query := "DELETE FROM responses WHERE rule_key=?"
 
-	if _, err := tx.Exec(query, key); err != nil {
+	if _, err := tx.ExecContext(ctx, query, key); err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
 
 		return fmt.Errorf("error updating task, %w", err)
@@ -167,7 +166,7 @@ func (repository *ruleMySQLRepository) deleteVariables(ctx context.Context, key 
 
 	query := "DELETE FROM variables WHERE rule_key=?"
 
-	if _, err := tx.Exec(query, key); err != nil {
+	if _, err := tx.ExecContext(ctx, query, key); err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
 
 		return fmt.Errorf("error updating task, %w", err)
@@ -185,7 +184,6 @@ func (repository *ruleMySQLRepository) Get(ctx context.Context, key string) (*mo
 	row := RuleRow{}
 
 	err = repository.db.Get(&row, query, key)
-
 	if err != nil {
 		if err.Error() == noRowsMessage {
 			msg := fmt.Sprintf("no rule found with key: %s", key)
@@ -206,7 +204,6 @@ func (repository *ruleMySQLRepository) Get(ctx context.Context, key string) (*mo
 	query = "SELECT id, type, name, `key`, rule_key, assertions FROM variables WHERE rule_key = ?"
 
 	err = repository.db.Select(&variables, query, key)
-
 	if err != nil {
 		logger.Error(repository, nil, err, "error executing SQL query")
 
@@ -219,7 +216,6 @@ func (repository *ruleMySQLRepository) Get(ctx context.Context, key string) (*mo
 				WHERE rule_key = ?`
 
 	err = repository.db.Select(&responses, query, key)
-
 	if err != nil {
 		logger.Error(repository, nil, err, "error executing SQL query")
 
@@ -244,7 +240,6 @@ func (repository *ruleMySQLRepository) Search(ctx context.Context, params map[st
 	}
 
 	err = repository.db.Select(&rows, searchQuery, paging.Limit, paging.Offset)
-
 	if err != nil {
 		logger.Error(repository, nil, err, "error executing SQL query")
 
@@ -262,7 +257,6 @@ func (repository *ruleMySQLRepository) Search(ctx context.Context, params map[st
 		totalQuery := "SELECT COUNT(*) as total FROM rules " + where
 
 		err = repository.db.Get(&total, totalQuery)
-
 		if err != nil {
 			logger.Error(repository, nil, err, "error executing SQL query")
 
@@ -275,7 +269,6 @@ func (repository *ruleMySQLRepository) Search(ctx context.Context, params map[st
 	rules := make([]*model.Rule, len(rows))
 	for index, row := range rows {
 		rules[index], err = repository.Get(ctx, row.Key)
-
 		if err != nil {
 			return nil, err
 		}
@@ -312,8 +305,7 @@ func (repository *ruleMySQLRepository) Delete(ctx context.Context, key string) e
 
 	query := "DELETE FROM rules WHERE `key`=?"
 
-	_, err = trx.Exec(query, key)
-
+	_, err = trx.ExecContext(ctx, query, key)
 	if err != nil {
 		logger.Error(repository, nil, err, "error deleting rule in DB")
 
@@ -335,7 +327,6 @@ func (repository *ruleMySQLRepository) SearchByMethodAndPath(ctx context.Context
 	searchQuery := "SELECT `key`, pattern, status FROM rules WHERE method = ?"
 
 	err = repository.db.Select(&rows, searchQuery, strings.ToUpper(method))
-
 	if err != nil {
 		logger.Error(repository, nil, err, "error executing SQL query")
 
@@ -370,7 +361,7 @@ func (repository *ruleMySQLRepository) insertVariables(ctx context.Context, rule
 			assertions = &a
 		}
 
-		_, err := trx.Exec(query, variable.Type, variable.Name, variable.Key, rule.Key, assertions)
+		_, err := trx.ExecContext(ctx, query, variable.Type, variable.Name, variable.Key, rule.Key, assertions)
 		if err != nil {
 			logger.Error(repository, nil, err, "error creating rule variable in DB")
 
@@ -387,7 +378,7 @@ func (repository *ruleMySQLRepository) insertResponses(ctx context.Context, rule
 	query := `INSERT INTO responses (body, content_type, http_status, delay, scene, rule_key) VALUES (?, ?, ?, ?, ?, ?)`
 
 	for _, r := range rule.Responses {
-		_, err := trx.Exec(query, r.Body, r.ContentType, r.HTTPStatus, r.Delay, r.Scene, rule.Key)
+		_, err := trx.ExecContext(ctx, query, r.Body, r.ContentType, r.HTTPStatus, r.Delay, r.Scene, rule.Key)
 		if err != nil {
 			logger.Error(repository, nil, err, "error creating rule response in DB")
 
@@ -434,6 +425,7 @@ func newWhereClause(params map[string]interface{}) (string, error) {
 		default:
 			return "", mockserrors.InvalidRulesError{Message: fmt.Sprintf("%s is not a valid parameter", key)}
 		}
+
 		index++
 	}
 
@@ -441,7 +433,7 @@ func newWhereClause(params map[string]interface{}) (string, error) {
 }
 
 func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *model.Rule {
-	vars := make([]*model.Variable, 0)
+	vars := make([]*model.Variable, 0, len(variables))
 
 	for _, variable := range variables {
 		newVar := model.Variable{
@@ -460,7 +452,7 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 		vars = append(vars, &newVar)
 	}
 
-	resps := make([]model.Response, 0)
+	resps := make([]model.Response, 0, len(responses))
 
 	for _, resp := range responses {
 		scene := ""
@@ -503,6 +495,7 @@ func (repository *ruleMySQLRepository) commitOrRollback(ctx context.Context, trx
 		err = trx.Commit()
 		if err != nil {
 			logger.Error(repository, nil, err, "Error committing changes")
+
 			_ = trx.Rollback()
 		}
 	}
