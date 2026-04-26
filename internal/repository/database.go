@@ -75,8 +75,10 @@ func getDBString() string {
 		if err == nil && u.Scheme == "mysql" {
 			password, _ := u.User.Password()
 			dbName := strings.TrimPrefix(u.Path, "/")
+
 			return fmt.Sprintf("%s:%s@tcp(%s)/%s", u.User.Username(), password, u.Host, dbName)
 		}
+
 		return mysqlURL
 	}
 
