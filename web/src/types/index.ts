@@ -45,3 +45,20 @@ export interface PaginatedMocks {
   results: Mock[];
   paging: Paging;
 }
+
+export interface LogEntry {
+  id: number;
+  timestamp: string;
+  method: string;
+  url: string;
+  request_body: string;
+  request_headers: Record<string, string>;
+  query_params: Record<string, string>;
+  response_status: number;
+  response_body: string;
+}
+
+export interface LogList {
+  results: LogEntry[];
+  total: number;
+}

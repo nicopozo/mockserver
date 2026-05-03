@@ -21,6 +21,11 @@
         <span class="mx-1">New Mock</span>
       </v-btn>
 
+      <v-btn :to="{name: 'Logs'}" variant="text" class="mx-1" exact>
+        <v-icon>mdi-format-list-bulleted</v-icon>
+        <span class="mx-1">Logs</span>
+      </v-btn>
+
       <v-spacer></v-spacer>
 
       <v-btn icon variant="text" class="mx-1" @click="toggleTheme" title="Toggle Theme">

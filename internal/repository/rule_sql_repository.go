@@ -98,7 +98,9 @@ func (repository *ruleSQLRepository) Create(ctx context.Context, rule *model.Rul
 
 	defer repository.commitOrRollback(ctx, trx, err)
 
-	rule.Key = fmt.Sprintf("%v", guuid.New())
+	if rule.Key == "" {
+		rule.Key = fmt.Sprintf("%v", guuid.New())
+	}
 
 	_, err = trx.ExecContext(ctx, query, rule.Key, rule.Group, rule.Name, rule.Path,
 		rule.Strategy, rule.Method, rule.Status, CreateExpression(rule.Path), rule.NextResponseIndex)

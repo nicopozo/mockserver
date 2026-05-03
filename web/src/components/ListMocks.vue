@@ -43,9 +43,13 @@
             ></v-select>
           </v-col>
           <!--SEARCH BUTTONS-->
-          <v-col cols="12" class="text-right">
-            <v-btn variant="flat" color="grey-lighten-2" class="mr-2" @click="reset()">Reset</v-btn>
+          <v-col cols="12" class="text-right d-flex align-center justify-end ga-2">
+            <v-btn variant="flat" color="grey-lighten-2" @click="reset()">Reset</v-btn>
             <v-btn variant="flat" color="primary" @click="search()">Search</v-btn>
+            <v-divider vertical class="mx-2"></v-divider>
+            <v-btn variant="outlined" color="primary" prepend-icon="mdi-download" @click="exportMocks()">Export</v-btn>
+            <v-btn variant="outlined" color="primary" prepend-icon="mdi-upload" @click="triggerFileInput()">Import</v-btn>
+            <input type="file" ref="fileInput" hidden accept=".json" @change="importMocks" />
           </v-col>
         </v-row>
       </v-container>
@@ -90,6 +94,7 @@
 import { ref, reactive, watch } from 'vue';
 import axios from "axios";
 import type { Mock, PaginatedMocks } from '@/types';
+const fileInput = ref<HTMLInputElement | null>(null);
 
 const httpMethods = [
   {text: "GET", value: "GET", color: "text-blue"},
@@ -143,6 +148,10 @@ const alert = reactive({
   color: "green",
   text: ""
 });
+
+function triggerFileInput() {
+  fileInput.value?.click();
+}
 
 function handleOptionsUpdate(newOptions: any) {
   options.value = newOptions;
@@ -256,6 +265,45 @@ async function callDelete(item: Mock) {
           search();
         });
   }
+}
+
+async function exportMocks() {
+  try {
+    const res = await axios.get(baseURL() + "/export");
+    const dataStr = JSON.stringify(res.data, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "mocks_export.json";
+    link.click();
+    window.URL.revokeObjectURL(url);
+    showAlert("Mocks exported successfully!");
+  } catch (err) {
+    showAlert("Error exporting mocks!", err);
+  }
+}
+
+async function importMocks(event: any) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const content = e.target?.result as string;
+      const rules = JSON.parse(content);
+      const res = await axios.post(baseURL() + "/import", rules);
+      const { created, updated, failed } = res.data;
+      showAlert(`Import result: ${created} created, ${updated} updated, ${failed} failed.`);
+      search();
+    } catch (err) {
+      showAlert("Error importing mocks! Check file format.", err);
+    } finally {
+      event.target.value = ""; // reset input
+    }
+  };
+  reader.readAsText(file);
 }
 
 watch(options, () => {

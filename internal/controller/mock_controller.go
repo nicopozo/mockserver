@@ -16,6 +16,7 @@ import (
 
 type MockController struct {
 	MockService service.MockService
+	LogService  service.LogService
 }
 
 func (controller *MockController) Execute(context *gin.Context) {
@@ -27,6 +28,9 @@ func (controller *MockController) Execute(context *gin.Context) {
 	path := context.Param("rule")
 	reqBody := controller.extractExecutionBody(logger, context.Request.Body)
 
+	// Build base log entry from the incoming request.
+	logEntry := controller.buildLogEntry(context, path, reqBody)
+
 	response, err := controller.MockService.SearchResponseForRequest(reqContext, context.Request, path, reqBody)
 	if err != nil {
 		if errors.As(err, &ruleserrors.RuleNotFoundError{}) {
@@ -36,6 +40,8 @@ func (controller *MockController) Execute(context *gin.Context) {
 			errorResult := model.NewError(model.ResourceNotFoundError,
 				"No rule found for path: %v and method: %s. %v", path, context.Request.Method, err.Error())
 			context.JSON(http.StatusNotFound, errorResult)
+
+			controller.recordLog(logEntry, http.StatusNotFound, errorResult.Message)
 
 			return
 		}
@@ -47,6 +53,8 @@ func (controller *MockController) Execute(context *gin.Context) {
 			errorResult := model.NewError(model.ValidationError, "%s", err.Error())
 			context.JSON(http.StatusNotFound, errorResult)
 
+			controller.recordLog(logEntry, http.StatusNotFound, errorResult.Message)
+
 			return
 		}
 
@@ -57,6 +65,8 @@ func (controller *MockController) Execute(context *gin.Context) {
 			errorResult := model.NewError(model.ValidationError, "%s", err.Error())
 			context.JSON(http.StatusBadRequest, errorResult)
 
+			controller.recordLog(logEntry, http.StatusBadRequest, errorResult.Message)
+
 			return
 		}
 
@@ -66,6 +76,8 @@ func (controller *MockController) Execute(context *gin.Context) {
 		errorResult := model.NewError(model.InternalError, "Error occurred when getting rule. %s", err.Error())
 		context.JSON(http.StatusInternalServerError, errorResult)
 
+		controller.recordLog(logEntry, http.StatusInternalServerError, errorResult.Message)
+
 		return
 	}
 
@@ -73,6 +85,49 @@ func (controller *MockController) Execute(context *gin.Context) {
 
 	time.Sleep(time.Duration(response.Delay) * time.Millisecond)
 	context.String(response.HTTPStatus, response.Body)
+
+	controller.recordLog(logEntry, response.HTTPStatus, response.Body)
+}
+
+// buildLogEntry constructs a LogEntry from the incoming Gin context.
+func (controller *MockController) buildLogEntry(context *gin.Context, path, reqBody string) model.LogEntry {
+	headers := make(map[string]string, len(context.Request.Header))
+	for key, values := range context.Request.Header {
+		if len(values) > 0 {
+			headers[key] = values[0]
+		}
+	}
+
+	queryParams := make(map[string]string)
+	for key, values := range context.Request.URL.Query() {
+		if len(values) > 0 {
+			queryParams[key] = values[0]
+		}
+	}
+
+	fullURL := path
+	if context.Request.URL.RawQuery != "" {
+		fullURL = path + "?" + context.Request.URL.RawQuery
+	}
+
+	return model.LogEntry{
+		Method:         context.Request.Method,
+		URL:            fullURL,
+		RequestBody:    reqBody,
+		RequestHeaders: headers,
+		QueryParams:    queryParams,
+	}
+}
+
+// recordLog saves the completed log entry (with response info) to the LogService.
+func (controller *MockController) recordLog(entry model.LogEntry, responseStatus int, responseBody string) {
+	if controller.LogService == nil {
+		return
+	}
+
+	entry.ResponseStatus = responseStatus
+	entry.ResponseBody = responseBody
+	controller.LogService.Add(entry)
 }
 
 func (controller *MockController) extractExecutionBody(logger log.ILogger, body io.Reader) string {

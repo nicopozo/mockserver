@@ -21,9 +21,15 @@ func mapRoutes(router *gin.Engine) {
 	router.DELETE("/mock-service/rules/:key", ruleController.Delete)
 	router.PUT("/mock-service/rules/:key", ruleController.Update)
 	router.PUT("/mock-service/rules/:key/status", ruleController.UpdateStatus)
+	router.GET("/mock-service/rules/export", ruleController.Export)
+	router.POST("/mock-service/rules/import", ruleController.Import)
 
 	mockController := applicationContainer.MockController()
 	router.Any("/mock-service/mock/*rule", mockController.Execute)
+
+	logController := applicationContainer.LogController()
+	router.GET("/mock-service/logs", logController.GetLogs)
+	router.DELETE("/mock-service/logs", logController.ClearLogs)
 
 	router.GET("/ping", ping)
 

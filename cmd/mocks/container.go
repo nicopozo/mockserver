@@ -12,9 +12,11 @@ import (
 type container struct {
 	mockController *controller.MockController
 	ruleController *controller.RuleController
+	logController  *controller.LogController
 
 	mockService service.MockService
 	ruleService service.RuleService
+	logService  service.LogService
 
 	ruleRepository repository.RuleRepository
 }
@@ -22,14 +24,35 @@ type container struct {
 func (c *container) MockController() *controller.MockController {
 	if c.mockController == nil {
 		mockService := c.MockService()
+		logService := c.LogService()
 		mockController := &controller.MockController{
 			MockService: mockService,
+			LogService:  logService,
 		}
 
 		c.mockController = mockController
 	}
 
 	return c.mockController
+}
+
+func (c *container) LogController() *controller.LogController {
+	if c.logController == nil {
+		logService := c.LogService()
+		c.logController = &controller.LogController{
+			LogService: logService,
+		}
+	}
+
+	return c.logController
+}
+
+func (c *container) LogService() service.LogService {
+	if c.logService == nil {
+		c.logService = service.NewLogService()
+	}
+
+	return c.logService
 }
 
 func (c *container) RuleController() *controller.RuleController {

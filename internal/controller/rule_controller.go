@@ -310,3 +310,96 @@ func (controller *RuleController) Delete(context *gin.Context) {
 
 	context.Status(http.StatusNoContent)
 }
+
+// Export all Rules.
+// @Tags Rules
+// @Summary Export all Rules
+// @Description Export all Rules in a JSON array
+// @ID export-rules
+// @Produce json
+// @Success 200 {array} model.Rule "Result"
+// @Failure 500 {object} model.Error
+// @Router /rules/export [get].
+func (controller *RuleController) Export(context *gin.Context) {
+	reqContext := mockscontext.New(context)
+	logger := mockscontext.Logger(reqContext)
+
+	logger.Debug(controller, nil, "Entering RuleController Export()")
+
+	// Use a large limit to get everything
+	paging := model.Paging{Limit: 10000, Offset: 0}
+	ruleList, err := controller.RuleService.Search(reqContext, nil, paging)
+	if err != nil {
+		logger.Error(controller, nil, err, "Failed to export rules")
+		errorResult := model.NewError(model.InternalError, "Error occurred when exporting rules. %s", err.Error())
+		context.JSON(http.StatusInternalServerError, errorResult)
+
+		return
+	}
+
+	context.JSON(http.StatusOK, ruleList.Results)
+}
+
+// Import Rules.
+// @Tags Rules
+// @Summary Import Rules
+// @Description Import a JSON array of Rules. Updates if key exists, otherwise creates.
+// @ID import-rules
+// @Accept json
+// @Produce json
+// @Param rules body []model.Rule true "The rules to be imported"
+// @Success 200 {object} map[string]int "Summary of imports"
+// @Failure 400 {object} model.Error
+// @Failure 500 {object} model.Error
+// @Router /rules/import [post].
+func (controller *RuleController) Import(context *gin.Context) {
+	reqContext := mockscontext.New(context)
+	logger := mockscontext.Logger(reqContext)
+
+	logger.Debug(controller, nil, "Entering RuleController Import()")
+
+	rules, err := model.UnmarshalRules(context.Request.Body)
+	if err != nil {
+		errorResult := model.NewError(model.ValidationError, "Invalid JSON array. %s", err.Error())
+		logger.Error(controller, nil, err, "Error unmarshalling Rules JSON array")
+		context.JSON(http.StatusBadRequest, errorResult)
+
+		return
+	}
+
+	stats := map[string]int{
+		"created": 0,
+		"updated": 0,
+		"failed":  0,
+	}
+
+	for _, rule := range rules {
+		var err error
+		if rule.Key != "" {
+			// Try to update first
+			_, err = controller.RuleService.Update(reqContext, rule.Key, rule)
+			if err == nil {
+				stats["updated"]++
+				continue
+			}
+			// If error is not "not found", record failure
+			if !errors.As(err, &ruleserrors.RuleNotFoundError{}) {
+				logger.Error(controller, nil, err, "Failed to update rule during import: %s", rule.Key)
+				stats["failed"]++
+				continue
+			}
+		}
+
+		// Create if key doesn't exist or update failed because not found
+		_, err = controller.RuleService.Save(reqContext, rule)
+		if err != nil {
+			logger.Error(controller, nil, err, "Failed to create rule during import: %s", rule.Name)
+			stats["failed"]++
+		} else {
+			stats["created"]++
+		}
+	}
+
+	context.JSON(http.StatusOK, stats)
+}
+
