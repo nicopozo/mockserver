@@ -1,4 +1,4 @@
-FROM golang:latest AS buildContainer
+FROM golang:latest AS buildcontainer
 WORKDIR /go/src/app
 
 COPY . .
@@ -9,13 +9,13 @@ RUN CGO_ENABLED=0 GOOS=linux go build -v -mod mod -ldflags "-s -w" .
 
 FROM alpine:latest
 WORKDIR /app
-COPY --from=buildContainer /go/src/app/cmd/mocks/mocks .
-COPY --from=buildContainer /go/src/app/web/dist web/dist
+COPY --from=buildcontainer /go/src/app/cmd/mocks/mocks .
+COPY --from=buildcontainer /go/src/app/web/dist web/dist
 
-ENV GIN_MODE release
+ENV GIN_MODE=release
 
-ENV HOST 0.0.0.0
-ENV PORT 8080
+ENV HOST=0.0.0.0
+ENV PORT=8080
 EXPOSE 8080
 
 CMD ["./mocks"]

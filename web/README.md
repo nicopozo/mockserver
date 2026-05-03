@@ -2,30 +2,28 @@
 
 ## Project setup
 
-```
+```sh
 npm install
 ```
 
 ### Compiles and hot-reloads for development
 
-```
-export NODE_OPTIONS=--openssl-legacy-provider
-npm run serve
+```sh
+npm run dev
 ```
 
 ### Compiles and minifies for production
 
-```
-export NODE_OPTIONS=--openssl-legacy-provider
+```sh
 npm run build
 ```
 
 ### Lints and fixes files
 
-```
+```sh
 npm run lint
 ```
 
 ### Customize configuration
 
-See [Configuration Reference](https://cli.vuejs.org/config/).
+See [Vite Configuration Reference](https://vite.dev/config/).

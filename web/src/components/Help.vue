@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-container fuild style="max-width: 70%">
+    <v-container fluid style="max-width: 70%">
       <v-card>
         <v-card-text>
           <v-responsive :aspect-ratio="16/9">
