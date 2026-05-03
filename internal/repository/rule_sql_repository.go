@@ -14,14 +14,8 @@ import (
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 )
 
-type ruleMySQLRepository struct {
+type ruleSQLRepository struct {
 	db Database
-}
-
-func NewRuleMySQLRepository(db Database) RuleRepository {
-	return &ruleMySQLRepository{
-		db: db,
-	}
 }
 
 type RuleRow struct {
@@ -55,13 +49,47 @@ type ResponseRow struct {
 	RuleKey     string  `db:"rule_key"`
 }
 
-func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+// NewRuleSQLRepository creates a repository that works with both MySQL and PostgreSQL.
+// The driver is inspected at runtime to translate queries accordingly.
+func NewRuleSQLRepository(db Database) RuleRepository {
+	return &ruleSQLRepository{
+		db: db,
+	}
+}
+
+// NewRuleMySQLRepository is kept as an alias for backward compatibility.
+func NewRuleMySQLRepository(db Database) RuleRepository {
+	return NewRuleSQLRepository(db)
+}
+
+// formatQuery translates a MySQL-style query to the target driver dialect.
+// For postgres: replaces backtick-escaped identifiers with double quotes and
+// rebinds positional parameters from ? to $1, $2, etc.
+func formatQuery(query string, driver string) string {
+	if driver != "postgres" {
+		return query
+	}
+
+	// Replace backtick-wrapped identifiers with double-quoted ones
+	re := regexp.MustCompile("`([^`]+)`")
+	query = re.ReplaceAllString(query, `"$1"`)
+
+	// Rebind ? placeholders to $1, $2, ...
+	query = sqlx.Rebind(sqlx.DOLLAR, query)
+
+	return query
+}
+
+func (repository *ruleSQLRepository) Create(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
 
-	query := "INSERT INTO rules (`key`, `group`, name, path, strategy, method, status, pattern, next_response_index) " +
-		" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	query := formatQuery(
+		"INSERT INTO rules (`key`, `group`, name, path, strategy, method, status, pattern, next_response_index) "+
+			" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		repository.db.DriverName(),
+	)
 
 	trx, err := repository.db.Beginx()
 	if err != nil {
@@ -93,13 +121,16 @@ func (repository *ruleMySQLRepository) Create(ctx context.Context, rule *model.R
 	return rule, nil
 }
 
-func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+func (repository *ruleSQLRepository) Update(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
 
-	query := "UPDATE rules SET `group`=?, name=?, path=?, strategy=?, method=?, status=?, pattern=?, " +
-		" next_response_index=? WHERE `key`=?"
+	query := formatQuery(
+		"UPDATE rules SET `group`=?, name=?, path=?, strategy=?, method=?, status=?, pattern=?,"+
+			" next_response_index=? WHERE `key`=?",
+		repository.db.DriverName(),
+	)
 
 	trx, err := repository.db.Beginx()
 	if err != nil {
@@ -147,10 +178,10 @@ func (repository *ruleMySQLRepository) Update(ctx context.Context, rule *model.R
 	return rule, nil
 }
 
-func (repository *ruleMySQLRepository) deleteResponses(ctx context.Context, key string, tx *sqlx.Tx) error {
+func (repository *ruleSQLRepository) deleteResponses(ctx context.Context, key string, tx *sqlx.Tx) error {
 	logger := mockscontext.Logger(ctx)
 
-	query := "DELETE FROM responses WHERE rule_key=?"
+	query := formatQuery("DELETE FROM responses WHERE rule_key=?", repository.db.DriverName())
 
 	if _, err := tx.ExecContext(ctx, query, key); err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
@@ -161,10 +192,10 @@ func (repository *ruleMySQLRepository) deleteResponses(ctx context.Context, key 
 	return nil
 }
 
-func (repository *ruleMySQLRepository) deleteVariables(ctx context.Context, key string, tx *sqlx.Tx) error {
+func (repository *ruleSQLRepository) deleteVariables(ctx context.Context, key string, tx *sqlx.Tx) error {
 	logger := mockscontext.Logger(ctx)
 
-	query := "DELETE FROM variables WHERE rule_key=?"
+	query := formatQuery("DELETE FROM variables WHERE rule_key=?", repository.db.DriverName())
 
 	if _, err := tx.ExecContext(ctx, query, key); err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
@@ -175,12 +206,12 @@ func (repository *ruleMySQLRepository) deleteVariables(ctx context.Context, key 
 	return nil
 }
 
-func (repository *ruleMySQLRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
+func (repository *ruleSQLRepository) Get(ctx context.Context, key string) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
 
-	query := "SELECT * FROM rules WHERE `key` = ?"
+	query := formatQuery("SELECT * FROM rules WHERE `key` = ?", repository.db.DriverName())
 	row := RuleRow{}
 
 	err = repository.db.Get(&row, query, key)
@@ -201,7 +232,10 @@ func (repository *ruleMySQLRepository) Get(ctx context.Context, key string) (*mo
 
 	var variables []VariableRow
 
-	query = "SELECT id, type, name, `key`, rule_key, assertions FROM variables WHERE rule_key = ?"
+	query = formatQuery(
+		"SELECT id, type, name, `key`, rule_key, assertions FROM variables WHERE rule_key = ?",
+		repository.db.DriverName(),
+	)
 
 	err = repository.db.Select(&variables, query, key)
 	if err != nil {
@@ -212,8 +246,7 @@ func (repository *ruleMySQLRepository) Get(ctx context.Context, key string) (*mo
 
 	var responses []ResponseRow
 
-	query = `SELECT * FROM responses
-				WHERE rule_key = ?`
+	query = formatQuery("SELECT * FROM responses WHERE rule_key = ?", repository.db.DriverName())
 
 	err = repository.db.Select(&responses, query, key)
 	if err != nil {
@@ -225,7 +258,7 @@ func (repository *ruleMySQLRepository) Get(ctx context.Context, key string) (*mo
 	return parseRule(row, variables, responses), nil
 }
 
-func (repository *ruleMySQLRepository) Search(ctx context.Context, params map[string]interface{},
+func (repository *ruleSQLRepository) Search(ctx context.Context, params map[string]interface{},
 	paging model.Paging,
 ) (*model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)
@@ -234,7 +267,7 @@ func (repository *ruleMySQLRepository) Search(ctx context.Context, params map[st
 
 	var err error
 
-	searchQuery, err := newSearchQuery(params)
+	searchQuery, err := newSearchQuery(params, repository.db.DriverName())
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +282,7 @@ func (repository *ruleMySQLRepository) Search(ctx context.Context, params map[st
 	if len(rows) > 0 {
 		var total int64
 
-		where, err := newWhereClause(params)
+		where, err := newWhereClause(params, repository.db.DriverName())
 		if err != nil {
 			return nil, err
 		}
@@ -277,7 +310,7 @@ func (repository *ruleMySQLRepository) Search(ctx context.Context, params map[st
 	return &model.RuleList{Paging: paging, Results: rules}, nil
 }
 
-func (repository *ruleMySQLRepository) Delete(ctx context.Context, key string) error {
+func (repository *ruleSQLRepository) Delete(ctx context.Context, key string) error {
 	logger := mockscontext.Logger(ctx)
 
 	var err error
@@ -303,7 +336,7 @@ func (repository *ruleMySQLRepository) Delete(ctx context.Context, key string) e
 		return fmt.Errorf("error deleting task, %w", err)
 	}
 
-	query := "DELETE FROM rules WHERE `key`=?"
+	query := formatQuery("DELETE FROM rules WHERE `key`=?", repository.db.DriverName())
 
 	_, err = trx.ExecContext(ctx, query, key)
 	if err != nil {
@@ -315,7 +348,7 @@ func (repository *ruleMySQLRepository) Delete(ctx context.Context, key string) e
 	return nil
 }
 
-func (repository *ruleMySQLRepository) SearchByMethodAndPath(ctx context.Context, method string,
+func (repository *ruleSQLRepository) SearchByMethodAndPath(ctx context.Context, method string,
 	path string,
 ) (*model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
@@ -324,7 +357,10 @@ func (repository *ruleMySQLRepository) SearchByMethodAndPath(ctx context.Context
 
 	var rows []RuleRow
 
-	searchQuery := "SELECT `key`, pattern, status FROM rules WHERE method = ?"
+	searchQuery := formatQuery(
+		"SELECT `key`, pattern, status FROM rules WHERE method = ?",
+		repository.db.DriverName(),
+	)
 
 	err = repository.db.Select(&rows, searchQuery, strings.ToUpper(method))
 	if err != nil {
@@ -348,10 +384,13 @@ func (repository *ruleMySQLRepository) SearchByMethodAndPath(ctx context.Context
 	}
 }
 
-func (repository *ruleMySQLRepository) insertVariables(ctx context.Context, rule *model.Rule, trx *sqlx.Tx) error {
+func (repository *ruleSQLRepository) insertVariables(ctx context.Context, rule *model.Rule, trx *sqlx.Tx) error {
 	logger := mockscontext.Logger(ctx)
 
-	query := "INSERT INTO variables (type, name, `key`, rule_key, assertions) VALUES (?, ?, ?, ?, ?)"
+	query := formatQuery(
+		"INSERT INTO variables (type, name, `key`, rule_key, assertions) VALUES (?, ?, ?, ?, ?)",
+		repository.db.DriverName(),
+	)
 
 	for _, variable := range rule.Variables {
 		var assertions *string
@@ -372,10 +411,13 @@ func (repository *ruleMySQLRepository) insertVariables(ctx context.Context, rule
 	return nil
 }
 
-func (repository *ruleMySQLRepository) insertResponses(ctx context.Context, rule *model.Rule, trx *sqlx.Tx) error {
+func (repository *ruleSQLRepository) insertResponses(ctx context.Context, rule *model.Rule, trx *sqlx.Tx) error {
 	logger := mockscontext.Logger(ctx)
 
-	query := `INSERT INTO responses (body, content_type, http_status, delay, scene, rule_key) VALUES (?, ?, ?, ?, ?, ?)`
+	query := formatQuery(
+		"INSERT INTO responses (body, content_type, http_status, delay, scene, rule_key) VALUES (?, ?, ?, ?, ?, ?)",
+		repository.db.DriverName(),
+	)
 
 	for _, r := range rule.Responses {
 		_, err := trx.ExecContext(ctx, query, r.Body, r.ContentType, r.HTTPStatus, r.Delay, r.Scene, rule.Key)
@@ -389,20 +431,23 @@ func (repository *ruleMySQLRepository) insertResponses(ctx context.Context, rule
 	return nil
 }
 
-func newSearchQuery(params map[string]interface{}) (string, error) {
+func newSearchQuery(params map[string]interface{}, driver string) (string, error) {
 	query := "SELECT * FROM rules"
 
-	where, err := newWhereClause(params)
+	where, err := newWhereClause(params, driver)
 	if err != nil {
 		return "", err
 	}
 
-	order := " ORDER BY `group`, path, method LIMIT ? OFFSET ?"
+	order := formatQuery(
+		" ORDER BY `group`, path, method LIMIT ? OFFSET ?",
+		driver,
+	)
 
 	return query + where + order, nil
 }
 
-func newWhereClause(params map[string]interface{}) (string, error) {
+func newWhereClause(params map[string]interface{}, driver string) (string, error) {
 	if len(params) == 0 {
 		return " ", nil
 	}
@@ -421,7 +466,11 @@ func newWhereClause(params map[string]interface{}) (string, error) {
 			where += key + " like '%" + v + "%'"
 		case "group", "key":
 			v := strings.ToLower(fmt.Sprintf("%v", value))
-			where += "`" + key + "` like '%" + v + "%'"
+			if driver == "postgres" {
+				where += `"` + key + `"` + " like '%" + v + "%'"
+			} else {
+				where += "`" + key + "` like '%" + v + "%'"
+			}
 		default:
 			return "", mockserrors.InvalidRulesError{Message: fmt.Sprintf("%s is not a valid parameter", key)}
 		}
@@ -486,7 +535,7 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 	}
 }
 
-func (repository *ruleMySQLRepository) commitOrRollback(ctx context.Context, trx *sqlx.Tx, err error) {
+func (repository *ruleSQLRepository) commitOrRollback(ctx context.Context, trx *sqlx.Tx, err error) {
 	logger := mockscontext.Logger(ctx)
 
 	if err != nil {

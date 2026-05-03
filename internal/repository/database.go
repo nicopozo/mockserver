@@ -12,6 +12,8 @@ import (
 	// mysql driver.
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	// postgres driver.
+	_ "github.com/lib/pq"
 )
 
 const (
@@ -19,6 +21,9 @@ const (
 	maxIdleConnections = 100
 	maxOpenConnections = 350
 	maxLifeTime        = 100 * time.Millisecond
+
+	datasourceMySQL    = "mysql"
+	datasourcePostgres = "postgres"
 )
 
 //go:generate mockgen -destination=../utils/test/mocks/sql_result_mock.go -package=mocks database/sql Result
@@ -32,12 +37,33 @@ type Database interface {
 	Select(dest interface{}, query string, args ...interface{}) error
 	Prepare(query string) (*sql.Stmt, error)
 	Beginx() (*sqlx.Tx, error)
+	DriverName() string
+}
+
+// getDatasource returns "postgres" or "mysql" based on MOCKS_DATASOURCE env var.
+func getDatasource() string {
+	ds := strings.ToLower(os.Getenv("MOCKS_DATASOURCE"))
+	if ds == datasourcePostgres {
+		return datasourcePostgres
+	}
+
+	return datasourceMySQL
 }
 
 func GetDB() (*sqlx.DB, error) {
 	var err error
+
 	if database == nil {
-		database, err = sqlx.Open("mysql", getDBString()+"?parseTime=true&charset=utf8")
+		datasource := getDatasource()
+
+		var connStr string
+		if datasource == datasourcePostgres {
+			connStr = getPostgresDBString()
+		} else {
+			connStr = getMySQLDBString() + "?parseTime=true&charset=utf8"
+		}
+
+		database, err = sqlx.Open(datasource, connStr)
 		if err != nil {
 			fmt.Printf("########## DB ERROR: %s #############\n", err.Error()) //nolint:forbidigo
 
@@ -53,7 +79,7 @@ func GetDB() (*sqlx.DB, error) {
 				time.Sleep(10 * time.Second) //nolint:mnd
 			}
 
-			fmt.Printf("########## CONNECTING TO DB - try i:%v #############\n", i+1) //nolint:forbidigo
+			fmt.Printf("########## CONNECTING TO DB (%s) - try i:%v #############\n", datasource, i+1) //nolint:forbidigo
 
 			err = database.PingContext(context.Background())
 		}
@@ -69,7 +95,7 @@ func GetDB() (*sqlx.DB, error) {
 	return database, err
 }
 
-func getDBString() string {
+func getMySQLDBString() string {
 	if mysqlURL := os.Getenv("MYSQL_URL"); mysqlURL != "" {
 		u, err := url.Parse(mysqlURL)
 		if err == nil && u.Scheme == "mysql" {
@@ -88,9 +114,23 @@ func getDBString() string {
 	port := getEnv("DB_PORT", "3306")
 	dbName := getEnv("DB_NAME", "mockserver")
 
-	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, port, dbName)
+	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, port, dbName)
+}
 
-	return connStr
+func getPostgresDBString() string {
+	if pgURL := os.Getenv("POSTGRES_URL"); pgURL != "" {
+		return pgURL
+	}
+
+	user := getEnv("DB_USER", "postgres")
+	password := getEnv("DB_PASSWORD", "password")
+	host := getEnv("DB_HOST", "localhost")
+	port := getEnv("DB_PORT", "5432")
+	dbName := getEnv("DB_NAME", "mockserver")
+	sslMode := getEnv("DB_SSLMODE", "disable")
+
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s search_path=mockserver sslmode=%s",
+		host, port, user, password, dbName, sslMode)
 }
 
 func getEnv(name, defaultValue string) string {
