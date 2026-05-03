@@ -230,16 +230,24 @@ function baseURL(): string {
     : 'http://localhost:8080/mock-service/logs'
 }
 
-async function fetchLogs() {
-  loading.value = true
+async function fetchLogs(isAuto = false) {
+  if (!isAuto) loading.value = true
   try {
     const res = await axios.get<LogList>(baseURL())
-    logs.value = res.data.results ?? []
+    const newLogs = res.data.results ?? []
+
+    // Only update if the number of logs changed or the first log's ID changed
+    // This avoids unnecessary re-renders when data is the same
+    if (newLogs.length !== logs.value.length || (newLogs.length > 0 && newLogs[0].id !== logs.value[0]?.id)) {
+      logs.value = newLogs
+    }
   } catch (err) {
-    showSnackbar('Error fetching logs', true)
-    console.error(err)
+    if (!isAuto) {
+      showSnackbar('Error fetching logs', true)
+      console.error(err)
+    }
   } finally {
-    loading.value = false
+    if (!isAuto) loading.value = false
   }
 }
 
@@ -265,7 +273,7 @@ function toggleAutoRefresh() {
 
 function startTimer() {
   stopTimer()
-  refreshTimer = setInterval(fetchLogs, 2000)
+  refreshTimer = setInterval(() => fetchLogs(true), 2000)
 }
 
 function stopTimer() {
