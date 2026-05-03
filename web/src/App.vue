@@ -4,7 +4,7 @@
     <nav-bar></nav-bar>
     <!--CONTAINER-->
     <v-main style="background-color: #f1f1f1;">
-      <v-container fuild style="max-width: 90%">
+      <v-container fluid style="max-width: 90%">
         <router-view/>
       </v-container>
     </v-main>

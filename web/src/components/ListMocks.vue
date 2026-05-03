@@ -8,24 +8,26 @@
           <v-col cols="12" md="3">
             <v-text-field label="Group"
                           v-model="filters.group"
-                          @keyup.enter.native="search()"
-                          outlined dense clearable hide-details></v-text-field>
+                          @keyup.enter="search()"
+                          variant="outlined" density="compact" clearable hide-details></v-text-field>
           </v-col>
           <!--PATH FILTER-->
           <v-col cols="12" md="3">
             <v-text-field label="Path"
                           v-model="filters.path"
-                          @keyup.enter.native="search()"
-                          outlined dense clearable hide-details></v-text-field>
+                          @keyup.enter="search()"
+                          variant="outlined" density="compact" clearable hide-details></v-text-field>
           </v-col>
           <!--STRATEGY FILTER-->
           <v-col cols="12" md="3">
             <v-select
                 label="Strategy"
                 v-model="filters.strategy"
-                @keyup.enter.native="search()"
+                @keyup.enter="search()"
                 :items="strategies"
-                outlined dense clearable hide-details
+                item-title="text"
+                item-value="value"
+                variant="outlined" density="compact" clearable hide-details
             ></v-select>
           </v-col>
           <!--HTTP METHOD FILTER-->
@@ -33,15 +35,17 @@
             <v-select
                 label="HTTP Method"
                 v-model="filters.method"
-                @keyup.enter.native="search()"
+                @keyup.enter="search()"
                 :items="httpMethods"
-                outlined dense clearable hide-details
+                item-title="text"
+                item-value="value"
+                variant="outlined" density="compact" clearable hide-details
             ></v-select>
           </v-col>
           <!--SEARCH BUTTONS-->
           <v-col cols="12" class="text-right">
-            <v-btn depressed class="mr-2" @click="reset()">Reset</v-btn>
-            <v-btn depressed color="primary" @click="search()">Search</v-btn>
+            <v-btn variant="flat" color="grey-lighten-2" class="mr-2" @click="reset()">Reset</v-btn>
+            <v-btn variant="flat" color="primary" @click="search()">Search</v-btn>
           </v-col>
         </v-row>
       </v-container>
@@ -49,34 +53,33 @@
 
     <!-- RESULT -->
     <br>
-    <v-data-table
-        class="elevation-2" dense
+    <v-data-table-server
+        class="elevation-2" density="compact"
         :headers="table.columns"
         :items="table.rows"
-        :footer-props="table.footer"
-        :server-items-length="table.total"
+        :items-length="table.total"
         :loading="table.loading"
-        :options.sync="options"
-        disable-sort
+        @update:options="handleOptionsUpdate"
+        hover
     >
       <template v-slot:item.status="{ item }">
-        <v-switch v-model="item.status" true-value="enabled" false-value="disabled" hide-details style="margin: 0"
-                  @change="callStatus(item)"></v-switch>
+        <v-switch v-model="(item.raw || item).status" color="info" true-value="enabled" false-value="disabled" hide-details density="compact" style="margin: 0"
+                  @update:model-value="callStatus(item.raw || item)"></v-switch>
       </template>
       <template v-slot:item.name="{ item }">
-        <router-link :to="{name: 'MockDetails', params:{theKey:item.key, theName:item.name}}">
-          <span class="mr-2">{{ item.name }}</span>
+        <router-link :to="{name: 'MockDetails', params:{theKey:(item.raw || item).key, theName:(item.raw || item).name}}">
+          <span class="mr-2">{{ (item.raw || item).name }}</span>
         </router-link>
       </template>
       <template v-slot:item.method="{ item }">
-        <span :class="getHTTPMethodColor(item.method)">{{ item.method }}</span>
+        <span :class="getHTTPMethodColor((item.raw || item).method)">{{ (item.raw || item).method }}</span>
       </template>
       <template v-slot:item.delete="{ item }">
-        <v-btn icon color="red" @click="callDelete(item)">
+        <v-btn icon color="red" variant="text" density="compact" @click="callDelete(item.raw || item)">
           <v-icon>mdi-delete</v-icon>
         </v-btn>
       </template>
-    </v-data-table>
+    </v-data-table-server>
 
     <v-snackbar v-model="alert.show" :color="alert.color">{{ alert.text }}</v-snackbar>
 
@@ -93,13 +96,13 @@ export default {
   data() {
     return {
       httpMethods: [
-        {text: "GET", value: "GET", color: "blue--text"},
-        {text: "POST", value: "POST", color: "green--text"},
-        {text: "PUT", value: "PUT", color: "orange--text"},
-        {text: "PATCH", value: "PATCH", color: "violet--text"},
-        {text: "DELETE", value: "DELETE", color: "red--text"},
-        {text: "OPTIONS", value: "OPTIONS", color: "gray--text"},
-        {text: "HEAD", value: "HEAD", color: "black--text"}
+        {text: "GET", value: "GET", color: "text-blue"},
+        {text: "POST", value: "POST", color: "text-green"},
+        {text: "PUT", value: "PUT", color: "text-orange"},
+        {text: "PATCH", value: "PATCH", color: "text-purple"},
+        {text: "DELETE", value: "DELETE", color: "text-red"},
+        {text: "OPTIONS", value: "OPTIONS", color: "text-grey"},
+        {text: "HEAD", value: "HEAD", color: "text-black"}
       ],
       strategies: [
         {text: "Normal", value: "normal"},
@@ -114,13 +117,13 @@ export default {
       },
       table: {
         columns: [
-          {text: "Enabled", value: "status"},
-          {text: "Name", value: "name"},
-          {text: "Group", value: "group"},
-          {text: "Path", value: "path", width: "35%"},
-          {text: "Strategy", value: "strategy"},
-          {text: "Method", value: "method"},
-          {text: "", value: "delete", width: "1%"},
+          {title: "Enabled", key: "status"},
+          {title: "Name", key: "name"},
+          {title: "Group", key: "group"},
+          {title: "Path", key: "path", width: "35%"},
+          {title: "Strategy", key: "strategy"},
+          {title: "Method", key: "method"},
+          {title: "", key: "delete", width: "1%"},
         ],
         rows: [],
         footer: {
@@ -130,7 +133,10 @@ export default {
         total: 0,
         loading: true,
       },
-      options: {},
+      options: {
+        page: 1,
+        itemsPerPage: 10
+      },
       alert: {
         show: false,
         color: "green",
@@ -139,6 +145,9 @@ export default {
     };
   },
   methods: {
+    handleOptionsUpdate(newOptions) {
+      this.options = newOptions;
+    },
     baseURL() {
       if (process.env.NODE_ENV === 'production') {
         return "/mock-service/rules"
@@ -246,8 +255,8 @@ export default {
     },
     async callDelete(item) {
       const confirmTitle = "Deleting Mock: " + item.key;
-      const confirmMsg = "Please confirm you want to delete this mock";
-      const confirmation = await this.$confirm(confirmMsg, {title: confirmTitle, color: "error"});
+      const confirmMsg = confirmTitle + "\n\nPlease confirm you want to delete this mock";
+      const confirmation = window.confirm(confirmMsg);
       if (confirmation) {
         axios
             .delete(this.baseURL() + "/" + item.key)

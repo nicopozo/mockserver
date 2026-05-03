@@ -1,57 +1,38 @@
 {
-  "name": "mocks-frontend",
-  "version": "0.1.0",
+  "name": "mockserver-web",
+  "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "run-s lint:*",
+    "lint:oxlint": "oxlint . --fix",
+    "lint:eslint": "eslint . --fix --cache"
   },
   "dependencies": {
-    "@mdi/font": "^7.0.96",
-    "@mdi/js": "^7.0.96",
-    "axios": "^1.15.0",
-    "core-js": "^3.8.3",
-    "vue": "~2.7.16",
-    "vue-router": "^3.6.5",
-    "vuetify": "^2.6.15",
-    "vuetify-confirm": "^2.0.6"
+    "@mdi/font": "^7.4.47",
+    "axios": "^1.16.0",
+    "vue": "^3.5.32",
+    "vue-router": "^5.0.4",
+    "vuetify": "^4.0.6"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.16",
-    "@babel/eslint-parser": "^7.12.16",
-    "@vue/cli-plugin-babel": "~5.0.8",
-    "@vue/cli-plugin-eslint": "~5.0.8",
-    "@vue/cli-service": "~5.0.8",
-    "eslint": "^8.57.0",
-    "eslint-plugin-vue": "^9.25.0",
-    "sass": "^1.77.2",
-    "sass-loader": "^13.3.3",
-    "vue-cli-plugin-vuetify": "~2.5.8",
-    "vue-template-compiler": "~2.7.16",
-    "vuetify-loader": "^1.9.2"
+    "@eslint/js": "^10.0.1",
+    "@vitejs/plugin-vue": "^6.0.6",
+    "eslint": "^10.2.1",
+    "eslint-plugin-oxlint": "~1.60.0",
+    "eslint-plugin-vue": "~10.8.0",
+    "globals": "^17.5.0",
+    "npm-run-all2": "^8.0.4",
+    "oxlint": "~1.60.0",
+    "sass": "^1.99.0",
+    "vite": "^8.0.8",
+    "vite-plugin-vue-devtools": "^8.1.1",
+    "vite-plugin-vuetify": "^2.1.3"
   },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "@babel/eslint-parser",
-      "requireConfigFile": false
-    },
-    "rules": {
-      "vue/multi-word-component-names": "off",
-      "vue/valid-v-slot": ["error", { "allowModifiers": true }]
-    }
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead"
-  ]
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
 }
