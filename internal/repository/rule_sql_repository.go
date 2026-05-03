@@ -98,7 +98,9 @@ func (repository *ruleSQLRepository) Create(ctx context.Context, rule *model.Rul
 		return nil, fmt.Errorf("error strating transaction, %w", err)
 	}
 
-	defer repository.commitOrRollback(ctx, trx, err)
+	defer func() {
+		repository.commitOrRollback(ctx, trx, err)
+	}()
 
 	if rule.Key == "" {
 		rule.Key = fmt.Sprintf("%v", guuid.New())
@@ -141,14 +143,29 @@ func (repository *ruleSQLRepository) Update(ctx context.Context, rule *model.Rul
 		return nil, fmt.Errorf("error starting transaction, %w", err)
 	}
 
-	defer repository.commitOrRollback(ctx, trx, err)
+	defer func() {
+		repository.commitOrRollback(ctx, trx, err)
+	}()
 
-	_, err = trx.ExecContext(ctx, query, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
+	res, err := trx.ExecContext(ctx, query, rule.Group, rule.Name, rule.Path, rule.Strategy, rule.Method, rule.Status,
 		CreateExpression(rule.Path), rule.NextResponseIndex, rule.Key)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating rule in DB")
 
 		return nil, fmt.Errorf("error updating item into DB, %w", err)
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("error checking rows affected, %w", err)
+	}
+
+	if rowsAffected == 0 {
+		err = mockserrors.RuleNotFoundError{
+			Message: fmt.Sprintf("no rule found with key: %s", rule.Key),
+		}
+
+		return nil, err
 	}
 
 	err = repository.deleteVariables(ctx, rule.Key, trx)
@@ -324,7 +341,9 @@ func (repository *ruleSQLRepository) Delete(ctx context.Context, key string) err
 		return fmt.Errorf("error strating transaction, %w", err)
 	}
 
-	defer repository.commitOrRollback(ctx, trx, err)
+	defer func() {
+		repository.commitOrRollback(ctx, trx, err)
+	}()
 
 	err = repository.deleteVariables(ctx, key, trx)
 	if err != nil {
