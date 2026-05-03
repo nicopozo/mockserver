@@ -23,6 +23,10 @@
 
       <v-spacer></v-spacer>
 
+      <v-btn icon variant="text" class="mx-1" @click="toggleTheme" title="Toggle Theme">
+        <v-icon>{{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
+      </v-btn>
+
       <v-btn :to="{name: 'Help'}" variant="text" class="mx-1" exact>
         <v-icon>mdi-help-circle</v-icon>
       </v-btn>
@@ -31,15 +35,17 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
+import { useTheme } from 'vuetify'
 import mockLogo from '@/assets/mock.png'
 
-export default {
-  name: "NavBar",
-  data() {
-    return {
-      mockLogo
-    }
-  }
-};
+const theme = useTheme()
+const isDark = computed(() => theme.global.name.value === 'dark')
+
+function toggleTheme() {
+  const newTheme = isDark.value ? 'light' : 'dark'
+  theme.global.name.value = newTheme
+  localStorage.setItem('mockserver-theme', newTheme)
+}
 </script>

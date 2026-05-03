@@ -3,7 +3,7 @@
     <!--APP BAR-->
     <nav-bar></nav-bar>
     <!--CONTAINER-->
-    <v-main style="background-color: #f1f1f1;">
+    <v-main>
       <v-container fluid style="max-width: 90%">
         <router-view/>
       </v-container>
