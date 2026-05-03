@@ -145,7 +145,7 @@
                 v-bind:key="index">
           <v-container fluid>
             <v-card-title class="px-0 py-0 pb-2 d-flex align-center">
-              <span>Variable {{ index + 1 }}</span>
+              <span>Variable {{ Number(index) + 1 }}</span>
               <v-spacer/>
               <!--REMOVE VARIABLE BUTTON-->
               <v-btn icon color="red" variant="text" density="compact" @click="removeVariable(index)">
@@ -188,7 +188,7 @@
                         v-bind:key="assertIndex">
                   <v-container fluid>
                     <v-card-title class="px-0 py-0 pb-0 d-flex align-center">
-                      <span>Assertion {{ assertIndex + 1 }}</span>
+                      <span>Assertion {{ Number(assertIndex) + 1 }}</span>
                       <v-spacer/>
                       <!--REMOVE ASSERTION BUTTON-->
                       <v-btn icon color="red" variant="text" density="compact" @click="removeAssertion(index, assertIndex)">
@@ -231,7 +231,7 @@
                         <v-text-field label="Range Min"
                                       v-model.number="assertion.min"
                                       placeholder="Range Min"
-                                      :rules="isAssertionFieldRequired(assertion, 'min') ? [v => v < assertion.max  || 'Range Min is required and lower than Max'] : []"
+                                      :rules="isAssertionFieldRequired(assertion, 'min') ? [v => v < (assertion.max ?? 0)  || 'Range Min is required and lower than Max'] : []"
                                       :disabled="!isAssertionFieldRequired(assertion, 'min')"
                                       :required="isAssertionFieldRequired(assertion, 'min')"
                                       variant="outlined" density="compact" type="number"/>
@@ -241,7 +241,7 @@
                         <v-text-field label="Range Max"
                                       v-model.number="assertion.max"
                                       placeholder="Range Max"
-                                      :rules="isAssertionFieldRequired(assertion, 'max') ? [v => v > assertion.min || 'Range Max is required and greater than Min'] : []"
+                                      :rules="isAssertionFieldRequired(assertion, 'max') ? [v => v > (assertion.min ?? 0) || 'Range Max is required and greater than Min'] : []"
                                       :disabled="!isAssertionFieldRequired(assertion, 'max')"
                                       :required="isAssertionFieldRequired(assertion, 'max')"
                                       variant="outlined" density="compact" type="number"/>
@@ -304,361 +304,336 @@
 </template>
 
 
-<script>
-import axios from "axios";
+<script setup lang="ts">
+import { ref, reactive, watch, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import axios from 'axios';
+import type { Mock, Variable, Assertion, Response } from '@/types';
 
-export default {
-  name: "MockDetails",
-  props: {
-    theKey: {
-      type: String,
-      required: false,
-    },
-    theName: {
-      type: String,
-      required: false,
-    },
-  },
-  title() {
-    return this.theName ? this.theName : "New Mock";
-  },
-  data() {
-    return {
-      mock: {},
-      httpMethods: [
-        {title: "GET", value: "GET"},
-        {title: "POST", value: "POST"},
-        {title: "PUT", value: "PUT"},
-        {title: "PATCH", value: "PATCH"},
-        {title: "DELETE", value: "DELETE"},
-        {title: "OPTIONS", value: "OPTIONS"},
-        {title: "HEAD", value: "HEAD"},
-      ],
-      strategies: [
-        {title: "Normal", value: "normal"},
-        {title: "Scene", value: "scene"},
-        {title: "Random", value: "random"},
-        {title: "Sequential", value: "sequential"},
-      ],
-      varTypes: [
-        {title: "Body", value: "body"},
-        {title: "Header", value: "header"},
-        {title: "Query", value: "query"},
-        {title: "Random", value: "random"},
-        {title: "Hash", value: "hash"},
-        {title: "Path", value: "path"},
-      ],
-      assertionTypes: [
-        {title: "Equals", value: "equals"},
-        {title: "Is string", value: "string"},
-        {title: "Is number", value: "number"},
-        {title: "Is present", value: "present"},
-        {title: "Numeric Range", value: "range"},
-      ],
-      alert: {
-        show: false,
-        color: "green",
-        text: "",
-        timeout: "5000"
-      },
-      valid: false,
-      loading: false,
-      saving: false,
-      executionURL: {
-        value: "",
-        show: false
-      }
-    };
-  },
-  methods: {
-    baseURL() {
-      if (process.env.NODE_ENV === 'production') {
-        return "/mock-service/rules"
-      }
-      return "http://localhost:8080/mock-service/rules"
-    },
-    submit() {
-      if (!this.$refs.form.validate()) {
-        this.showAlert("Some fields are not valid!", "validation error");
-        return;
-      }
+const props = defineProps<{
+  theKey?: string;
+  theName?: string;
+}>();
 
-      if (this.theKey) {
-        this.submitUpdate();
-      } else {
-        this.submitCreate();
-      }
-    },
-    async submitCreate() {
-      const confirmTitle = "Creating New Mock";
-      const confirmMsg = confirmTitle + "\n\nPlease confirm you want to create this mock";
-      const confirmation = window.confirm(confirmMsg);
-      if (confirmation) {
-        this.createMock();
-      }
-    },
-    async submitUpdate() {
-      const confirmTitle = "Updating Mock: " + this.theKey;
-      const confirmMsg = confirmTitle + "\n\nPlease confirm you want to update this mock";
-      const confirmation = window.confirm(confirmMsg);
-      if (confirmation) {
-        this.updateMock();
-      }
-    },
-    async submitDelete() {
-      const confirmTitle = "Deleting Mock: " + this.theKey;
-      const confirmMsg = confirmTitle + "\n\nPlease confirm you want to delete this mock";
-      const confirmation = window.confirm(confirmMsg);
-      if (confirmation) {
-        this.deleteMock();
-      }
-    },
-    async resetForm() {
-      const confirmTitle = "Reset Form";
-      const confirmMsg = confirmTitle + "\n\nAll changes will be lost, are you sure?";
-      const confirmation = window.confirm(confirmMsg);
-      if (confirmation) {
-        this.$refs.form.reset();
-        this.initialize();
-      }
-    },
-    createMock() {
-      this.saving = true;
-      axios
-          .post(this.baseURL(), this.mock, {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          })
-          .then((res) => {
-            this.$router.push({name: 'MockDetails', params: {theKey: res.data.key, theName: res.data.name}});
-          })
-          .catch((err) => {
-            this.showAlert("Error creating mock", err);
-          }).finally(() => {
-        this.saving = false;
-      });
-    },
-    updateMock() {
-      this.saving = true;
-      axios
-          .put(this.baseURL() + "/" + this.theKey,
-              this.mock,
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              }
-          )
-          .then(() => {
-            this.showAlert("Mock successfully updated!", null);
-          })
-          .catch((err) => {
-            this.showAlert("Error updating mock", err)
-          }).finally(() => {
-        this.saving = false;
-      });
-    },
-    deleteMock() {
-      axios
-          .delete(this.baseURL() + "/" + this.theKey)
-          .then(() => {
-            this.$router.push({name: 'ListMocks'});
-          })
-          .catch((err) => {
-            this.showAlert("Error deleting mock!", err);
-          });
-    },
-    showAlert(text, err) {
-      this.alert = {text: text, color: err == null ? "green" : "red", show: true};
-      console.log(err);
-    },
-    addVariable() {
-      let newVar = {
-        type: "body",
-        name: "",
-        key: "",
-        assertions:[]
-      };
-      if (!this.mock.variables) {
-        this.mock.variables = [];
-      }
+const route = useRoute();
+const router = useRouter();
+const form = ref<any>(null);
 
-      this.mock.variables.push(newVar);
-    },
-    removeVariable(i) {
-      this.mock.variables.splice(i, 1);
-    },
-    addAssertion(variableIndex) {
-      let newAssertion = {
-        fail_on_error: true,
-        type: "equals",
-        variable_name: "",
-        value: "",
-        min: 0,
-        max: 0
-      };
-      if (!this.mock.variables[variableIndex].assertions) {
-        this.mock.variables[variableIndex].assertions = [];
-      }
+const mock = ref<Mock>(newMock());
+const valid = ref(false);
+const loading = ref(false);
+const saving = ref(false);
 
-      this.mock.variables[variableIndex].assertions.push(newAssertion);
-    },
-    removeAssertion(variableIndex, assertionIndex) {
-      this.mock.variables[variableIndex].assertions.splice(assertionIndex, 1);
-    },
-    addResponse() {
-      let newResponse = {
-        body: "",
-        content_type: "application/json",
-        http_status: 200,
-        delay: 0,
-        scene: "",
-      };
-      if (!this.mock.variables) {
-        this.mock.responses = [newResponse];
-      } else {
-        this.mock.responses.push(newResponse);
-      }
-    },
-    removeResponse(i) {
-      this.mock.responses.splice(i, 1);
-    },
-    updateResponses() {
-      if (this.mock.strategy !== "scene") {
-        this.mock.responses.forEach(r => {
-          r.scene = ""
-        });
-      }
-    },
-    updateVariables() {
-      this.mock.variables.forEach(v => {
-        if (v.type !== "body" && v.type !== "query" && v.type !== "header" && v.type !== "path") {
-          v.key = "";
-        }
-      });
-    },
-    updateAssertions(variableIndex) {
-      this.mock.variables[variableIndex].assertions.forEach(a => {
-        if (a.type !== "range") {
-          a.min = 0;
-          a.max = 0;
-        } else {
-          a.min = 0;
-          a.max = 1;
+const httpMethods = [
+  {title: "GET", value: "GET"},
+  {title: "POST", value: "POST"},
+  {title: "PUT", value: "PUT"},
+  {title: "PATCH", value: "PATCH"},
+  {title: "DELETE", value: "DELETE"},
+  {title: "OPTIONS", value: "OPTIONS"},
+  {title: "HEAD", value: "HEAD"},
+];
+const strategies = [
+  {title: "Normal", value: "normal"},
+  {title: "Scene", value: "scene"},
+  {title: "Random", value: "random"},
+  {title: "Sequential", value: "sequential"},
+];
+const varTypes = [
+  {title: "Body", value: "body"},
+  {title: "Header", value: "header"},
+  {title: "Query", value: "query"},
+  {title: "Random", value: "random"},
+  {title: "Hash", value: "hash"},
+  {title: "Path", value: "path"},
+];
+const assertionTypes = [
+  {title: "Equals", value: "equals"},
+  {title: "Is string", value: "string"},
+  {title: "Is number", value: "number"},
+  {title: "Is present", value: "present"},
+  {title: "Numeric Range", value: "range"},
+];
 
-          if (a.type !== "equals") {
-            a.value = "";
-          }
-        }
+const alert = reactive({
+  show: false,
+  color: "green",
+  text: "",
+  timeout: "5000"
+});
 
+const executionURL = reactive({
+  value: "",
+  show: false
+});
 
-      });
-    },
-    isResponseSceneRequired(mock) {
-      return mock.strategy === "scene";
-    },
-    isVariableTypeRequired(variable) {
-      return variable.type === 'body' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
-    },
-    isAssertionFieldRequired(assertion, field) {
-      switch (assertion.type) {
-        case "equals":
-          return field === "value"
-        case "range":
-          return field === "min" || field === "max";
-        default:
-          return false;
-      }
-    },
-    isAssertionAllowed(variable) {
-      return variable.type === 'body' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
-    },
-    getResponseDescriptionPrefix(index) {
-      return "Response " + (index + 1).toString() + ": "
-    },
-    newMock() {
-      return {
-        key: "",
-        group: "",
-        name: "",
-        path: "",
-        strategy: "",
-        method: "",
-        status: "enabled",
-        responses: [
-          {
-            description: "",
-            body: "",
-            content_type: "application/json",
-            http_status: 200,
-            delay: 0,
-            scene: "",
-          },
-        ],
-        variables: [],
-      };
-    },
-    showExecutionURL() {
-      let executionURL = this.getExecutionURL()
-      if (executionURL === "") {
-        this.showAlert("Path cannot be empty.", "error");
-      } else {
-        this.executionURL.value = executionURL
-        this.executionURL.show = true
-      }
-    },
-    getExecutionURL() {
-      let path = this.mock.path;
-      if (path === "") {
-        return ""
-      }
+function baseURL() {
+  if (import.meta.env.PROD) {
+    return "/mock-service/rules"
+  }
+  return "http://localhost:8080/mock-service/rules"
+}
 
-      if (!path.startsWith("/")) {
-        path = "/" + path
-      }
+function submit() {
+  if (!form.value?.validate()) {
+    showAlert("Some fields are not valid!", "validation error");
+    return;
+  }
 
-      return window.location.protocol + "//" + window.location.host + "/mock-service/mock" + path
-    },
-    copyExecutionURL() {
-      // navigator.clipboard.writeText(this.executionURL.value)
-      //     .then(() => {
-      //       this.showAlert("Successfully copied Execution URL to clipboard", null);
-      //     })
-      //     .catch((err) => {
-      //       this.showAlert("Error copying Execution URL to clipboard", err);
-      //     });
-      this.executionURL.show = false
-    },
-    initialize() {
-      if (this.theKey) {
-        this.loading = true;
-        axios
-            .get(this.baseURL() + "/" + this.theKey)
-            .then((res) => {
-              this.mock = res.data;
-            }).catch((err) => {
-          this.showAlert("Error getting mock info!", err);
-        }).finally(() => {
-          this.loading = false;
-        });
-      } else {
-        this.mock = this.newMock();
-        this.$refs.form.resetValidation();
-      }
-    },
-  },
-  async created() {
-    this.initialize();
-  },
-  watch: {
-    // will fire on route changes
-    //'$route.params.id': function(val, oldVal){ // Same
-    "$route.path": function (val, oldVal) {
-      console.log(val + oldVal);
-      this.initialize();
-    },
-  },
-};
+  if (props.theKey) {
+    submitUpdate();
+  } else {
+    submitCreate();
+  }
+}
+
+async function submitCreate() {
+  const confirmTitle = "Creating New Mock";
+  const confirmMsg = confirmTitle + "\n\nPlease confirm you want to create this mock";
+  if (window.confirm(confirmMsg)) {
+    createMock();
+  }
+}
+
+async function submitUpdate() {
+  const confirmTitle = "Updating Mock: " + props.theKey;
+  const confirmMsg = confirmTitle + "\n\nPlease confirm you want to update this mock";
+  if (window.confirm(confirmMsg)) {
+    updateMock();
+  }
+}
+
+async function submitDelete() {
+  const confirmTitle = "Deleting Mock: " + props.theKey;
+  const confirmMsg = confirmTitle + "\n\nPlease confirm you want to delete this mock";
+  if (window.confirm(confirmMsg)) {
+    deleteMock();
+  }
+}
+
+async function resetForm() {
+  const confirmTitle = "Reset Form";
+  const confirmMsg = confirmTitle + "\n\nAll changes will be lost, are you sure?";
+  if (window.confirm(confirmMsg)) {
+    form.value?.reset();
+    initialize();
+  }
+}
+
+function createMock() {
+  saving.value = true;
+  axios
+      .post<Mock>(baseURL(), mock.value, {
+        headers: { "Content-Type": "application/json" },
+      })
+      .then((res) => {
+        router.push({name: 'MockDetails', params: {theKey: res.data.key, theName: res.data.name}});
+      })
+      .catch((err) => showAlert("Error creating mock", err))
+      .finally(() => saving.value = false);
+}
+
+function updateMock() {
+  saving.value = true;
+  axios
+      .put(baseURL() + "/" + props.theKey, mock.value, {
+        headers: { "Content-Type": "application/json" },
+      })
+      .then(() => showAlert("Mock successfully updated!"))
+      .catch((err) => showAlert("Error updating mock", err))
+      .finally(() => saving.value = false);
+}
+
+function deleteMock() {
+  axios
+      .delete(baseURL() + "/" + props.theKey)
+      .then(() => router.push({name: 'ListMocks'}))
+      .catch((err) => showAlert("Error deleting mock!", err));
+}
+
+function showAlert(text: string, err?: any) {
+  alert.text = text;
+  alert.color = err == null ? "green" : "red";
+  alert.show = true;
+  if (err) console.error(err);
+}
+
+function addVariable() {
+  const newVar: Variable = {
+    type: "body",
+    name: "",
+    key: "",
+    assertions:[]
+  };
+  if (!mock.value.variables) mock.value.variables = [];
+  mock.value.variables.push(newVar);
+}
+
+function removeVariable(i: number) {
+  mock.value.variables.splice(i, 1);
+}
+
+function addAssertion(variableIndex: number) {
+  const newAssertion: Assertion = {
+    fail_on_error: true,
+    type: "equals",
+    variable_name: "",
+    value: "",
+    min: 0,
+    max: 0
+  };
+  if (!mock.value.variables[variableIndex].assertions) {
+    mock.value.variables[variableIndex].assertions = [];
+  }
+  mock.value.variables[variableIndex].assertions.push(newAssertion);
+}
+
+function removeAssertion(variableIndex: number, assertionIndex: number) {
+  mock.value.variables[variableIndex].assertions.splice(assertionIndex, 1);
+}
+
+function addResponse() {
+  const newResponse: Response = {
+    description: "",
+    body: "",
+    content_type: "application/json",
+    http_status: 200,
+    delay: 0,
+    scene: "",
+  };
+  if (!mock.value.responses) {
+    mock.value.responses = [newResponse];
+  } else {
+    mock.value.responses.push(newResponse);
+  }
+}
+
+function removeResponse(i: number) {
+  mock.value.responses.splice(i, 1);
+}
+
+function updateResponses() {
+  if (mock.value.strategy !== "scene") {
+    mock.value.responses?.forEach(r => {
+      r.scene = ""
+    });
+  }
+}
+
+function updateVariables() {
+  mock.value.variables?.forEach(v => {
+    if (v.type !== "body" && v.type !== "query" && v.type !== "header" && v.type !== "path") {
+      v.key = "";
+    }
+  });
+}
+
+function updateAssertions(variableIndex: number) {
+  mock.value.variables[variableIndex].assertions?.forEach(a => {
+    if (a.type !== "range") {
+      a.min = 0;
+      a.max = 0;
+    } else {
+      a.min = 0;
+      a.max = 1;
+      a.value = "";
+    }
+  });
+}
+
+function isResponseSceneRequired(m: Mock) {
+  return m.strategy === "scene";
+}
+
+function isVariableTypeRequired(variable: Variable) {
+  return variable.type === 'body' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
+}
+
+function isAssertionFieldRequired(assertion: Assertion, field: string) {
+  switch (assertion.type) {
+    case "equals":
+      return field === "value"
+    case "range":
+      return field === "min" || field === "max";
+    default:
+      return false;
+  }
+}
+
+function isAssertionAllowed(variable: Variable) {
+  return variable.type === 'body' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
+}
+
+function getResponseDescriptionPrefix(index: number) {
+  return "Response " + (index + 1).toString() + ": "
+}
+
+function newMock(): Mock {
+  return {
+    key: "",
+    group: "",
+    name: "",
+    path: "",
+    strategy: "",
+    method: "",
+    status: "enabled",
+    responses: [{
+      description: "",
+      body: "",
+      content_type: "application/json",
+      http_status: 200,
+      delay: 0,
+      scene: "",
+    }],
+    variables: [],
+  };
+}
+
+function showExecutionURL() {
+  let url = getExecutionURL()
+  if (url === "") {
+    showAlert("Path cannot be empty.", "error");
+  } else {
+    executionURL.value = url
+    executionURL.show = true
+  }
+}
+
+function getExecutionURL() {
+  let path = mock.value.path;
+  if (!path) return ""
+
+  if (!path.startsWith("/")) path = "/" + path
+  return window.location.protocol + "//" + window.location.host + "/mock-service/mock" + path
+}
+
+function copyExecutionURL() {
+  executionURL.show = false
+}
+
+function initialize() {
+  if (props.theKey) {
+    loading.value = true;
+    axios
+        .get<Mock>(baseURL() + "/" + props.theKey)
+        .then((res) => {
+          mock.value = res.data;
+        })
+        .catch((err) => showAlert("Error getting mock info!", err))
+        .finally(() => loading.value = false);
+  } else {
+    mock.value = newMock();
+    form.value?.resetValidation();
+  }
+}
+
+onMounted(() => {
+  initialize();
+});
+
+watch(() => route.path, () => {
+  initialize();
+});
+
 </script>
 
