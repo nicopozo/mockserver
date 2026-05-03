@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import ListMocks from '../components/ListMocks.vue'
-import MockDetails from '../components/MockDetails.vue'
-import Help from '../components/Help.vue'
+const ListMocks = () => import('../components/ListMocks.vue')
+const MockDetails = () => import('../components/MockDetails.vue')
+const Help = () => import('../components/Help.vue')
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),

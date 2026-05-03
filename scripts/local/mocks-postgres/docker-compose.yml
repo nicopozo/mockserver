@@ -1,0 +1,33 @@
+version: "3.0"
+
+services:
+  db:
+    image: postgres
+    container_name: postgres-container
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=root
+      - POSTGRES_DB=mockserver
+    ports:
+      - '5432:5432'
+    tty: true
+    volumes:
+      - ../../sql/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - mocks-network
+  mock-service:
+    container_name: mock-service
+    build: ../../../.
+    environment:
+      - MOCKS_DATASOURCE=postgres
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_HOST=postgres-container
+      - DB_PORT=5432
+    ports:
+      - '8080:8080'
+    networks:
+      - mocks-network
+networks:
+  mocks-network:
+    driver: bridge

@@ -96,13 +96,13 @@ func (c *container) RuleRepository() repository.RuleRepository {
 			c.ruleRepository = repository.NewRuleElasticRepository()
 
 			return c.ruleRepository
-		case "mysql":
+		case "mysql", "postgres":
 			db, err := repository.GetDB()
 			if err != nil {
-				panic(fmt.Sprintf("Error connecting to mysql DB: %s", err.Error()))
+				panic(fmt.Sprintf("Error connecting to %s DB: %s", dataSource, err.Error()))
 			}
 
-			c.ruleRepository = repository.NewRuleMySQLRepository(db)
+			c.ruleRepository = repository.NewRuleSQLRepository(db)
 
 			return c.ruleRepository
 		}
