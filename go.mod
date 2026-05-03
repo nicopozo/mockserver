@@ -18,6 +18,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
 	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0
+	go.uber.org/dig v1.19.0
 )
 
 require (

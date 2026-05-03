@@ -13,6 +13,12 @@ type LogController struct {
 	LogService service.LogService
 }
 
+func NewLogController(logService service.LogService) *LogController {
+	return &LogController{
+		LogService: logService,
+	}
+}
+
 // GetLogs returns all captured log entries (newest first).
 func (controller *LogController) GetLogs(context *gin.Context) {
 	reqContext := mockscontext.New(context)

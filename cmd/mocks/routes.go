@@ -9,12 +9,10 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func mapRoutes(router *gin.Engine) {
+func mapRoutes(router *gin.Engine, api MockContainer) {
 	router.Static("/mock-service/admin", "web/dist")
 
-	applicationContainer := container{}
-
-	ruleController := applicationContainer.RuleController()
+	ruleController := api.Controllers.RuleController
 	router.POST("/mock-service/rules", ruleController.Create)
 	router.GET("/mock-service/rules/:key", ruleController.Get)
 	router.GET("/mock-service/rules", ruleController.Search)
@@ -24,10 +22,10 @@ func mapRoutes(router *gin.Engine) {
 	router.GET("/mock-service/rules/export", ruleController.Export)
 	router.POST("/mock-service/rules/import", ruleController.Import)
 
-	mockController := applicationContainer.MockController()
+	mockController := api.Controllers.MockController
 	router.Any("/mock-service/mock/*rule", mockController.Execute)
 
-	logController := applicationContainer.LogController()
+	logController := api.Controllers.LogController
 	router.GET("/mock-service/logs", logController.GetLogs)
 	router.DELETE("/mock-service/logs", logController.ClearLogs)
 

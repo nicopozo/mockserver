@@ -14,6 +14,8 @@ import (
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 )
 
+const columnMethod = "method"
+
 type ruleSQLRepository struct {
 	db Database
 }
@@ -360,7 +362,7 @@ func (repository *ruleSQLRepository) SearchByMethodAndPath(ctx context.Context, 
 	var rows []RuleRow
 
 	searchQuery := formatQuery(
-		"SELECT `key`, pattern, status FROM rules WHERE method = ?",
+		"SELECT `key`, pattern, status FROM rules WHERE "+columnMethod+" = ?",
 		repository.db.DriverName(),
 	)
 
@@ -442,7 +444,7 @@ func newSearchQuery(params map[string]interface{}, driver string) (string, error
 	}
 
 	order := formatQuery(
-		" ORDER BY `group`, path, method LIMIT ? OFFSET ?",
+		" ORDER BY `group`, path, "+columnMethod+" LIMIT ? OFFSET ?",
 		driver,
 	)
 
@@ -463,7 +465,7 @@ func newWhereClause(params map[string]interface{}, driver string) (string, error
 		}
 
 		switch key {
-		case "status", "method", "pattern", "strategy", "path", "name":
+		case "status", columnMethod, "pattern", "strategy", "path", "name":
 			v := strings.ToLower(fmt.Sprintf("%v", value))
 			where += key + " like '%" + v + "%'"
 		case "group", "key":

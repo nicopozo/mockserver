@@ -110,6 +110,7 @@ linters:
       - internal/utils/test/mocks
       - ".*\\.my\\.go$"
       - lib/bad.go
+      - web/node_modules
 formatters:
   enable:
     - gci
@@ -125,3 +126,4 @@ formatters:
       - internal/utils/test/mocks
       - ".*\\.my\\.go$"
       - lib/bad.go
+      - web/node_modules

@@ -9,10 +9,8 @@ import (
 	"strings"
 	"time"
 
-	// mysql driver.
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	// postgres driver.
 	_ "github.com/lib/pq"
 )
 
@@ -51,48 +49,53 @@ func getDatasource() string {
 }
 
 func GetDB() (*sqlx.DB, error) {
-	var err error
-
-	if database == nil {
-		datasource := getDatasource()
-
-		var connStr string
-		if datasource == datasourcePostgres {
-			connStr = getPostgresDBString()
-		} else {
-			connStr = getMySQLDBString() + "?parseTime=true&charset=utf8"
-		}
-
-		database, err = sqlx.Open(datasource, connStr)
-		if err != nil {
-			fmt.Printf("########## DB ERROR: %s #############\n", err.Error()) //nolint:forbidigo
-
-			return nil, fmt.Errorf("error connecting DB: %w", err)
-		}
-
-		database.SetMaxIdleConns(maxIdleConnections)
-		database.SetMaxOpenConns(maxOpenConnections)
-		database.SetConnMaxLifetime(maxLifeTime)
-
-		for i := 0; i < 10 && (i == 0 || err != nil); i++ {
-			if i > 0 {
-				time.Sleep(10 * time.Second) //nolint:mnd
-			}
-
-			fmt.Printf("########## CONNECTING TO DB (%s) - try i:%v #############\n", datasource, i+1) //nolint:forbidigo
-
-			err = database.PingContext(context.Background())
-		}
-
-		if err != nil {
-			fmt.Printf("########## DB ERROR: %s #############\n", err.Error()) //nolint:forbidigo
-
-			database = nil
-			err = fmt.Errorf("error DB ping: %w", err)
-		}
+	if database != nil {
+		return database, nil
 	}
 
-	return database, err
+	return connect()
+}
+
+func connect() (*sqlx.DB, error) {
+	var err error
+
+	datasource := getDatasource()
+	connStr := getMySQLDBString() + "?parseTime=true&charset=utf8"
+
+	if datasource == datasourcePostgres {
+		connStr = getPostgresDBString()
+	}
+
+	database, err = sqlx.Open(datasource, connStr)
+	if err != nil {
+		fmt.Printf("########## DB ERROR: %s #############\n", err.Error()) //nolint:forbidigo
+
+		return nil, fmt.Errorf("error connecting DB: %w", err)
+	}
+
+	database.SetMaxIdleConns(maxIdleConnections)
+	database.SetMaxOpenConns(maxOpenConnections)
+	database.SetConnMaxLifetime(maxLifeTime)
+
+	for i := 0; i < 10 && (i == 0 || err != nil); i++ {
+		if i > 0 {
+			time.Sleep(10 * time.Second) //nolint:mnd
+		}
+
+		fmt.Printf("########## CONNECTING TO DB (%s) - try i:%v #############\n", datasource, i+1) //nolint:forbidigo
+
+		err = database.PingContext(context.Background())
+	}
+
+	if err != nil {
+		fmt.Printf("########## DB ERROR: %s #############\n", err.Error()) //nolint:forbidigo
+
+		database = nil
+
+		return nil, fmt.Errorf("error DB ping: %w", err)
+	}
+
+	return database, nil
 }
 
 func getMySQLDBString() string {

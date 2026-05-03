@@ -19,6 +19,13 @@ type MockController struct {
 	LogService  service.LogService
 }
 
+func NewMockController(mockService service.MockService, logService service.LogService) *MockController {
+	return &MockController{
+		MockService: mockService,
+		LogService:  logService,
+	}
+}
+
 func (controller *MockController) Execute(context *gin.Context) {
 	reqContext := mockscontext.New(context)
 	logger := mockscontext.Logger(reqContext)
@@ -33,50 +40,7 @@ func (controller *MockController) Execute(context *gin.Context) {
 
 	response, err := controller.MockService.SearchResponseForRequest(reqContext, context.Request, path, reqBody)
 	if err != nil {
-		if errors.As(err, &ruleserrors.RuleNotFoundError{}) {
-			logger.Debug(controller, nil, "No rule found for path: %v and method: %s",
-				path, context.Request.Method)
-
-			errorResult := model.NewError(model.ResourceNotFoundError,
-				"No rule found for path: %v and method: %s. %v", path, context.Request.Method, err.Error())
-			context.JSON(http.StatusNotFound, errorResult)
-
-			controller.recordLog(logEntry, http.StatusNotFound, errorResult.Message)
-
-			return
-		}
-
-		if errors.As(err, &ruleserrors.InvalidRulesError{}) {
-			logger.Debug(controller, nil, "No valid rule found for path: %v and method: %s",
-				path, context.Request.Method)
-
-			errorResult := model.NewError(model.ValidationError, "%s", err.Error())
-			context.JSON(http.StatusNotFound, errorResult)
-
-			controller.recordLog(logEntry, http.StatusNotFound, errorResult.Message)
-
-			return
-		}
-
-		if errors.As(err, &ruleserrors.AssertionError{}) {
-			logger.Debug(controller, nil, "One or more assertions failed.",
-				path, context.Request.Method)
-
-			errorResult := model.NewError(model.ValidationError, "%s", err.Error())
-			context.JSON(http.StatusBadRequest, errorResult)
-
-			controller.recordLog(logEntry, http.StatusBadRequest, errorResult.Message)
-
-			return
-		}
-
-		logger.Error(controller, nil, err,
-			"Failed to execute rule for method %v: and path %v", context.Request.Method, path)
-
-		errorResult := model.NewError(model.InternalError, "Error occurred when getting rule. %s", err.Error())
-		context.JSON(http.StatusInternalServerError, errorResult)
-
-		controller.recordLog(logEntry, http.StatusInternalServerError, errorResult.Message)
+		controller.handleExecutionError(context, logger, path, logEntry, err)
 
 		return
 	}
@@ -89,6 +53,59 @@ func (controller *MockController) Execute(context *gin.Context) {
 	controller.recordLog(logEntry, response.HTTPStatus, response.Body)
 }
 
+func (controller *MockController) handleExecutionError(
+	context *gin.Context,
+	logger log.ILogger,
+	path string,
+	logEntry model.LogEntry,
+	err error,
+) {
+	if errors.As(err, &ruleserrors.RuleNotFoundError{}) {
+		logger.Debug(controller, nil, "No rule found for path: %v and method: %s",
+			path, context.Request.Method)
+
+		errorResult := model.NewError(model.ResourceNotFoundError,
+			"No rule found for path: %v and method: %s. %v", path, context.Request.Method, err.Error())
+		context.JSON(http.StatusNotFound, errorResult)
+
+		controller.recordLog(logEntry, http.StatusNotFound, errorResult.Message)
+
+		return
+	}
+
+	if errors.As(err, &ruleserrors.InvalidRulesError{}) {
+		logger.Debug(controller, nil, "No valid rule found for path: %v and method: %s",
+			path, context.Request.Method)
+
+		errorResult := model.NewError(model.ValidationError, "%s", err.Error())
+		context.JSON(http.StatusNotFound, errorResult)
+
+		controller.recordLog(logEntry, http.StatusNotFound, errorResult.Message)
+
+		return
+	}
+
+	if errors.As(err, &ruleserrors.AssertionError{}) {
+		logger.Debug(controller, nil, "One or more assertions failed.",
+			path, context.Request.Method)
+
+		errorResult := model.NewError(model.ValidationError, "%s", err.Error())
+		context.JSON(http.StatusBadRequest, errorResult)
+
+		controller.recordLog(logEntry, http.StatusBadRequest, errorResult.Message)
+
+		return
+	}
+
+	logger.Error(controller, nil, err,
+		"Failed to execute rule for method %v: and path %v", context.Request.Method, path)
+
+	errorResult := model.NewError(model.InternalError, "Error occurred when getting rule. %s", err.Error())
+	context.JSON(http.StatusInternalServerError, errorResult)
+
+	controller.recordLog(logEntry, http.StatusInternalServerError, errorResult.Message)
+}
+
 // buildLogEntry constructs a LogEntry from the incoming Gin context.
 func (controller *MockController) buildLogEntry(context *gin.Context, path, reqBody string) model.LogEntry {
 	headers := make(map[string]string, len(context.Request.Header))
@@ -99,6 +116,7 @@ func (controller *MockController) buildLogEntry(context *gin.Context, path, reqB
 	}
 
 	queryParams := make(map[string]string)
+
 	for key, values := range context.Request.URL.Query() {
 		if len(values) > 0 {
 			queryParams[key] = values[0]

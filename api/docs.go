@@ -148,6 +148,89 @@ const docTemplate = `{
                 }
             }
         },
+        "/rules/export": {
+            "get": {
+                "description": "Export all Rules in a JSON array",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rules"
+                ],
+                "summary": "Export all Rules",
+                "operationId": "export-rules",
+                "responses": {
+                    "200": {
+                        "description": "Result",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Rule"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/rules/import": {
+            "post": {
+                "description": "Import a JSON array of Rules. Updates if key exists, otherwise creates.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rules"
+                ],
+                "summary": "Import Rules",
+                "operationId": "import-rules",
+                "parameters": [
+                    {
+                        "description": "The rules to be imported",
+                        "name": "rules",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Rule"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Summary of imports",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/rules/{key}": {
             "get": {
                 "description": "Get a Rule, if not found return 404",

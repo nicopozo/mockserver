@@ -1,137 +1,94 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/nicopozo/mockserver/internal/controller"
 	"github.com/nicopozo/mockserver/internal/repository"
 	"github.com/nicopozo/mockserver/internal/service"
+	"go.uber.org/dig"
 )
 
-type container struct {
-	mockController *controller.MockController
-	ruleController *controller.RuleController
-	logController  *controller.LogController
+var errInvalidDataSource = errors.New("invalid datasource type")
 
-	mockService service.MockService
-	ruleService service.RuleService
-	logService  service.LogService
+// MockContainer is a specialized container that uses dig.In to automatically
+// resolve multiple dependencies based on tag/type mapping.
+type MockContainer struct {
+	dig.In
 
-	ruleRepository repository.RuleRepository
+	Controllers struct {
+		dig.In
+		MockController *controller.MockController
+		RuleController *controller.RuleController
+		LogController  *controller.LogController
+	}
 }
 
-func (c *container) MockController() *controller.MockController {
-	if c.mockController == nil {
-		mockService := c.MockService()
-		logService := c.LogService()
-		mockController := &controller.MockController{
-			MockService: mockService,
-			LogService:  logService,
+// BuildContainer initialize the dependency injection container.
+func BuildContainer() MockContainer {
+	container := dig.New()
+
+	providers := []any{
+		// Repositories
+		newRuleRepository,
+
+		// Services
+		service.NewLogService,
+		service.NewRuleService,
+		service.NewMockService,
+
+		// Controllers
+		controller.NewMockController,
+		controller.NewRuleController,
+		controller.NewLogController,
+	}
+
+	for _, provider := range providers {
+		if err := container.Provide(provider); err != nil {
+			panic(fmt.Sprintf("failed to register dependency: %v", err))
 		}
-
-		c.mockController = mockController
 	}
 
-	return c.mockController
-}
+	var api MockContainer
 
-func (c *container) LogController() *controller.LogController {
-	if c.logController == nil {
-		logService := c.LogService()
-		c.logController = &controller.LogController{
-			LogService: logService,
-		}
+	if err := container.Invoke(func(c MockContainer) {
+		api = c
+	}); err != nil {
+		panic(fmt.Sprintf("failed to resolve container: %v", err))
 	}
 
-	return c.logController
+	return api
 }
 
-func (c *container) LogService() service.LogService {
-	if c.logService == nil {
-		c.logService = service.NewLogService()
-	}
+// newRuleRepository contains the logic to select the appropriate repository implementation
+// based on the MOCKS_DATASOURCE environment variable.
+func newRuleRepository() (repository.RuleRepository, error) {
+	dataSource := os.Getenv("MOCKS_DATASOURCE")
 
-	return c.logService
-}
+	switch dataSource {
+	case "file", "":
+		filePath := os.Getenv("MOCKS_FILE")
 
-func (c *container) RuleController() *controller.RuleController {
-	if c.ruleController == nil {
-		ruleService := c.RuleService()
-		ruleController := &controller.RuleController{
-			RuleService: ruleService,
-		}
-
-		c.ruleController = ruleController
-	}
-
-	return c.ruleController
-}
-
-func (c *container) MockService() service.MockService {
-	if c.mockService == nil {
-		ruleService := c.RuleService()
-
-		mockService, err := service.NewMockService(ruleService)
+		repo, err := repository.NewRuleFileRepository(filePath)
 		if err != nil {
-			panic("error creating Mock Service")
+			return nil, fmt.Errorf("failed to create rule file repository: %w", err)
 		}
 
-		c.mockService = mockService
-	}
+		return repo, nil
 
-	return c.mockService
-}
+	case "elastic":
+		return repository.NewRuleElasticRepository(), nil
 
-func (c *container) RuleService() service.RuleService {
-	if c.ruleService == nil {
-		ruleRepository := c.RuleRepository()
-
-		ruleService, err := service.NewRuleService(ruleRepository)
+	case "mysql", "postgres":
+		db, err := repository.GetDB()
 		if err != nil {
-			panic("error creating Rule Service")
+			return nil, fmt.Errorf("error connecting to %s DB: %w", dataSource, err)
 		}
 
-		c.ruleService = ruleService
+		return repository.NewRuleSQLRepository(db), nil
 	}
 
-	return c.ruleService
-}
-
-func (c *container) RuleRepository() repository.RuleRepository {
-	if c.ruleRepository == nil {
-		dataSource := os.Getenv("MOCKS_DATASOURCE")
-
-		switch dataSource {
-		case "file", "":
-			filePath := os.Getenv("MOCKS_FILE")
-
-			repo, err := repository.NewRuleFileRepository(filePath)
-			if err != nil {
-				panic(fmt.Sprintf("Error creating File Repository: %s", err.Error()))
-			}
-
-			c.ruleRepository = repo
-
-			return c.ruleRepository
-
-		case "elastic":
-			c.ruleRepository = repository.NewRuleElasticRepository()
-
-			return c.ruleRepository
-		case "mysql", "postgres":
-			db, err := repository.GetDB()
-			if err != nil {
-				panic(fmt.Sprintf("Error connecting to %s DB: %s", dataSource, err.Error()))
-			}
-
-			c.ruleRepository = repository.NewRuleSQLRepository(db)
-
-			return c.ruleRepository
-		}
-
-		panic("invalid datasource type: " + dataSource)
-	}
-
-	return c.ruleRepository
+	return nil, errInvalidDataSource
 }

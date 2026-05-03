@@ -12,8 +12,16 @@ import (
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 )
 
+const exportLimit = 10000
+
 type RuleController struct {
 	RuleService service.RuleService
+}
+
+func NewRuleController(ruleService service.RuleService) *RuleController {
+	return &RuleController{
+		RuleService: ruleService,
+	}
 }
 
 // Create a Rule.
@@ -327,7 +335,8 @@ func (controller *RuleController) Export(context *gin.Context) {
 	logger.Debug(controller, nil, "Entering RuleController Export()")
 
 	// Use a large limit to get everything
-	paging := model.Paging{Limit: 10000, Offset: 0}
+	paging := model.Paging{Limit: exportLimit, Offset: 0}
+
 	ruleList, err := controller.RuleService.Search(reqContext, nil, paging)
 	if err != nil {
 		logger.Error(controller, nil, err, "Failed to export rules")
@@ -380,12 +389,16 @@ func (controller *RuleController) Import(context *gin.Context) {
 			_, err = controller.RuleService.Update(reqContext, rule.Key, rule)
 			if err == nil {
 				stats["updated"]++
+
 				continue
 			}
+
 			// If error is not "not found", record failure
 			if !errors.As(err, &ruleserrors.RuleNotFoundError{}) {
 				logger.Error(controller, nil, err, "Failed to update rule during import: %s", rule.Key)
+
 				stats["failed"]++
+
 				continue
 			}
 		}
@@ -394,6 +407,7 @@ func (controller *RuleController) Import(context *gin.Context) {
 		_, err = controller.RuleService.Save(reqContext, rule)
 		if err != nil {
 			logger.Error(controller, nil, err, "Failed to create rule during import: %s", rule.Name)
+
 			stats["failed"]++
 		} else {
 			stats["created"]++
@@ -402,4 +416,3 @@ func (controller *RuleController) Import(context *gin.Context) {
 
 	context.JSON(http.StatusOK, stats)
 }
-

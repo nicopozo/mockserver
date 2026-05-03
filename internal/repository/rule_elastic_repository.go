@@ -144,7 +144,7 @@ func (repository *ruleElasticRepository) Search(ctx context.Context, params map[
 	terms := make([]map[string]interface{}, 0)
 
 	for key, value := range params {
-		if key == "method" { //nolint:goconst
+		if key == "method" {
 			str, ok := value.(string)
 			if !ok {
 				return nil, fmt.Errorf("param method must be string") //nolint:err113

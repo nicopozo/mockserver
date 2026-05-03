@@ -355,6 +355,62 @@ paths:
       summary: Update a Rule Status
       tags:
       - Rules
+  /rules/export:
+    get:
+      description: Export all Rules in a JSON array
+      operationId: export-rules
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Result
+          schema:
+            items:
+              $ref: '#/definitions/model.Rule'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Error'
+      summary: Export all Rules
+      tags:
+      - Rules
+  /rules/import:
+    post:
+      consumes:
+      - application/json
+      description: Import a JSON array of Rules. Updates if key exists, otherwise
+        creates.
+      operationId: import-rules
+      parameters:
+      - description: The rules to be imported
+        in: body
+        name: rules
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Rule'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Summary of imports
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Error'
+      summary: Import Rules
+      tags:
+      - Rules
 schemes:
 - http
 swagger: "2.0"

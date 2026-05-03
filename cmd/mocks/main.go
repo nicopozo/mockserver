@@ -24,7 +24,9 @@ func main() {
 
 	router.Use(cors.Default())
 
-	mapRoutes(router)
+	api := BuildContainer()
+
+	mapRoutes(router, api)
 
 	if err := router.Run(":8080"); err != nil {
 		panic(err.Error())
