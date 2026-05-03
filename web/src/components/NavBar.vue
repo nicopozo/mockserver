@@ -1,43 +1,51 @@
 <template>
-  <div>
-    <v-app-bar app color="primary" theme="dark" class="px-4">
-      <v-img
-          alt="Mocks Server"
-          class="shrink mr-2"
-          :src="mockLogo"
-          max-height="40"
-          max-width="40"
-      />
+  <v-app-bar 
+    app 
+    color="primary-darken-1"
+    theme="dark"
+    elevation="2" 
+    height="80"
+    class="main-navbar px-4"
+  >
+    <template #prepend>
+      <v-img :src="mockLogo" alt="Mocks Server" width="140" height="90" class="ml-2" />
+    </template>
 
-      <v-app-bar-title class="mr-3">Mocks Server</v-app-bar-title>
+    <div class="font-weight-black" style="letter-spacing: 0.5px; font-size: 1.6rem; white-space: nowrap; margin-left: -25px;">
+      Mocks Server
+    </div>
 
-      <v-btn :to="{name: 'ListMocks'}" variant="text" class="mx-1" exact>
-        <v-icon>mdi-home</v-icon>
-        <span class="mx-1">Home</span>
+    <v-divider vertical class="mx-6 my-4" color="white"></v-divider>
+
+    <div class="nav-links d-flex ga-2">
+      <v-btn :to="{name: 'ListMocks'}" variant="text" class="nav-btn" exact rounded="lg">
+        <v-icon start size="20">mdi-home-variant-outline</v-icon>
+        <span class="font-weight-medium">Home</span>
       </v-btn>
 
-      <v-btn :to="{name: 'NewMock'}" variant="text" class="mx-1" exact>
-        <v-icon>mdi-plus-circle-outline</v-icon>
-        <span class="mx-1">New Mock</span>
+      <v-btn :to="{name: 'NewMock'}" variant="text" class="nav-btn" exact rounded="lg">
+        <v-icon start size="20">mdi-plus-circle-outline</v-icon>
+        <span class="font-weight-medium">New Mock</span>
       </v-btn>
 
-      <v-btn :to="{name: 'Logs'}" variant="text" class="mx-1" exact>
-        <v-icon>mdi-format-list-bulleted</v-icon>
-        <span class="mx-1">Logs</span>
+      <v-btn :to="{name: 'Logs'}" variant="text" class="nav-btn" exact rounded="lg">
+        <v-icon start size="20">mdi-chart-timeline-variant</v-icon>
+        <span class="font-weight-medium">Logs</span>
+      </v-btn>
+    </div>
+
+    <v-spacer></v-spacer>
+
+    <div class="d-flex align-center ga-2">
+      <v-btn icon variant="text" size="small" @click="toggleTheme" title="Toggle Theme">
+        <v-icon size="20">{{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
       </v-btn>
 
-      <v-spacer></v-spacer>
-
-      <v-btn icon variant="text" class="mx-1" @click="toggleTheme" title="Toggle Theme">
-        <v-icon>{{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
+      <v-btn :to="{name: 'Help'}" icon variant="text" size="small" exact title="Help">
+        <v-icon size="20">mdi-help-circle-outline</v-icon>
       </v-btn>
-
-      <v-btn :to="{name: 'Help'}" variant="text" class="mx-1" exact>
-        <v-icon>mdi-help-circle</v-icon>
-      </v-btn>
-
-    </v-app-bar>
-  </div>
+    </div>
+  </v-app-bar>
 </template>
 
 <script setup lang="ts">
@@ -54,3 +62,23 @@ function toggleTheme() {
   localStorage.setItem('mockserver-theme', newTheme)
 }
 </script>
+
+<style scoped>
+.nav-btn {
+  text-transform: none;
+  letter-spacing: 0;
+  transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.v-btn--active.nav-btn {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.v-app-bar-title {
+  font-size: 1.1rem;
+}
+</style>

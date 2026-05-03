@@ -1,22 +1,26 @@
 <template>
-  <div>
+  <div class="list-mocks-container">
     <!--SEARCH-->
-    <v-card class="elevation-2">
-      <v-container fluid>
-        <v-row>
+    <v-card class="search-card mb-6" elevation="0">
+      <v-container fluid class="pa-6">
+        <v-row align="center">
           <!--GROUP FILTER-->
           <v-col cols="12" md="3">
             <v-text-field label="Group"
                           v-model="filters.group"
                           @keyup.enter="search()"
-                          variant="outlined" density="compact" clearable hide-details></v-text-field>
+                          variant="solo-filled" density="comfortable" flat clearable hide-details
+                          prepend-inner-icon="mdi-folder-outline"
+                          class="custom-field"></v-text-field>
           </v-col>
           <!--PATH FILTER-->
           <v-col cols="12" md="3">
             <v-text-field label="Path"
                           v-model="filters.path"
                           @keyup.enter="search()"
-                          variant="outlined" density="compact" clearable hide-details></v-text-field>
+                          variant="solo-filled" density="comfortable" flat clearable hide-details
+                          prepend-inner-icon="mdi-link-variant"
+                          class="custom-field"></v-text-field>
           </v-col>
           <!--STRATEGY FILTER-->
           <v-col cols="12" md="3">
@@ -27,7 +31,9 @@
                 :items="strategies"
                 item-title="text"
                 item-value="value"
-                variant="outlined" density="compact" clearable hide-details
+                variant="solo-filled" density="comfortable" flat clearable hide-details
+                prepend-inner-icon="mdi-layers-outline"
+                class="custom-field"
             ></v-select>
           </v-col>
           <!--HTTP METHOD FILTER-->
@@ -39,16 +45,22 @@
                 :items="httpMethods"
                 item-title="text"
                 item-value="value"
-                variant="outlined" density="compact" clearable hide-details
+                variant="solo-filled" density="comfortable" flat clearable hide-details
+                prepend-inner-icon="mdi-api"
+                class="custom-field"
             ></v-select>
           </v-col>
           <!--SEARCH BUTTONS-->
-          <v-col cols="12" class="text-right d-flex align-center justify-end ga-2">
-            <v-btn variant="flat" color="grey-lighten-2" @click="reset()">Reset</v-btn>
-            <v-btn variant="flat" color="primary" @click="search()">Search</v-btn>
+          <v-col cols="12" class="d-flex align-center justify-end ga-3 pt-4">
+            <v-btn variant="text" color="grey-darken-1" @click="reset()" class="text-none">
+              <v-icon start>mdi-refresh</v-icon> Reset
+            </v-btn>
+            <v-btn color="primary" @click="search()" class="text-none px-6" elevation="2">
+              <v-icon start>mdi-magnify</v-icon> Search
+            </v-btn>
             <v-divider vertical class="mx-2"></v-divider>
-            <v-btn variant="outlined" color="primary" prepend-icon="mdi-download" @click="exportMocks()">Export</v-btn>
-            <v-btn variant="outlined" color="primary" prepend-icon="mdi-upload" @click="triggerFileInput()">Import</v-btn>
+            <v-btn variant="tonal" color="secondary" prepend-icon="mdi-download" @click="exportMocks()" class="text-none">Export</v-btn>
+            <v-btn variant="tonal" color="secondary" prepend-icon="mdi-upload" @click="triggerFileInput()" class="text-none">Import</v-btn>
             <input type="file" ref="fileInput" hidden accept=".json" @change="importMocks" />
           </v-col>
         </v-row>
@@ -56,36 +68,84 @@
     </v-card>
 
     <!-- RESULT -->
-    <br>
-    <v-data-table-server
-        class="elevation-2" density="compact"
-        :headers="table.columns"
-        :items="table.rows"
-        :items-length="table.total"
-        :loading="table.loading"
-        @update:options="handleOptionsUpdate"
-        hover
-    >
-      <template v-slot:item.status="{ item }">
-        <v-switch v-model="raw(item).status" color="info" true-value="enabled" false-value="disabled" hide-details density="compact" style="margin: 0"
-                  @update:model-value="callStatus(raw(item))"></v-switch>
-      </template>
-      <template v-slot:item.name="{ item }">
-        <router-link :to="{name: 'MockDetails', params:{theKey:raw(item).key, theName:raw(item).name}}">
-          <span class="mr-2">{{ raw(item).name }}</span>
-        </router-link>
-      </template>
-      <template v-slot:item.method="{ item }">
-        <span :class="getHTTPMethodColor(raw(item).method)">{{ raw(item).method }}</span>
-      </template>
-      <template v-slot:item.delete="{ item }">
-        <v-btn icon color="red" variant="text" density="compact" @click="callDelete(raw(item))">
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
-      </template>
-    </v-data-table-server>
+    <v-card class="table-card" elevation="4">
+      <v-data-table-server
+          density="comfortable"
+          :headers="table.columns"
+          :items="table.rows"
+          :items-length="table.total"
+          :loading="table.loading"
+          @update:options="handleOptionsUpdate"
+          hover
+          class="custom-table"
+      >
+        <template v-slot:item.status="{ item }">
+          <div class="d-flex align-center">
+            <v-switch v-model="raw(item).status" 
+                      color="success" 
+                      true-value="enabled" 
+                      false-value="disabled" 
+                      hide-details 
+                      density="compact"
+                      @update:model-value="callStatus(raw(item))"
+                      class="status-switch"
+            ></v-switch>
+            <span class="text-caption ml-2 text-uppercase font-weight-bold" :class="raw(item).status === 'enabled' ? 'text-success' : 'text-grey'">
+              {{ raw(item).status }}
+            </span>
+          </div>
+        </template>
+        
+        <template v-slot:item.name="{ item }">
+          <div class="d-flex align-center">
+            <v-avatar color="primary" variant="tonal" size="32" class="mr-3">
+              <v-icon size="18">mdi-file-code-outline</v-icon>
+            </v-avatar>
+            <router-link :to="{name: 'MockDetails', params:{theKey:raw(item).key, theName:raw(item).name}}" class="mock-link">
+              <span class="font-weight-bold">{{ raw(item).name }}</span>
+            </router-link>
+          </div>
+        </template>
 
-    <v-snackbar v-model="alert.show" :color="alert.color">{{ alert.text }}</v-snackbar>
+        <template v-slot:item.path="{ item }">
+          <code class="path-code">{{ raw(item).path }}</code>
+        </template>
+
+        <template v-slot:item.strategy="{ item }">
+          <v-chip size="small" variant="outlined" color="primary" class="text-uppercase font-weight-bold">
+            {{ raw(item).strategy }}
+          </v-chip>
+        </template>
+
+        <template v-slot:item.method="{ item }">
+          <v-chip :color="getHTTPMethodColor(raw(item).method)" size="small" variant="flat" class="font-weight-black px-3">
+            {{ raw(item).method }}
+          </v-chip>
+        </template>
+
+        <template v-slot:item.delete="{ item }">
+          <v-btn icon color="error" variant="text" density="comfortable" @click="callDelete(raw(item))">
+            <v-icon size="20">mdi-delete-outline</v-icon>
+            <v-tooltip activator="parent" location="top">Delete Mock</v-tooltip>
+          </v-btn>
+        </template>
+
+        <template v-slot:no-data>
+          <div class="py-10 text-center">
+            <v-icon size="64" color="grey-lighten-1">mdi-database-off-outline</v-icon>
+            <p class="text-h6 text-grey-darken-1 mt-4">No mocks found matching your criteria</p>
+            <v-btn variant="text" color="primary" @click="reset()">Clear Filters</v-btn>
+          </div>
+        </template>
+      </v-data-table-server>
+    </v-card>
+
+    <v-snackbar v-model="alert.show" :color="alert.color" elevation="10" rounded="lg">
+      <div class="d-flex align-center">
+        <v-icon start>{{ alert.color === 'green' ? 'mdi-check-circle' : 'mdi-alert-circle' }}</v-icon>
+        {{ alert.text }}
+      </div>
+    </v-snackbar>
 
   </div>
 </template>
@@ -97,19 +157,20 @@ import type { Mock, PaginatedMocks } from '@/types';
 const fileInput = ref<HTMLInputElement | null>(null);
 
 const httpMethods = [
-  {text: "GET", value: "GET", color: "text-blue"},
-  {text: "POST", value: "POST", color: "text-green"},
-  {text: "PUT", value: "PUT", color: "text-orange"},
-  {text: "PATCH", value: "PATCH", color: "text-purple"},
-  {text: "DELETE", value: "DELETE", color: "text-red"},
-  {text: "OPTIONS", value: "OPTIONS", color: "text-grey"},
-  {text: "HEAD", value: "HEAD", color: "text-black"}
+  {text: "GET", value: "GET", color: "blue-darken-1"},
+  {text: "POST", value: "POST", color: "green-darken-1"},
+  {text: "PUT", value: "PUT", color: "orange-darken-2"},
+  {text: "PATCH", value: "PATCH", color: "purple-darken-1"},
+  {text: "DELETE", value: "DELETE", color: "red-darken-1"},
+  {text: "OPTIONS", value: "OPTIONS", color: "grey-darken-1"},
+  {text: "HEAD", value: "HEAD", color: "blue-grey-darken-3"}
 ];
 
 const strategies = [
   {text: "Normal", value: "normal"},
   {text: "Scene", value: "scene"},
-  {text: "Random", value: "random"}
+  {text: "Random", value: "random"},
+  {text: "Sequential", value: "sequential"}
 ];
 
 const filters = reactive({
@@ -121,19 +182,15 @@ const filters = reactive({
 
 const table = reactive({
   columns: [
-    {title: "Enabled", key: "status"},
-    {title: "Name", key: "name"},
-    {title: "Group", key: "group"},
-    {title: "Path", key: "path", width: "35%"},
-    {title: "Strategy", key: "strategy"},
-    {title: "Method", key: "method"},
-    {title: "", key: "delete", width: "1%"},
+    {title: "Status", key: "status", align: 'start', sortable: false},
+    {title: "Name", key: "name", align: 'start'},
+    {title: "Group", key: "group", align: 'start'},
+    {title: "Path", key: "path", width: "35%", align: 'start'},
+    {title: "Strategy", key: "strategy", align: 'center'},
+    {title: "Method", key: "method", align: 'center'},
+    {title: "", key: "delete", align: 'center', sortable: false},
   ] as any[],
   rows: [] as Mock[],
-  footer: {
-    showFirstLastPage: false,
-    "items-per-page-options": [10, 30, 50],
-  },
   total: 0,
   loading: true,
 });
@@ -169,7 +226,7 @@ function baseURL() {
 }
 
 function getHTTPMethodColor(httpMethod: string) {
-  return httpMethods.find(x => x.value == httpMethod)?.color || 'text-black';
+  return httpMethods.find(x => x.value == httpMethod)?.color || 'grey';
 }
 
 function queryParams() {
@@ -262,7 +319,7 @@ async function callDelete(item: Mock) {
         .catch((err) => {
           showAlert("Error deleting mock!", err);
         }).finally(() => {
-          search();
+          restSearch();
         });
   }
 }
@@ -296,7 +353,7 @@ async function importMocks(event: any) {
       const res = await axios.post(baseURL() + "/import", rules);
       const { created, updated, failed } = res.data;
       showAlert(`Import result: ${created} created, ${updated} updated, ${failed} failed.`);
-      search();
+      restSearch();
     } catch (err) {
       showAlert("Error importing mocks! Check file format.", err);
     } finally {
@@ -311,3 +368,65 @@ watch(options, () => {
 }, { deep: true });
 
 </script>
+
+<style scoped>
+.list-mocks-container {
+  padding: 12px;
+}
+
+.search-card {
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  transition: background 0.3s ease;
+}
+
+.table-card {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.custom-field :deep(.v-field) {
+  border-radius: 12px;
+}
+
+.mock-link {
+  text-decoration: none;
+  color: #1976D2;
+  transition: color 0.2s;
+}
+
+.mock-link:hover {
+  color: #1565C0;
+  text-decoration: underline;
+}
+
+.path-code {
+  background-color: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: 'Fira Code', 'Roboto Mono', monospace;
+  font-size: 0.85rem;
+  color: #E91E63;
+}
+
+.status-switch {
+  transform: scale(0.8);
+}
+
+.custom-table :deep(tr:hover) {
+  background-color: rgba(25, 118, 210, 0.04) !important;
+}
+</style>
+
+<style>
+/* Estilos específicos de ListMocks */
+.v-theme--light .search-card {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.v-theme--dark .search-card {
+  background: rgba(33, 33, 33, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+</style>

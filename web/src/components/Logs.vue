@@ -49,16 +49,16 @@
     </v-card>
 
     <!-- LOG TABLE -->
-    <v-data-table
-      class="elevation-2"
-      density="compact"
-      :headers="columns"
-      :items="logs"
-      :loading="loading"
-      :items-per-page="25"
-      hover
-      show-expand
-    >
+    <v-card class="table-card elevation-2">
+      <v-data-table
+        density="compact"
+        :headers="columns"
+        :items="logs"
+        :loading="loading"
+        :items-per-page="25"
+        hover
+        show-expand
+      >
       <!-- Method chip -->
       <template v-slot:item.method="{ item }">
         <v-chip :color="methodColor(item.method)" size="small" label>
@@ -152,7 +152,8 @@
           <p class="text-body-2 text-disabled">Make a request to <code>/mock-service/mock/*</code> to see it here.</p>
         </div>
       </template>
-    </v-data-table>
+      </v-data-table>
+    </v-card>
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">
       {{ snackbar.text }}
@@ -321,4 +322,10 @@ onUnmounted(() => {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+.table-card {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
 </style>
