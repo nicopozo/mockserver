@@ -239,7 +239,7 @@
         </v-toolbar>
         <v-card-text class="pa-8 text-center">
           <p class="text-subtitle-1 text-grey-darken-1 mb-4">Use this URL to hit your mock server:</p>
-          <v-sheet color="grey-lighten-4" class="pa-4 rounded-lg border d-flex align-center">
+          <v-sheet class="url-container pa-4 rounded-lg border d-flex align-center">
             <code class="text-h6 text-primary flex-grow-1 text-truncate">{{ executionURL.value }}</code>
             <v-btn icon="mdi-content-copy" variant="text" color="primary" @click="copyURL()"></v-btn>
           </v-sheet>
@@ -674,5 +674,14 @@ watch(() => route.path, () => {
 .v-theme--dark .code-editor :deep(textarea) {
   background-color: #1a1a1a !important;
   color: #64ffda !important; /* Un toque de color para el código en dark mode */
+}
+
+.v-theme--light .url-container {
+  background-color: #f5f5f5 !important;
+}
+
+.v-theme--dark .url-container {
+  background-color: #1a1a1a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 </style>
