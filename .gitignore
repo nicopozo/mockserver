@@ -2,3 +2,10 @@
 web/node_modules
 local.env
 .env
+
+# Binaries
+mocks
+service
+
+# IDEs
+.vscode/

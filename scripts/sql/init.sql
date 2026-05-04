@@ -25,6 +25,7 @@ CREATE TABLE `mockserver`.`responses`
     `delay`        int          DEFAULT '0',
     `scene`        varchar(255) DEFAULT NULL,
     `rule_key`     varchar(255) NOT NULL,
+    `description`  varchar(255) DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `rules_idx` (`rule_key`),
     CONSTRAINT `rules` FOREIGN KEY (`rule_key`) REFERENCES `rules` (`key`)

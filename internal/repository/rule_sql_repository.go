@@ -49,6 +49,7 @@ type ResponseRow struct {
 	Delay       int     `db:"delay"`
 	Scene       *string `db:"scene"`
 	RuleKey     string  `db:"rule_key"`
+	Description *string `db:"description"`
 }
 
 // NewRuleSQLRepository creates a repository that works with both MySQL and PostgreSQL.
@@ -438,12 +439,12 @@ func (repository *ruleSQLRepository) insertResponses(ctx context.Context, rule *
 	logger := mockscontext.Logger(ctx)
 
 	query := formatQuery(
-		"INSERT INTO responses (body, content_type, http_status, delay, scene, rule_key) VALUES (?, ?, ?, ?, ?, ?)",
+		"INSERT INTO responses (body, content_type, http_status, delay, scene, rule_key, description) VALUES (?, ?, ?, ?, ?, ?, ?)",
 		repository.db.DriverName(),
 	)
 
 	for _, r := range rule.Responses {
-		_, err := trx.ExecContext(ctx, query, r.Body, r.ContentType, r.HTTPStatus, r.Delay, r.Scene, rule.Key)
+		_, err := trx.ExecContext(ctx, query, r.Body, r.ContentType, r.HTTPStatus, r.Delay, r.Scene, rule.Key, r.Description)
 		if err != nil {
 			logger.Error(repository, nil, err, "error creating rule response in DB")
 
@@ -539,6 +540,10 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 			HTTPStatus:  resp.HTTPStatus,
 			Delay:       resp.Delay,
 			Scene:       scene,
+		}
+
+		if resp.Description != nil {
+			newResp.Description = *resp.Description
 		}
 
 		resps = append(resps, newResp)

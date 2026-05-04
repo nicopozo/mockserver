@@ -509,6 +509,10 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 0
                 },
+                "description": {
+                    "type": "string",
+                    "example": "success response"
+                },
                 "http_status": {
                     "type": "integer",
                     "example": 200

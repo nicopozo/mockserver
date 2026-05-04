@@ -64,6 +64,9 @@ definitions:
       delay:
         example: 0
         type: integer
+      description:
+        example: success response
+        type: string
       http_status:
         example: 200
         type: integer
