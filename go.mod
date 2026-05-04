@@ -3,15 +3,13 @@ module github.com/nicopozo/mockserver
 go 1.24.4
 
 require (
-	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/gofrs/uuid v4.4.0+incompatible
-	github.com/golang/mock v1.6.0
-	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9
+	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/files v1.0.1
@@ -19,6 +17,7 @@ require (
 	github.com/swaggo/swag v1.16.4
 	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0
 	go.uber.org/dig v1.19.0
+	go.uber.org/mock v0.6.0
 )
 
 require (

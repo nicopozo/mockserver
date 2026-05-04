@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	guuid "github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
@@ -104,7 +104,8 @@ func (repository *ruleSQLRepository) Create(ctx context.Context, rule *model.Rul
 	}()
 
 	if rule.Key == "" {
-		rule.Key = fmt.Sprintf("%v", guuid.New())
+		id, _ := gonanoid.New(IDLength)
+		rule.Key = id
 	}
 
 	_, err = trx.ExecContext(ctx, query, rule.Key, rule.Group, rule.Name, rule.Path,
@@ -169,35 +170,41 @@ func (repository *ruleSQLRepository) Update(ctx context.Context, rule *model.Rul
 		return nil, err
 	}
 
-	err = repository.deleteVariables(ctx, rule.Key, trx)
+	return rule, repository.syncRelatedData(ctx, rule, trx)
+}
+
+func (repository *ruleSQLRepository) syncRelatedData(ctx context.Context, rule *model.Rule, trx *sqlx.Tx) error {
+	logger := mockscontext.Logger(ctx)
+
+	err := repository.deleteVariables(ctx, rule.Key, trx)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
 
-		return nil, fmt.Errorf("error updating task, %w", err)
+		return fmt.Errorf("error updating task, %w", err)
 	}
 
 	err = repository.insertVariables(ctx, rule, trx)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
 
-		return nil, fmt.Errorf("error updating task, %w", err)
+		return fmt.Errorf("error updating task, %w", err)
 	}
 
 	err = repository.deleteResponses(ctx, rule.Key, trx)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
 
-		return nil, fmt.Errorf("error updating task, %w", err)
+		return fmt.Errorf("error updating task, %w", err)
 	}
 
 	err = repository.insertResponses(ctx, rule, trx)
 	if err != nil {
 		logger.Error(repository, nil, err, "error updating task in DB")
 
-		return nil, fmt.Errorf("error updating task, %w", err)
+		return fmt.Errorf("error updating task, %w", err)
 	}
 
-	return rule, nil
+	return nil
 }
 
 func (repository *ruleSQLRepository) deleteResponses(ctx context.Context, key string, tx *sqlx.Tx) error {
@@ -439,7 +446,8 @@ func (repository *ruleSQLRepository) insertResponses(ctx context.Context, rule *
 	logger := mockscontext.Logger(ctx)
 
 	query := formatQuery(
-		"INSERT INTO responses (body, content_type, http_status, delay, scene, rule_key, description) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO responses (body, content_type, http_status, delay, scene, rule_key, description) "+
+			"VALUES (?, ?, ?, ?, ?, ?, ?)",
 		repository.db.DriverName(),
 	)
 

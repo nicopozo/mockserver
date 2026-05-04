@@ -7,13 +7,13 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/service"
 	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestRuleService_Save(t *testing.T) {

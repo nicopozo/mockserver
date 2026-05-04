@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
@@ -17,6 +16,7 @@ import (
 	testutils "github.com/nicopozo/mockserver/internal/utils/test"
 	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestMockService_SearchResponseForRequest(t *testing.T) {

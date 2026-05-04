@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	guuid "github.com/google/uuid"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
@@ -81,7 +81,8 @@ func (repository *ruleFileRepository) Create(ctx context.Context, rule *model.Ru
 
 	logger.Debug(repository, nil, "Saving new rule into file")
 
-	rule.Key = fmt.Sprintf("%v", guuid.New())
+	id, _ := gonanoid.New(IDLength)
+	rule.Key = id
 
 	fRule := fileRule{
 		Rule:              *rule,

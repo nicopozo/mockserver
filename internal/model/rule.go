@@ -40,23 +40,6 @@ type RuleStatus struct {
 	Status string `json:"status" example:"enabled"`
 }
 
-type ESRule struct {
-	Source *Rule `json:"_source"` //nolint:tagliatelle
-}
-
-type ESSearchResult struct {
-	Hits *ESHits `json:"hits"`
-}
-
-type ESHits struct {
-	Total *ESTotal  `json:"total"`
-	Hits  []*ESRule `json:"hits"`
-}
-
-type ESTotal struct {
-	Value int `json:"value"`
-}
-
 func UnmarshalRule(body io.Reader) (*Rule, error) {
 	rule := &Rule{}
 
@@ -98,26 +81,4 @@ func (status *RuleStatus) Validate() error {
 	}
 
 	return nil
-}
-
-func UnmarshalESRule(body io.Reader) (*Rule, error) {
-	rule := &ESRule{}
-
-	err := jsonutils.Unmarshal(body, rule)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling body, %w", err)
-	}
-
-	return rule.Source, nil
-}
-
-func UnmarshalSearchESRule(body io.Reader) (*ESSearchResult, error) {
-	result := &ESSearchResult{}
-
-	err := jsonutils.Unmarshal(body, result)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling body, %w", err)
-	}
-
-	return result, nil
 }

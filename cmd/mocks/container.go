@@ -78,9 +78,6 @@ func newRuleRepository() (repository.RuleRepository, error) {
 
 		return repo, nil
 
-	case "elastic":
-		return repository.NewRuleElasticRepository(), nil
-
 	case "mysql", "postgres":
 		db, err := repository.GetDB()
 		if err != nil {

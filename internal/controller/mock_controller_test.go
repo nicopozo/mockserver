@@ -6,13 +6,13 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
 	"github.com/nicopozo/mockserver/internal/controller"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	testutils "github.com/nicopozo/mockserver/internal/utils/test"
 	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestMockController_Execute(t *testing.T) {
