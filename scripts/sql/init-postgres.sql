@@ -44,3 +44,17 @@ CREATE TABLE IF NOT EXISTS mockserver.variables
 );
 
 CREATE INDEX IF NOT EXISTS idx_variables_rule_key ON mockserver.variables (rule_key);
+CREATE TABLE IF NOT EXISTS mockserver.request_logs
+(
+    id               varchar(27) NOT NULL,
+    timestamp        timestamp   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    method           varchar(10) NOT NULL,
+    url              text        NOT NULL,
+    request_body     text,
+    request_headers  jsonb,
+    query_params     jsonb,
+    response_status  int,
+    response_body    text,
+    assertion_errors jsonb,
+    PRIMARY KEY (id)
+);

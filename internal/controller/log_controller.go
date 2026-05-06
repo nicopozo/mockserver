@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
+	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/service"
 )
 
@@ -19,14 +20,24 @@ func NewLogController(logService service.LogService) *LogController {
 	}
 }
 
-// GetLogs returns all captured log entries (newest first).
+// GetLogs returns captured log entries with pagination.
 func (controller *LogController) GetLogs(context *gin.Context) {
 	reqContext := mockscontext.New(context)
 	logger := mockscontext.Logger(reqContext)
 
 	logger.Debug(controller, nil, "Entering LogController GetLogs()")
 
-	logs := controller.LogService.GetAll()
+	paging, err := getPagingFromRequest(context.Request)
+	if err != nil {
+		logger.Error(controller, nil, err, "Error parsing pagination params")
+		errorResult := model.NewError(model.ValidationError, "Error parsing pagination params: %s", err.Error())
+		context.JSON(http.StatusBadRequest, errorResult)
+
+		return
+	}
+
+	logs := controller.LogService.GetAll(*paging)
+
 	context.JSON(http.StatusOK, logs)
 }
 

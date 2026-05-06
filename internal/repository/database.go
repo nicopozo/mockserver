@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -142,4 +143,22 @@ func getEnv(name, defaultValue string) string {
 	}
 
 	return defaultValue
+}
+
+// FormatQuery translates a MySQL-style query to the target driver dialect.
+// For postgres: replaces backtick-escaped identifiers with double quotes and
+// rebinds positional parameters from ? to $1, $2, etc.
+func FormatQuery(query string, driver string) string {
+	if driver != "postgres" {
+		return query
+	}
+
+	// Replace backtick-wrapped identifiers with double-quoted ones
+	re := regexp.MustCompile("`([^`]+)`")
+	query = re.ReplaceAllString(query, `"$1"`)
+
+	// Rebind ? placeholders to $1, $2, ...
+	query = sqlx.Rebind(sqlx.DOLLAR, query)
+
+	return query
 }

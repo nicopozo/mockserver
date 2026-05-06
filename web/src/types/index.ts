@@ -39,6 +39,7 @@ export interface Paging {
   total: number;
   limit: number;
   offset: number;
+  last_id?: string;
 }
 
 export interface PaginatedMocks {
@@ -47,7 +48,7 @@ export interface PaginatedMocks {
 }
 
 export interface LogEntry {
-  id: number;
+  id: string;
   timestamp: string;
   method: string;
   url: string;
@@ -61,5 +62,5 @@ export interface LogEntry {
 
 export interface LogList {
   results: LogEntry[];
-  total: number;
+  paging: Paging;
 }

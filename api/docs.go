@@ -477,6 +477,9 @@ const docTemplate = `{
         "model.Paging": {
             "type": "object",
             "properties": {
+                "last_id": {
+                    "type": "string"
+                },
                 "limit": {
                     "type": "integer",
                     "default": 30,

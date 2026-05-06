@@ -45,3 +45,18 @@ CREATE TABLE `mockserver`.`variables`
     CONSTRAINT `rule` FOREIGN KEY (`rule_key`) REFERENCES `rules` (`key`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = latin1;
+CREATE TABLE `mockserver`.`request_logs`
+(
+    `id`               varchar(27)  NOT NULL,
+    `timestamp`        timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `method`           varchar(10)  NOT NULL,
+    `url`              text         NOT NULL,
+    `request_body`     longtext,
+    `request_headers`  longtext,
+    `query_params`     longtext,
+    `response_status`  int,
+    `response_body`    longtext,
+    `assertion_errors` longtext,
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = latin1;

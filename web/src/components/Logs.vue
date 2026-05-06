@@ -8,7 +8,7 @@
             <div class="d-flex align-center ga-2">
               <v-icon size="24" color="primary">mdi-format-list-bulleted</v-icon>
               <span class="text-h6 font-weight-bold">Request Logs</span>
-              <v-chip color="primary" size="small" class="ml-2">{{ logs.length }}</v-chip>
+              <v-chip color="primary" size="small" class="ml-2">{{ totalItems }}</v-chip>
             </div>
           </v-col>
           <v-col cols="12" md="6" class="d-flex justify-end ga-2">
@@ -50,12 +50,15 @@
 
     <!-- LOG TABLE -->
     <v-card class="table-card elevation-2">
-      <v-data-table
+      <v-data-table-server
         density="compact"
         :headers="columns"
         :items="logs"
         :loading="loading"
-        :items-per-page="25"
+        :items-per-page="itemsPerPage"
+        :items-length="totalItems"
+        v-model:options="tableOptions"
+        @update:options="onTableUpdate"
         hover
         show-expand
       >
@@ -183,7 +186,7 @@
           <p class="text-body-2 text-disabled">Make a request to <code>/mock-service/mock/*</code> to see it here.</p>
         </div>
       </template>
-      </v-data-table>
+      </v-data-table-server>
     </v-card>
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">
@@ -198,7 +201,19 @@ import axios from 'axios'
 import type { LogEntry, LogList } from '@/types'
 
 const logs = ref<LogEntry[]>([])
+const totalItems = ref(0)
 const loading = ref(false)
+const itemsPerPage = ref(25)
+const tableOptions = ref({
+  page: 1,
+  itemsPerPage: 25,
+  sortBy: [{ key: 'id', order: 'desc' }]
+})
+
+// Store the last ID seen for each page to support keyset pagination
+// pageCursors[page] = the ID of the last item of page (page - 1)
+const pageCursors = ref<Record<number, string>>({})
+
 const autoRefresh = ref(true)
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
@@ -265,12 +280,32 @@ function baseURL(): string {
 
 async function fetchLogs(isAuto = false) {
   if (!isAuto) loading.value = true
+  
+  const { page, itemsPerPage } = tableOptions.value
+  const offset = (page - 1) * itemsPerPage
+  
+  // Try to use the cursor for the current page
+  const lastId = pageCursors.value[page]
+  
   try {
-    const res = await axios.get<LogList>(baseURL())
+    const res = await axios.get<LogList>(baseURL(), {
+      params: {
+        limit: itemsPerPage,
+        last_id: lastId || undefined,
+        // Only send offset if we don't have a cursor (for initial page jumps)
+        offset: lastId ? undefined : offset
+      }
+    })
+    
     const newLogs = res.data.results ?? []
+    totalItems.value = res.data.paging?.total ?? 0
 
-    // Only update if the number of logs changed or the first log's ID changed
-    // This avoids unnecessary re-renders when data is the same
+    // Store the cursor for the NEXT page
+    if (newLogs.length > 0) {
+      pageCursors.value[page + 1] = newLogs[newLogs.length - 1].id
+    }
+
+    // Only update if data actually changed
     if (newLogs.length !== logs.value.length || (newLogs.length > 0 && newLogs[0].id !== logs.value[0]?.id)) {
       logs.value = newLogs
     }
@@ -282,6 +317,15 @@ async function fetchLogs(isAuto = false) {
   } finally {
     if (!isAuto) loading.value = false
   }
+}
+
+function onTableUpdate(options: any) {
+  // If page size changed, clear cursors because they are no longer valid
+  if (options.itemsPerPage !== itemsPerPage.value) {
+    pageCursors.value = {}
+    itemsPerPage.value = options.itemsPerPage
+  }
+  fetchLogs()
 }
 
 async function clearLogs() {
@@ -321,7 +365,7 @@ function showSnackbar(text: string, isError = false) {
 }
 
 onMounted(() => {
-  fetchLogs()
+  // Initial fetch will be triggered by @update:options on v-data-table-server
   startTimer()
 })
 

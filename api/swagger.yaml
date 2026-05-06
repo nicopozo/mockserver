@@ -40,6 +40,8 @@ definitions:
     type: object
   model.Paging:
     properties:
+      last_id:
+        type: string
       limit:
         default: 30
         maximum: 1000

@@ -1,69 +1,46 @@
 package service
 
 import (
-	"sync"
-	"sync/atomic"
-	"time"
+	"context"
 
 	"github.com/nicopozo/mockserver/internal/model"
+	"github.com/nicopozo/mockserver/internal/repository"
 )
 
-const maxLogEntries = 500
-
-// LogService stores request/response log entries in memory.
+// LogService stores request/response log entries.
 type LogService interface {
 	Add(entry model.LogEntry)
-	GetAll() model.LogList
+	GetAll(paging model.Paging) model.LogList
 	Clear()
 }
 
 type logService struct {
-	mu      sync.RWMutex
-	entries []model.LogEntry
-	counter int64
+	repo repository.LogRepository
 }
 
-// NewLogService creates a new in-memory LogService.
-func NewLogService() LogService {
+// NewLogService creates a new LogService with the provided repository.
+func NewLogService(repo repository.LogRepository) LogService {
 	return &logService{
-		entries: make([]model.LogEntry, 0, maxLogEntries),
+		repo: repo,
 	}
 }
 
 func (s *logService) Add(entry model.LogEntry) {
-	entry.ID = atomic.AddInt64(&s.counter, 1)
-	entry.Timestamp = time.Now()
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.entries = append(s.entries, entry)
-
-	// Keep only the last maxLogEntries entries.
-	if len(s.entries) > maxLogEntries {
-		s.entries = s.entries[len(s.entries)-maxLogEntries:]
-	}
+	_ = s.repo.Add(context.Background(), entry)
 }
 
-func (s *logService) GetAll() model.LogList {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	// Return a copy in reverse order (newest first).
-	result := make([]model.LogEntry, len(s.entries))
-	for i, entry := range s.entries {
-		result[len(s.entries)-1-i] = entry
+func (s *logService) GetAll(paging model.Paging) model.LogList {
+	logs, err := s.repo.GetAll(context.Background(), paging)
+	if err != nil {
+		return model.LogList{
+			Results: []model.LogEntry{},
+			Paging:  paging,
+		}
 	}
 
-	return model.LogList{
-		Results: result,
-		Total:   len(result),
-	}
+	return logs
 }
 
 func (s *logService) Clear() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.entries = make([]model.LogEntry, 0, maxLogEntries)
+	_ = s.repo.Clear(context.Background())
 }

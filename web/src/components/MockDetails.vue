@@ -171,7 +171,9 @@
             <v-col cols="12" md="4">
               <v-text-field label="Source Key/Path" v-model="variable.key" variant="outlined" density="comfortable" 
                             :disabled="!isVariableTypeRequired(variable)"
-                            placeholder="JSON Path or Header Key"/>
+                            :placeholder="variableKeyPlaceholder(variable.type)"
+                            :hint="variableKeyHint(variable.type)"
+                            persistent-hint/>
             </v-col>
           </v-row>
 
@@ -505,6 +507,26 @@ function isResponseSceneRequired(m: Mock) {
 
 function isVariableTypeRequired(variable: Variable) {
   return variable.type === 'body' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
+}
+
+function variableKeyPlaceholder(type: string): string {
+  switch (type) {
+    case 'body':   return '$.field or $.nested.field'
+    case 'header': return 'X-Custom-Header'
+    case 'query':  return 'paramName'
+    case 'path':   return 'paramName (matches {paramName} in path)'
+    default:       return 'N/A — not required for this type'
+  }
+}
+
+function variableKeyHint(type: string): string {
+  switch (type) {
+    case 'body':   return 'JSONPath expression to extract a value from the request body'
+    case 'header': return 'Name of the HTTP request header to read'
+    case 'query':  return 'Query string parameter name (e.g. for ?page=2 use "page")'
+    case 'path':   return 'Path segment name defined in curly braces, e.g. user_id for /users/{user_id}'
+    default:       return ''
+  }
 }
 
 function isAssertionFieldRequired(assertion: Assertion, field: string) {

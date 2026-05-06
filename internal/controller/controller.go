@@ -39,6 +39,8 @@ func getPagingFromRequest(request *http.Request) (*model.Paging, error) {
 		paging.Limit = int32(l)
 	}
 
+	paging.LastID = request.URL.Query().Get("last_id")
+
 	return paging, nil
 }
 

@@ -33,6 +33,7 @@ func BuildContainer() MockContainer {
 	providers := []any{
 		// Repositories
 		newRuleRepository,
+		newLogRepository,
 
 		// Services
 		service.NewLogService,
@@ -88,4 +89,23 @@ func newRuleRepository() (repository.RuleRepository, error) {
 	}
 
 	return nil, errInvalidDataSource
+}
+
+// newLogRepository selects the appropriate log storage implementation.
+func newLogRepository() (repository.LogRepository, error) {
+	dataSource := os.Getenv("MOCKS_DATASOURCE")
+
+	switch dataSource {
+	case "mysql", "postgres":
+		db, err := repository.GetDB()
+		if err != nil {
+			return nil, fmt.Errorf("error connecting to %s DB for logs: %w", dataSource, err)
+		}
+
+		return repository.NewLogSQLRepository(db), nil
+
+	default:
+		// Default to in-memory for "file" mode or if not specified
+		return repository.NewLogMemoryRepository(), nil
+	}
 }
