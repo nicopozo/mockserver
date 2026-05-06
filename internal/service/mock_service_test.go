@@ -870,7 +870,7 @@ func TestMockService_SearchResponseForRequest(t *testing.T) {
 				srv, err := service.NewMockService(ruleServiceMock)
 				assert.Nil(t, err)
 
-				got, err := srv.SearchResponseForRequest(
+				got, _, err := srv.SearchResponseForRequest(
 					tt.args[idx].ctx, tt.args[idx].request, tt.args[idx].path, tt.args[idx].body)
 				if tt.want[idx].err != nil {
 					assert.Equal(t, tt.want[idx].err, err)

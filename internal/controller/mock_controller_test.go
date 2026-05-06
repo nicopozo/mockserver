@@ -131,7 +131,7 @@ func TestMockController_Execute(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			mockServiceMock.EXPECT().SearchResponseForRequest(gomock.Any(), gomock.Any(), "/test", gomock.Any()).
-				Return(tt.serviceResponse, tt.serviceErr).Times(tt.serviceCallTimes)
+				Return(tt.serviceResponse, model.AssertionResult{}, tt.serviceErr).Times(tt.serviceCallTimes)
 
 			ginContext, response := testutils.GetGinContext()
 			path := gin.Param{Key: "rule", Value: "/test"}

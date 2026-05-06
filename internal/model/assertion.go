@@ -84,24 +84,24 @@ func (a Assertion) Validate() error {
 
 type AssertionResult struct {
 	Fail            bool
-	assertionErrors []string
+	AssertionErrors []string
 }
 
 func (e *AssertionResult) AddAssertionError(failsOnError bool, assertionError string) {
 	e.Fail = e.Fail || failsOnError
-	e.assertionErrors = append(e.assertionErrors, assertionError)
+	e.AssertionErrors = append(e.AssertionErrors, assertionError)
 }
 
 func (e *AssertionResult) GetError() error {
 	return mockserrors.AssertionError{
-		Errors: e.assertionErrors,
+		Errors: e.AssertionErrors,
 	}
 }
 
 func (e *AssertionResult) Print(ctx context.Context) {
 	logger := mockscontext.Logger(ctx)
 
-	for _, err := range e.assertionErrors {
+	for _, err := range e.AssertionErrors {
 		logger.Info(e, nil, "variable is not the expected: %s", err)
 	}
 }

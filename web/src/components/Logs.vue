@@ -90,6 +90,20 @@
         </span>
       </template>
 
+      <!-- Assertion result chip -->
+      <template v-slot:item.assertion_errors="{ item }">
+        <v-chip
+          v-if="item.assertion_errors && item.assertion_errors.length > 0"
+          color="red" size="small" label
+          prepend-icon="mdi-close-circle-outline"
+        >
+          Fail ({{ item.assertion_errors.length }})
+        </v-chip>
+        <v-chip v-else color="green" size="small" label prepend-icon="mdi-check-circle-outline">
+          Pass
+        </v-chip>
+      </template>
+
       <!-- Expanded row: full details -->
       <template v-slot:expanded-row="{ columns: cols, item }">
         <tr>
@@ -137,6 +151,23 @@
                       </tbody>
                     </v-table>
                   </v-col>
+                  <!-- ASSERTION ERRORS -->
+                  <v-col cols="12" v-if="item.assertion_errors && item.assertion_errors.length > 0">
+                    <div class="text-overline text-error mb-1">
+                      <v-icon size="small" class="mr-1">mdi-shield-alert-outline</v-icon>
+                      Assertion Errors ({{ item.assertion_errors.length }})
+                    </div>
+                    <v-alert
+                      v-for="(err, errIdx) in item.assertion_errors"
+                      :key="errIdx"
+                      type="error"
+                      variant="tonal"
+                      density="compact"
+                      class="mb-1 text-caption"
+                    >
+                      {{ err }}
+                    </v-alert>
+                  </v-col>
                 </v-row>
               </v-container>
             </v-card>
@@ -179,6 +210,7 @@ const columns = [
   { title: 'URL', key: 'url', sortable: false },
   { title: 'Request Body', key: 'request_body', sortable: false },
   { title: 'Status', key: 'response_status', width: '80px', sortable: false },
+  { title: 'Assertions', key: 'assertion_errors', width: '110px', sortable: false },
   { title: '', key: 'data-table-expand', width: '40px' },
 ]
 

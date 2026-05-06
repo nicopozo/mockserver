@@ -23,7 +23,9 @@ const maxRand = 9999999999
 //go:generate mockgen -destination=../utils/test/mocks/mock_service_mock.go -package=mocks -source=./mock_service.go
 
 type MockService interface {
-	SearchResponseForRequest(ctx context.Context, request *http.Request, path, body string) (model.Response, error)
+	SearchResponseForRequest(
+		ctx context.Context, request *http.Request, path, body string,
+	) (model.Response, model.AssertionResult, error)
 }
 
 func NewMockService(ruleService RuleService) (MockService, error) {
@@ -42,7 +44,7 @@ type mockService struct {
 
 func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 	request *http.Request, path, body string,
-) (model.Response, error) {
+) (model.Response, model.AssertionResult, error) {
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(svc, nil, "Entering mockService Execute()")
@@ -53,12 +55,12 @@ func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 	if err != nil {
 		logger.Error(svc, nil, err, "error searching responses")
 
-		return model.Response{}, fmt.Errorf("error searching rule, %w", err)
+		return model.Response{}, model.AssertionResult{}, fmt.Errorf("error searching rule, %w", err)
 	}
 
 	variableValues, err := svc.getVariableValues(*request, body, rule, path)
 	if err != nil {
-		return model.Response{}, err
+		return model.Response{}, model.AssertionResult{}, err
 	}
 
 	assertionResult := svc.applyAssertionsFromRule(rule, variableValues)
@@ -66,19 +68,19 @@ func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 	assertionResult.Print(ctx)
 
 	if assertionResult.Fail {
-		return model.Response{}, assertionResult.GetError() //nolint:wrapcheck
+		return model.Response{}, assertionResult, assertionResult.GetError() //nolint:wrapcheck
 	}
 
 	response, err := svc.getResponseFromRule(ctx, rule, request, body, path)
 	if err != nil {
-		return model.Response{}, err
+		return model.Response{}, assertionResult, err
 	}
 
 	body = svc.applyVariables(response.Body, variableValues)
 
 	response.Body = body
 
-	return response, nil
+	return response, assertionResult, nil
 }
 
 func (svc *mockService) applyVariables(respBody string, variables []*model.Variable) string {

@@ -38,7 +38,12 @@ func (controller *MockController) Execute(context *gin.Context) {
 	// Build base log entry from the incoming request.
 	logEntry := controller.buildLogEntry(context, path, reqBody)
 
-	response, err := controller.MockService.SearchResponseForRequest(reqContext, context.Request, path, reqBody)
+	response, assertionResult, err := controller.MockService.SearchResponseForRequest(
+		reqContext, context.Request, path, reqBody)
+
+	// Attach assertion errors to the log entry regardless of outcome.
+	logEntry.AssertionErrors = assertionResult.AssertionErrors
+
 	if err != nil {
 		controller.handleExecutionError(context, logger, path, logEntry, err)
 

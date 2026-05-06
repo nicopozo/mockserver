@@ -56,6 +56,7 @@ export interface LogEntry {
   query_params: Record<string, string>;
   response_status: number;
   response_body: string;
+  assertion_errors?: string[];
 }
 
 export interface LogList {
