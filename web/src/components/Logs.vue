@@ -319,7 +319,7 @@ async function fetchLogs(isAuto = false) {
   }
 }
 
-function onTableUpdate(options: any) {
+function onTableUpdate(options: { page: number, itemsPerPage: number, sortBy: any[] }) {
   // If page size changed, clear cursors because they are no longer valid
   if (options.itemsPerPage !== itemsPerPage.value) {
     pageCursors.value = {}
