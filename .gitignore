@@ -5,7 +5,6 @@ local.env
 
 # Binaries
 mocks
-service
 
 # IDEs
 .vscode/

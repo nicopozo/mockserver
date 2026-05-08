@@ -124,7 +124,6 @@ func (svc *mockService) getRandomResponse(rule model.Rule) (model.Response, erro
 	return rule.Responses[i], nil
 }
 
-//nolint:cyclop
 func (svc *mockService) getResponseByScene(rule model.Rule, request *http.Request, body,
 	path string,
 ) (model.Response, error) {
@@ -147,16 +146,6 @@ func (svc *mockService) getResponseByScene(rule model.Rule, request *http.Reques
 	sceneName, err := svc.getVariableValue(*scene, request, body, rule, path)
 	if err != nil {
 		return model.Response{}, err
-	}
-
-	if sceneName != "" {
-		first := string(sceneName[0])
-		last := string(sceneName[len(sceneName)-1])
-
-		// if it is a BODY variable, it is returned as JSON. So, I delete the "" from the beginning and the end
-		if first == "\"" && last == "\"" {
-			sceneName = sceneName[1 : len(sceneName)-1]
-		}
 	}
 
 	respIndex := -1

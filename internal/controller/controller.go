@@ -44,9 +44,9 @@ func getPagingFromRequest(request *http.Request) (*model.Paging, error) {
 	return paging, nil
 }
 
-func getParametersFromRequest(request *http.Request) map[string]interface{} {
+func getParametersFromRequest(request *http.Request) map[string]any {
 	queryParams := request.URL.Query()
-	params := make(map[string]interface{}, len(queryParams))
+	params := make(map[string]any, len(queryParams))
 
 	for key, values := range queryParams {
 		if key != "offset" && key != "limit" && key != "last_id" {

@@ -250,6 +250,62 @@ func TestMockService_SearchResponseForRequest(t *testing.T) {
 			},
 		},
 		{
+			name: "Should search response and unquote string variables from JSON body",
+			args: []args{
+				{
+					ctx: mockscontext.Background(),
+					request: getMockRequest(
+						http.MethodPost,
+						"url",
+						"{\"name\": \"nico\"}",
+						nil,
+						nil,
+					),
+					path: "/test",
+					body: "{\"name\": \"nico\"}",
+				},
+			},
+			rulesServiceCall: []rulesServiceCall{
+				{
+					searchByMethodAndPathResult: model.Rule{
+						Key:      "key123",
+						Group:    "myapp",
+						Name:     "test_mock",
+						Path:     "/test",
+						Strategy: "normal",
+						Method:   "POST",
+						Status:   "enabled",
+						Variables: []*model.Variable{
+							{
+								Type: "body",
+								Name: "user_name",
+								Key:  "$.name",
+							},
+						},
+						Responses: []model.Response{
+							{
+								Body:        "{\"greeting\":\"hello {user_name}\"}",
+								ContentType: "application/json",
+								HTTPStatus:  http.StatusOK,
+							},
+						},
+					},
+					searchByMethodAndPathErr:   nil,
+					searchByMethodAndPathTimes: 1,
+				},
+			},
+			want: []want{
+				{
+					result: model.Response{
+						Body:        "{\"greeting\":\"hello nico\"}",
+						ContentType: "application/json",
+						HTTPStatus:  http.StatusOK,
+					},
+					err: nil,
+				},
+			},
+		},
+		{
 			name: "Should return response successfully when equals assertions passes OK",
 			args: []args{
 				{

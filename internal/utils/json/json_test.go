@@ -63,6 +63,21 @@ func TestMarshal(t *testing.T) {
 			args: args{model: &dto{ID: 12, Name: "the_name"}},
 			want: "{\"id\":12,\"name\":\"the_name\"}",
 		},
+		{
+			name: "Marshal string should return raw string",
+			args: args{model: "raw_string"},
+			want: "raw_string",
+		},
+		{
+			name: "Marshal nil should return empty string",
+			args: args{model: nil},
+			want: "",
+		},
+		{
+			name: "Marshal number should return string representation",
+			args: args{model: 123},
+			want: "123",
+		},
 	}
 
 	for _, tt := range tests { //nolint:paralleltest

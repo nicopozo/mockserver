@@ -3,6 +3,7 @@ package controller_test
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/nicopozo/mockserver/internal/controller"
@@ -23,6 +24,7 @@ func TestMockController_Execute(t *testing.T) {
 		serviceErr       error
 		serviceResponse  model.Response
 		serviceCallTimes int
+		rulePath         string
 	}{
 		{
 			name:       "Create rule successfully",
@@ -120,6 +122,18 @@ func TestMockController_Execute(t *testing.T) {
 			serviceResponse:  model.Response{},
 			serviceCallTimes: 1,
 		},
+		{
+			name:       "Should prepend leading slash to path if missing",
+			want:       "{\"balance\":5000}",
+			wantStatus: http.StatusOK,
+			serviceResponse: model.Response{
+				Body:        "{\"balance\":5000}",
+				ContentType: "application/json",
+				HTTPStatus:  http.StatusOK,
+			},
+			serviceCallTimes: 1,
+			rulePath:         "test",
+		},
 	}
 
 	for _, tt := range tests {
@@ -129,11 +143,22 @@ func TestMockController_Execute(t *testing.T) {
 			mockServiceMock := mocks.NewMockMockService(mockCtrl)
 			defer mockCtrl.Finish()
 
-			mockServiceMock.EXPECT().SearchResponseForRequest(gomock.Any(), gomock.Any(), "/test", gomock.Any()).
+			expectedPath := tt.rulePath
+			if expectedPath == "" {
+				expectedPath = "/test"
+			}
+
+			// Ensure expectedPath starts with / for the mock expectation
+			mockSearchPath := expectedPath
+			if !strings.HasPrefix(mockSearchPath, "/") {
+				mockSearchPath = "/" + mockSearchPath
+			}
+
+			mockServiceMock.EXPECT().SearchResponseForRequest(gomock.Any(), gomock.Any(), mockSearchPath, gomock.Any()).
 				Return(tt.serviceResponse, model.AssertionResult{}, tt.serviceErr).Times(tt.serviceCallTimes)
 
 			response, request := testutils.GetHTTPContext()
-			request.SetPathValue("rule", "/test")
+			request.SetPathValue("rule", expectedPath)
 			request.Method = http.MethodGet
 
 			mc := &controller.MockController{

@@ -321,6 +321,14 @@ const varTypes = [
 const assertionTypes = [
   {title: "Equals", value: "equals"},
   {title: "Is not equal", value: "not_equals"},
+  {title: "Regex match", value: "regex"},
+  {title: "Contains", value: "contains"},
+  {title: "Starts with", value: "starts_with"},
+  {title: "Ends with", value: "ends_with"},
+  {title: "Length", value: "length"},
+  {title: "Is One Of (Enum)", value: "enum"},
+  {title: "Is Boolean", value: "boolean"},
+  {title: "JSON Schema", value: "json_schema"},
   {title: "Is string", value: "string"},
   {title: "Is number", value: "number"},
   {title: "Is present", value: "present"},
@@ -556,7 +564,14 @@ function isAssertionFieldRequired(assertion: Assertion, field: string) {
   switch (assertion.type) {
     case "equals":
     case "not_equals":
+    case "regex":
+    case "contains":
+    case "starts_with":
+    case "ends_with":
+    case "enum":
+    case "json_schema":
       return field === "value"
+    case "length":
     case "range":
       return field === "min" || field === "max";
     default:

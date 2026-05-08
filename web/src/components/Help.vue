@@ -226,6 +226,14 @@
               <tbody>
                 <tr><td class="font-weight-medium">Equals</td><td>Variable must exactly match the expected value</td><td>Value field required</td></tr>
                 <tr><td class="font-weight-medium">Is Not Equal</td><td>Variable must not match the expected value</td><td>Value field required</td></tr>
+                <tr><td class="font-weight-medium">Regex Match</td><td>Variable must match the specified regular expression</td><td>Value (regex) required</td></tr>
+                <tr><td class="font-weight-medium">Contains</td><td>Variable must contain the specified substring</td><td>Value field required</td></tr>
+                <tr><td class="font-weight-medium">Starts With</td><td>Variable must start with the specified prefix</td><td>Value field required</td></tr>
+                <tr><td class="font-weight-medium">Ends With</td><td>Variable must end with the specified suffix</td><td>Value field required</td></tr>
+                <tr><td class="font-weight-medium">Length</td><td>Variable length must be within min–max range</td><td>Min and Max fields required</td></tr>
+                <tr><td class="font-weight-medium">Is One Of</td><td>Variable must be one of the comma-separated values</td><td>Value (comma-separated) required</td></tr>
+                <tr><td class="font-weight-medium">Is Boolean</td><td>Variable must be "true" or "false"</td><td>No extra config</td></tr>
+                <tr><td class="font-weight-medium">JSON Schema</td><td>Variable must validate against the provided JSON schema</td><td>Value (JSON Schema) required</td></tr>
                 <tr><td class="font-weight-medium">Is String</td><td>Variable must be a non-numeric string</td><td>No extra config</td></tr>
                 <tr><td class="font-weight-medium">Is Number</td><td>Variable must be a valid number</td><td>No extra config</td></tr>
                 <tr><td class="font-weight-medium">Is Present</td><td>Variable must exist and not be empty</td><td>No extra config</td></tr>

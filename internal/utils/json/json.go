@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-func Unmarshal(body io.Reader, model interface{}) error {
+func Unmarshal(body io.Reader, model any) error {
 	var jsonReq []byte
 
 	var err error
@@ -22,17 +22,19 @@ func Unmarshal(body io.Reader, model interface{}) error {
 	return nil
 }
 
-func Marshal(model interface{}) string {
-	result := ""
-
+func Marshal(model any) string {
 	if model == nil {
-		return result
+		return ""
+	}
+
+	if s, ok := model.(string); ok {
+		return s
 	}
 
 	out, err := json.Marshal(model)
 	if err == nil {
-		result = string(out)
+		return string(out)
 	}
 
-	return result
+	return ""
 }
