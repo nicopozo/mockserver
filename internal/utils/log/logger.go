@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/oklog/ulid/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -92,14 +92,7 @@ func (logger *log) GetMessage(message string, args ...interface{}) string {
 }
 
 func newRequestID() string {
-	requestID := ""
-
-	logID, err := uuid.NewV4()
-	if err == nil {
-		requestID = logID.String()
-	}
-
-	return requestID
+	return ulid.Make().String()
 }
 
 func getClass(source interface{}) string {

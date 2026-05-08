@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
-	gonanoid "github.com/matoous/go-nanoid/v2"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
+	"github.com/oklog/ulid/v2"
 )
 
 const columnMethod = "method"
@@ -86,8 +86,7 @@ func (repository *ruleSQLRepository) Create(ctx context.Context, rule *model.Rul
 	}()
 
 	if rule.Key == "" {
-		id, _ := gonanoid.New(IDLength)
-		rule.Key = id
+		rule.Key = ulid.Make().String()
 	}
 
 	_, err = trx.ExecContext(ctx, query, rule.Key, rule.Group, rule.Name, rule.Path,
@@ -145,11 +144,10 @@ func (repository *ruleSQLRepository) Update(ctx context.Context, rule *model.Rul
 	}
 
 	if rowsAffected == 0 {
-		err = mockserrors.RuleNotFoundError{
-			Message: fmt.Sprintf("no rule found with key: %s", rule.Key),
+		_, err := repository.Get(ctx, rule.Key)
+		if err != nil {
+			return nil, err
 		}
-
-		return nil, err
 	}
 
 	return rule, repository.syncRelatedData(ctx, rule, trx)
@@ -278,12 +276,12 @@ func (repository *ruleSQLRepository) Search(ctx context.Context, params map[stri
 
 	var err error
 
-	searchQuery, err := newSearchQuery(params, repository.db.DriverName())
+	searchQuery, args, err := newSearchQuery(params, paging, repository.db.DriverName())
 	if err != nil {
 		return nil, err
 	}
 
-	err = repository.db.Select(&rows, searchQuery, paging.Limit, paging.Offset)
+	err = repository.db.Select(&rows, searchQuery, args...)
 	if err != nil {
 		logger.Error(repository, nil, err, "error executing SQL query")
 
@@ -445,20 +443,39 @@ func (repository *ruleSQLRepository) insertResponses(ctx context.Context, rule *
 	return nil
 }
 
-func newSearchQuery(params map[string]interface{}, driver string) (string, error) {
+func newSearchQuery(params map[string]interface{}, paging model.Paging, driver string) (string, []interface{}, error) {
 	query := "SELECT * FROM rules"
 
 	where, err := newWhereClause(params, driver)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	order := FormatQuery(
-		" ORDER BY `group`, path, "+columnMethod+" LIMIT ? OFFSET ?",
-		driver,
-	)
+	var args []interface{}
 
-	return query + where + order, nil
+	if paging.LastID != "" {
+		if where == " " {
+			where = " WHERE "
+		} else {
+			where += " AND "
+		}
+
+		if driver == datasourcePostgres {
+			where += `"key" < ?`
+		} else {
+			where += "`key` < ?"
+		}
+
+		args = append(args, paging.LastID)
+
+		order := FormatQuery(" ORDER BY `key` DESC LIMIT ?", driver)
+
+		return query + where + order, append(args, paging.Limit), nil
+	}
+
+	order := FormatQuery(" ORDER BY `key` DESC LIMIT ?", driver)
+
+	return query + where + order, append(args, paging.Limit), nil
 }
 
 func newWhereClause(params map[string]interface{}, driver string) (string, error) {
@@ -480,7 +497,7 @@ func newWhereClause(params map[string]interface{}, driver string) (string, error
 			where += key + " like '%" + v + "%'"
 		case "group", "key":
 			v := strings.ToLower(fmt.Sprintf("%v", value))
-			if driver == "postgres" {
+			if driver == datasourcePostgres {
 				where += `"` + key + `"` + " like '%" + v + "%'"
 			} else {
 				where += "`" + key + "` like '%" + v + "%'"

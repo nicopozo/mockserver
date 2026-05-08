@@ -86,8 +86,80 @@ func Test_ruleFileRepository_Get(t *testing.T) {
 	}
 }
 
+func Test_ruleFileRepository_Search(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		params map[string]interface{}
+		paging model.Paging
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		wantLen int
+		total   int64
+	}{
+		{
+			name: "Should search and return all rules",
+			args: args{
+				ctx:    context.Background(),
+				params: map[string]interface{}{},
+				paging: model.Paging{Limit: 10},
+			},
+			wantLen: 4,
+			total:   4,
+		},
+		{
+			name: "Should search with limit",
+			args: args{
+				ctx:    context.Background(),
+				params: map[string]interface{}{},
+				paging: model.Paging{Limit: 1},
+			},
+			wantLen: 1,
+			total:   4,
+		},
+		{
+			name: "Should search with LastID (keyset pagination)",
+			args: args{
+				ctx:    context.Background(),
+				params: map[string]interface{}{},
+				paging: model.Paging{Limit: 10, LastID: "c3"}, // c3 is index 1 after sorting newest first (d4, c3, b2, a1)
+			},
+			wantLen: 2, // b2, a1
+			total:   4,
+		},
+		{
+			name: "Should search with filters",
+			args: args{
+				ctx:    context.Background(),
+				params: map[string]interface{}{"name": "TestMock"},
+				paging: model.Paging{Limit: 10},
+			},
+			wantLen: 1,
+			total:   1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			name := getMocksFile()
+			defer func(fileName string) { _ = os.Remove(fileName) }(name)
+
+			fileRepository, err := repository.NewRuleFileRepository(name)
+			if assert.Nil(t, err) {
+				got, err := fileRepository.Search(tt.args.ctx, tt.args.params, tt.args.paging)
+
+				assert.Nil(t, err)
+				assert.Equal(t, tt.wantLen, len(got.Results))
+				assert.Equal(t, tt.total, got.Paging.Total)
+			}
+		})
+	}
+}
+
 func getMocksFile() string {
-	dest, err := os.OpenFile("mocks.json", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o600)
+	dest, err := os.OpenFile("mocks.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		panic(err)
 	}

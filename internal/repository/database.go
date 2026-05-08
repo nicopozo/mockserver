@@ -149,7 +149,7 @@ func getEnv(name, defaultValue string) string {
 // For postgres: replaces backtick-escaped identifiers with double quotes and
 // rebinds positional parameters from ? to $1, $2, etc.
 func FormatQuery(query string, driver string) string {
-	if driver != "postgres" {
+	if driver != datasourcePostgres {
 		return query
 	}
 

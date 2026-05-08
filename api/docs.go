@@ -69,9 +69,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "default": "0",
-                        "description": "number of results to be skipped",
-                        "name": "offset",
+                        "description": "ID of the last item from the previous page",
+                        "name": "last_id",
                         "in": "query"
                     }
                 ],
@@ -483,12 +482,6 @@ const docTemplate = `{
                 "limit": {
                     "type": "integer",
                     "default": 30,
-                    "maximum": 1000,
-                    "minimum": 0
-                },
-                "offset": {
-                    "type": "integer",
-                    "default": 0,
                     "maximum": 1000,
                     "minimum": 0
                 },

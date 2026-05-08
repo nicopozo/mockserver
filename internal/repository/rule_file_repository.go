@@ -6,13 +6,14 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 
-	gonanoid "github.com/matoous/go-nanoid/v2"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
+	"github.com/oklog/ulid/v2"
 )
 
 const defaultFilePath = "/tmp/mocks.json"
@@ -81,8 +82,7 @@ func (repository *ruleFileRepository) Create(ctx context.Context, rule *model.Ru
 
 	logger.Debug(repository, nil, "Saving new rule into file")
 
-	id, _ := gonanoid.New(IDLength)
-	rule.Key = id
+	rule.Key = ulid.Make().String()
 
 	fRule := fileRule{
 		Rule:              *rule,
@@ -99,12 +99,23 @@ func (repository *ruleFileRepository) Update(ctx context.Context, rule *model.Ru
 
 	logger.Debug(repository, nil, "Updating rule.")
 
+	found := false
+
 	for index := range repository.rules {
 		if repository.rules[index].Key == rule.Key {
 			repository.rules[index] = fileRule{
 				Rule:              *rule,
 				NextResponseIndex: rule.NextResponseIndex,
 			}
+			found = true
+
+			break
+		}
+	}
+
+	if !found {
+		return nil, mockserrors.RuleNotFoundError{
+			Message: fmt.Sprintf("no rule found with key: %s", rule.Key),
 		}
 	}
 
@@ -145,7 +156,6 @@ func (repository *ruleFileRepository) Search(ctx context.Context, params map[str
 
 	ruleList := new(model.RuleList)
 	ruleList.Paging = paging
-	ruleList.Results = make([]*model.Rule, 0)
 
 	filtered := make([]*model.Rule, 0)
 
@@ -158,18 +168,39 @@ func (repository *ruleFileRepository) Search(ctx context.Context, params map[str
 		}
 	}
 
-	if int(paging.Offset) > len(filtered) {
+	// Sort newest first
+	sort.Slice(filtered, func(i, j int) bool {
+		return filtered[i].Key > filtered[j].Key
+	})
+
+	ruleList.Paging.Total = int64(len(filtered))
+
+	start := 0
+
+	if paging.LastID != "" {
+		start = -1
+
+		for index, rule := range filtered {
+			if rule.Key == paging.LastID {
+				start = index + 1
+
+				break
+			}
+		}
+	}
+
+	if start == -1 || start >= len(filtered) {
+		ruleList.Results = make([]*model.Rule, 0)
+
 		return ruleList, nil
 	}
 
-	to := int(paging.Offset) + int(paging.Limit)
+	to := start + int(paging.Limit)
 	if to > len(filtered) {
 		to = len(filtered)
 	}
 
-	ruleList.Results = filtered[paging.Offset:to]
-
-	ruleList.Paging.Total = int64(len(filtered))
+	ruleList.Results = filtered[start:to]
 
 	return ruleList, nil
 }

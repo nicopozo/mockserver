@@ -200,6 +200,9 @@ const options = ref({
   itemsPerPage: 10
 });
 
+// Store the last ID seen for each page to support keyset pagination
+const pageCursors = ref<Record<number, string>>({});
+
 const alert = reactive({
   show: false,
   color: "green",
@@ -211,6 +214,10 @@ function triggerFileInput() {
 }
 
 function handleOptionsUpdate(newOptions: any) {
+  // If page size changed, clear cursors because they are no longer valid
+  if (newOptions.itemsPerPage !== options.value.itemsPerPage) {
+    pageCursors.value = {};
+  }
   options.value = newOptions;
 }
 
@@ -233,9 +240,12 @@ function queryParams() {
   const { group, path, strategy, method } = filters;
   const { page, itemsPerPage } = options.value;
 
+  // Try to use the cursor for the current page
+  const lastId = pageCursors.value[page];
+
   let params: any = {
     limit: itemsPerPage,
-    offset: (page - 1) * itemsPerPage,
+    last_id: lastId || undefined,
   };
 
   if (group) params.group = group;
@@ -255,9 +265,10 @@ function reset() {
 }
 
 function search() {
+  pageCursors.value = {}; // Reset cursors on new search
   options.value = {
     page: 1,
-    itemsPerPage: 10,
+    itemsPerPage: options.value.itemsPerPage,
   };
 }
 
@@ -275,8 +286,17 @@ function restSearch() {
         params: queryParams(),
       })
       .then((res) => {
-        table.rows = res.data.results;
+        table.rows = res.data.results || [];
         table.total = res.data.paging.total;
+
+        // Store the cursor for the NEXT page
+        const { page } = options.value;
+        if (table.rows.length > 0) {
+          const lastKey = table.rows[table.rows.length - 1].key;
+          if (lastKey) {
+            pageCursors.value[page + 1] = lastKey;
+          }
+        }
       })
       .catch((err) => {
         table.rows = [];

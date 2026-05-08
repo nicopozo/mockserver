@@ -238,7 +238,7 @@ func (controller *RuleController) Get(context *gin.Context) {
 // @Param method query string false "Method"
 // @Param status query string false "Enabled/Disabled"
 // @Param limit query number false "Max expected number of results" default(30)
-// @Param offset query string false "number of results to be skipped" default(0)
+// @Param last_id query string false "ID of the last item from the previous page"
 // @Success 200 {object} model.RuleList "Result"
 // @Failure 400 {object} model.Error
 // @Failure 404 {object} model.Error
@@ -335,7 +335,7 @@ func (controller *RuleController) Export(context *gin.Context) {
 	logger.Debug(controller, nil, "Entering RuleController Export()")
 
 	// Use a large limit to get everything
-	paging := model.Paging{Limit: exportLimit, Offset: 0}
+	paging := model.Paging{Limit: exportLimit}
 
 	ruleList, err := controller.RuleService.Search(reqContext, nil, paging)
 	if err != nil {

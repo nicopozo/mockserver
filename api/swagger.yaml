@@ -47,11 +47,6 @@ definitions:
         maximum: 1000
         minimum: 0
         type: integer
-      offset:
-        default: 0
-        maximum: 1000
-        minimum: 0
-        type: integer
       total:
         type: integer
     type: object
@@ -179,10 +174,9 @@ paths:
         in: query
         name: limit
         type: number
-      - default: "0"
-        description: number of results to be skipped
+      - description: ID of the last item from the previous page
         in: query
-        name: offset
+        name: last_id
         type: string
       produces:
       - application/json

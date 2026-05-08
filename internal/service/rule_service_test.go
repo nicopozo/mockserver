@@ -619,3 +619,120 @@ func TestRuleService_Delete(t *testing.T) {
 		})
 	}
 }
+
+func TestRuleService_Update(t *testing.T) {
+	type args struct {
+		key  string
+		rule model.Rule
+		ctx  context.Context
+	}
+
+	tests := []struct {
+		name             string
+		args             args
+		want             model.Rule
+		wantedErr        error
+		repositoryErr    error
+		serviceCallTimes int
+	}{
+		{
+			name: "Should update rule correctly",
+			args: args{
+				ctx: mockscontext.Background(),
+				key: "key123",
+				rule: model.Rule{
+					Group:    "myapp",
+					Name:     "test_mock",
+					Path:     "/test",
+					Strategy: "normal",
+					Method:   "put",
+					Status:   "enabled",
+					Responses: []model.Response{
+						{
+							Body:        "{\"balance\":5000}",
+							ContentType: "application/json",
+							HTTPStatus:  http.StatusOK,
+							Delay:       100,
+						},
+					},
+				},
+			},
+			want: model.Rule{
+				Key:      "key123",
+				Group:    "myapp",
+				Name:     "test_mock",
+				Path:     "/test",
+				Strategy: "normal",
+				Method:   "PUT",
+				Status:   "enabled",
+				Responses: []model.Response{
+					{
+						Body:        "{\"balance\":5000}",
+						ContentType: "application/json",
+						HTTPStatus:  http.StatusOK,
+						Delay:       100,
+					},
+				},
+			},
+			wantedErr:        nil,
+			repositoryErr:    nil,
+			serviceCallTimes: 1,
+		},
+		{
+			name: "Should return error when repository returns error",
+			args: args{
+				ctx: mockscontext.Background(),
+				key: "key123",
+				rule: model.Rule{
+					Group:    "myapp",
+					Name:     "test_mock",
+					Path:     "/test",
+					Strategy: "normal",
+					Method:   "put",
+					Status:   "enabled",
+					Responses: []model.Response{
+						{
+							Body:        "{\"balance\":5000}",
+							ContentType: "application/json",
+							HTTPStatus:  http.StatusOK,
+							Delay:       100,
+						},
+					},
+				},
+			},
+			wantedErr:        fmt.Errorf("error updating rule - %w", errors.New("error updating rule")),
+			repositoryErr:    errors.New("error updating rule"),
+			serviceCallTimes: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+
+			ruleRepositoryMock := mocks.NewMockRuleRepository(mockCtrl)
+			defer mockCtrl.Finish()
+
+			ruleRepositoryMock.EXPECT().Update(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(ctx context.Context, rule *model.Rule) (*model.Rule, error) {
+					if tt.repositoryErr != nil {
+						return nil, tt.repositoryErr
+					}
+
+					return rule, nil
+				}).Times(tt.serviceCallTimes)
+
+			ruleService, err := service.NewRuleService(ruleRepositoryMock)
+			assert.Nil(t, err)
+
+			got, err := ruleService.Update(tt.args.ctx, tt.args.key, tt.args.rule)
+			if tt.wantedErr != nil {
+				assert.Equal(t, tt.wantedErr.Error(), err.Error())
+
+				return
+			}
+
+			assert.Nil(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

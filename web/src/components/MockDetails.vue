@@ -258,8 +258,8 @@
 
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, reactive, watch, onMounted, onUnmounted, computed } from 'vue';
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import axios from 'axios';
 import type { Mock, Variable, Assertion, Response } from '@/types';
 
@@ -273,9 +273,27 @@ const router = useRouter();
 const form = ref<any>(null);
 
 const mock = ref<Mock>(newMock());
+const originalMockString = ref('');
 const valid = ref(false);
 const loading = ref(false);
 const saving = ref(false);
+
+const isDirty = computed(() => {
+  return JSON.stringify(mock.value) !== originalMockString.value;
+});
+
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  if (isDirty.value) {
+    e.preventDefault();
+  }
+}
+
+onBeforeRouteLeave(() => {
+  if (isDirty.value) {
+    const answer = window.confirm('Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?');
+    if (!answer) return false;
+  }
+});
 
 const httpMethods = [
   {title: "GET", value: "GET"},
@@ -386,6 +404,7 @@ function createMock() {
         headers: { "Content-Type": "application/json" },
       })
       .then((res) => {
+        originalMockString.value = JSON.stringify(mock.value);
         router.push({name: 'MockDetails', params: {theKey: res.data.key, theName: res.data.name}});
       })
       .catch((err) => showAlert("Error creating mock", err))
@@ -398,7 +417,10 @@ function updateMock() {
       .put(baseURL() + "/" + props.theKey, mock.value, {
         headers: { "Content-Type": "application/json" },
       })
-      .then(() => showAlert("Mock successfully updated!"))
+      .then(() => {
+        originalMockString.value = JSON.stringify(mock.value);
+        showAlert("Mock successfully updated!");
+      })
       .catch((err) => showAlert("Error updating mock", err))
       .finally(() => saving.value = false);
 }
@@ -595,17 +617,24 @@ function initialize() {
         .get<Mock>(baseURL() + "/" + props.theKey)
         .then((res) => {
           mock.value = res.data;
+          originalMockString.value = JSON.stringify(res.data);
         })
         .catch((err) => showAlert("Error getting mock info!", err))
         .finally(() => loading.value = false);
   } else {
     mock.value = newMock();
+    originalMockString.value = JSON.stringify(mock.value);
     form.value?.resetValidation();
   }
 }
 
 onMounted(() => {
   initialize();
+  window.addEventListener('beforeunload', handleBeforeUnload);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload);
 });
 
 watch(() => route.path, () => {

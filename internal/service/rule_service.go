@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -51,34 +52,36 @@ func (ruleService *ruleService) Save(ctx context.Context, rule model.Rule) (mode
 
 	rule = formatRule(rule)
 
-	repoRule, err := ruleService.RuleRepository.Create(ctx, &rule)
+	var (
+		repoRule *model.Rule
+		err      error
+	)
+
+	action := "creating"
+
+	if rule.Key == "" {
+		repoRule, err = ruleService.RuleRepository.Create(ctx, &rule)
+	} else {
+		action = "updating"
+		repoRule, err = ruleService.RuleRepository.Update(ctx, &rule)
+
+		if err != nil && errors.As(err, &mockserrors.RuleNotFoundError{}) {
+			action = "creating"
+			repoRule, err = ruleService.RuleRepository.Create(ctx, &rule)
+		}
+	}
+
 	if err != nil {
-		return model.Rule{}, fmt.Errorf("error creating rule - %w", err)
+		return model.Rule{}, fmt.Errorf("error %s rule - %w", action, err)
 	}
 
 	return *repoRule, nil
 }
 
 func (ruleService *ruleService) Update(ctx context.Context, key string, rule model.Rule) (model.Rule, error) {
-	logger := mockscontext.Logger(ctx)
-
-	logger.Debug(ruleService, nil, "Entering ruleService Update()")
-
-	if err := validateRule(rule); err != nil {
-		logger.Error(ruleService, nil, err, "Rule Validation failed")
-
-		return model.Rule{}, fmt.Errorf("error validating rule - %w", err)
-	}
-
 	rule.Key = key
-	rule = formatRule(rule)
 
-	repoRule, err := ruleService.RuleRepository.Update(ctx, &rule)
-	if err != nil {
-		return model.Rule{}, fmt.Errorf("error updating rule - %w", err)
-	}
-
-	return *repoRule, nil
+	return ruleService.Save(ctx, rule)
 }
 
 func (ruleService *ruleService) UpdateStatus(ctx context.Context, key string,
@@ -86,7 +89,7 @@ func (ruleService *ruleService) UpdateStatus(ctx context.Context, key string,
 ) (model.Rule, error) {
 	logger := mockscontext.Logger(ctx)
 
-	logger.Debug(ruleService, nil, "Entering ruleService Update()")
+	logger.Debug(ruleService, nil, "Entering ruleService UpdateStatus()")
 
 	if err := ruleStatus.Validate(); err != nil {
 		return model.Rule{}, fmt.Errorf("error validating rule, %w", err)
@@ -99,14 +102,7 @@ func (ruleService *ruleService) UpdateStatus(ctx context.Context, key string,
 
 	rule.Status = ruleStatus.Status
 
-	rule = formatRule(rule)
-
-	repoRule, err := ruleService.RuleRepository.Update(ctx, &rule)
-	if err != nil {
-		return model.Rule{}, fmt.Errorf("error updating rule status - %w", err)
-	}
-
-	return *repoRule, nil
+	return ruleService.Save(ctx, rule)
 }
 
 func (ruleService *ruleService) Get(ctx context.Context, key string) (model.Rule, error) {

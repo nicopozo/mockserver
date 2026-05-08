@@ -38,7 +38,6 @@ export interface Mock {
 export interface Paging {
   total: number;
   limit: number;
-  offset: number;
   last_id?: string;
 }
 
