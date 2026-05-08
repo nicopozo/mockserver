@@ -225,6 +225,7 @@
               <thead><tr><th>Type</th><th>Description</th><th>Config</th></tr></thead>
               <tbody>
                 <tr><td class="font-weight-medium">Equals</td><td>Variable must exactly match the expected value</td><td>Value field required</td></tr>
+                <tr><td class="font-weight-medium">Is Not Equal</td><td>Variable must not match the expected value</td><td>Value field required</td></tr>
                 <tr><td class="font-weight-medium">Is String</td><td>Variable must be a non-numeric string</td><td>No extra config</td></tr>
                 <tr><td class="font-weight-medium">Is Number</td><td>Variable must be a valid number</td><td>No extra config</td></tr>
                 <tr><td class="font-weight-medium">Is Present</td><td>Variable must exist and not be empty</td><td>No extra config</td></tr>

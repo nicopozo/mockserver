@@ -320,6 +320,7 @@ const varTypes = [
 ];
 const assertionTypes = [
   {title: "Equals", value: "equals"},
+  {title: "Is not equal", value: "not_equals"},
   {title: "Is string", value: "string"},
   {title: "Is number", value: "number"},
   {title: "Is present", value: "present"},
@@ -554,6 +555,7 @@ function variableKeyHint(type: string): string {
 function isAssertionFieldRequired(assertion: Assertion, field: string) {
   switch (assertion.type) {
     case "equals":
+    case "not_equals":
       return field === "value"
     case "range":
       return field === "min" || field === "max";

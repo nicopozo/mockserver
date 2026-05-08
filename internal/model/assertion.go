@@ -12,6 +12,7 @@ import (
 
 const (
 	AssertionTypeEquals    = "equals"
+	AssertionTypeNotEquals = "not_equals"
 	AssertionTypeString    = "string"
 	AssertionTypeNumber    = "number"
 	AssertionTypeRange     = "range"
@@ -29,9 +30,11 @@ type Assertion struct {
 }
 
 func (a Assertion) Assert(variable *Variable) (string, bool) { //nolint:cyclop
+	val := strings.Trim(variable.Value, `"`)
+
 	switch a.Type {
 	case AssertionTypeNumber:
-		if !isNumber(strings.Trim(variable.Value, `"`)) {
+		if !isNumber(val) {
 			return fmt.Sprintf("variable '%s' is not a valid number", variable.Name), false
 		}
 	case AssertionTypeString:
@@ -39,12 +42,17 @@ func (a Assertion) Assert(variable *Variable) (string, bool) { //nolint:cyclop
 			return fmt.Sprintf("variable '%s' is not a valid string", variable.Name), false
 		}
 	case AssertionTypeEquals:
-		if strings.TrimSpace(variable.Value) != strings.TrimSpace(a.Value) {
+		if strings.TrimSpace(val) != strings.TrimSpace(a.Value) {
 			return fmt.Sprintf("variable '%s' value is '%s' but expected was '%s'",
 				variable.Name, variable.Value, a.Value), false
 		}
+	case AssertionTypeNotEquals:
+		if strings.TrimSpace(val) == strings.TrimSpace(a.Value) {
+			return fmt.Sprintf("variable '%s' value is '%s' and it is not expected to be equal to '%s'",
+				variable.Name, variable.Value, a.Value), false
+		}
 	case AssertionTypeRange:
-		v, err := strconv.ParseFloat(variable.Value, floatSize)
+		v, err := strconv.ParseFloat(val, floatSize)
 		if err != nil {
 			return fmt.Sprintf("variable '%s' is not a valid number", variable.Name), false
 		}
@@ -53,7 +61,7 @@ func (a Assertion) Assert(variable *Variable) (string, bool) { //nolint:cyclop
 			return fmt.Sprintf("variable '%s' is not in a valid number range", variable.Name), false
 		}
 	case AssertionTypeIsPresent:
-		if strings.TrimSpace(variable.Value) == "" {
+		if strings.TrimSpace(val) == "" {
 			return fmt.Sprintf("variable '%s' is not present in request", variable.Name), false
 		}
 	}
@@ -65,9 +73,9 @@ func (a Assertion) Validate() error {
 	switch a.Type {
 	case AssertionTypeNumber, AssertionTypeString, AssertionTypeIsPresent:
 		return nil
-	case AssertionTypeEquals:
+	case AssertionTypeEquals, AssertionTypeNotEquals:
 		if a.Value == "" {
-			return mockserrors.InvalidRulesError{Message: "value is required when type is 'equals'"}
+			return mockserrors.InvalidRulesError{Message: "value is required when type is 'equals' or 'not_equals'"}
 		}
 
 		return nil

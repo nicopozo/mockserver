@@ -290,6 +290,62 @@ func TestAssertion_Assert(t *testing.T) {
 				isValid: false,
 			},
 		},
+		{
+			name: "Should validate successfully type is 'not_equals' and value is different",
+			assertionsFields: assertionsFields{
+				Type:  "not_equals",
+				Value: "user01",
+			},
+			args: args{
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "username",
+					Key:   "username",
+					Value: "user02",
+				},
+			},
+			want: want{
+				isValid: true,
+			},
+		},
+		{
+			name: "Should fail validation when type is 'not_equals' and value is equal",
+			assertionsFields: assertionsFields{
+				Type:  "not_equals",
+				Value: "user01",
+			},
+			args: args{
+				variables: &model.Variable{
+					Type:  "query",
+					Name:  "username",
+					Key:   "username",
+					Value: "user01",
+				},
+			},
+			want: want{
+				msg:     "variable 'username' value is 'user01' and it is not expected to be equal to 'user01'",
+				isValid: false,
+			},
+		},
+		{
+			name: "Should fail validation when type is 'not_equals' and value is equal (with quotes)",
+			assertionsFields: assertionsFields{
+				Type:  "not_equals",
+				Value: "user01",
+			},
+			args: args{
+				variables: &model.Variable{
+					Type:  "body",
+					Name:  "username",
+					Key:   "$.username",
+					Value: "\"user01\"",
+				},
+			},
+			want: want{
+				msg:     "variable 'username' value is '\"user01\"' and it is not expected to be equal to 'user01'",
+				isValid: false,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -354,7 +410,22 @@ func TestAssertion_Validate(t *testing.T) {
 			assertionsFields: assertionsFields{
 				Type: "equals",
 			},
-			wantErr: mockserrors.InvalidRulesError{Message: "value is required when type is 'equals'"},
+			wantErr: mockserrors.InvalidRulesError{Message: "value is required when type is 'equals' or 'not_equals'"},
+		},
+		{
+			name: "Validate successfully when type is not_equals and value is set",
+			assertionsFields: assertionsFields{
+				Type:  "not_equals",
+				Value: "assertion_value",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Should return error when type is not_equals and value is not set",
+			assertionsFields: assertionsFields{
+				Type: "not_equals",
+			},
+			wantErr: mockserrors.InvalidRulesError{Message: "value is required when type is 'equals' or 'not_equals'"},
 		},
 		{
 			name: "Validate successfully when type is range and value is correct",
