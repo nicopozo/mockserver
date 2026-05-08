@@ -2,38 +2,33 @@ package main
 
 import (
 	"net/http"
-
-	"github.com/gin-gonic/gin"
-	_ "github.com/nicopozo/mockserver/api"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func mapRoutes(router *gin.Engine, api MockContainer) {
-	router.Static("/mock-service/admin", "web/dist")
+func mapRoutes(mux *http.ServeMux, api MockContainer) {
+	// Serve Admin Web UI
+	mux.Handle("/mock-service/admin/", http.StripPrefix("/mock-service/admin/", http.FileServer(http.Dir("web/dist"))))
 
 	ruleController := api.Controllers.RuleController
-	router.POST("/mock-service/rules", ruleController.Create)
-	router.GET("/mock-service/rules/:key", ruleController.Get)
-	router.GET("/mock-service/rules", ruleController.Search)
-	router.DELETE("/mock-service/rules/:key", ruleController.Delete)
-	router.PUT("/mock-service/rules/:key", ruleController.Update)
-	router.PUT("/mock-service/rules/:key/status", ruleController.UpdateStatus)
-	router.GET("/mock-service/rules/export", ruleController.Export)
-	router.POST("/mock-service/rules/import", ruleController.Import)
+	mux.HandleFunc("POST /mock-service/rules", ruleController.Create)
+	mux.HandleFunc("GET /mock-service/rules/{key}", ruleController.Get)
+	mux.HandleFunc("GET /mock-service/rules", ruleController.Search)
+	mux.HandleFunc("DELETE /mock-service/rules/{key}", ruleController.Delete)
+	mux.HandleFunc("PUT /mock-service/rules/{key}", ruleController.Update)
+	mux.HandleFunc("PUT /mock-service/rules/{key}/status", ruleController.UpdateStatus)
+	mux.HandleFunc("GET /mock-service/rules/export", ruleController.Export)
+	mux.HandleFunc("POST /mock-service/rules/import", ruleController.Import)
 
 	mockController := api.Controllers.MockController
-	router.Any("/mock-service/mock/*rule", mockController.Execute)
+	// Any method wildcard route
+	mux.HandleFunc("/mock-service/mock/{rule...}", mockController.Execute)
 
 	logController := api.Controllers.LogController
-	router.GET("/mock-service/logs", logController.GetLogs)
-	router.DELETE("/mock-service/logs", logController.ClearLogs)
+	mux.HandleFunc("GET /mock-service/logs", logController.GetLogs)
+	mux.HandleFunc("DELETE /mock-service/logs", logController.ClearLogs)
 
-	router.GET("/ping", ping)
-
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	mux.HandleFunc("GET /ping", ping)
 }
 
-func ping(c *gin.Context) {
-	c.String(http.StatusOK, "pong")
+func ping(w http.ResponseWriter, r *http.Request) {
+	_, _ = w.Write([]byte("pong"))
 }

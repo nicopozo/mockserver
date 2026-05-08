@@ -3,10 +3,10 @@ package controller
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/service"
+	httputils "github.com/nicopozo/mockserver/internal/utils/http"
 )
 
 // LogController exposes the in-memory request/response logs.
@@ -21,33 +21,32 @@ func NewLogController(logService service.LogService) *LogController {
 }
 
 // GetLogs returns captured log entries with pagination.
-func (controller *LogController) GetLogs(context *gin.Context) {
-	reqContext := mockscontext.New(context)
+func (controller *LogController) GetLogs(writer http.ResponseWriter, request *http.Request) {
+	reqContext := mockscontext.New(request)
 	logger := mockscontext.Logger(reqContext)
 
 	logger.Debug(controller, nil, "Entering LogController GetLogs()")
 
-	paging, err := getPagingFromRequest(context.Request)
+	paging, err := getPagingFromRequest(request)
 	if err != nil {
 		logger.Error(controller, nil, err, "Error parsing pagination params")
-		errorResult := model.NewError(model.ValidationError, "Error parsing pagination params: %s", err.Error())
-		context.JSON(http.StatusBadRequest, errorResult)
+		httputils.WriteError(writer, model.ValidationError, "Error parsing pagination params: %s", err.Error())
 
 		return
 	}
 
 	logs := controller.LogService.GetAll(*paging)
 
-	context.JSON(http.StatusOK, logs)
+	httputils.WriteJSON(writer, http.StatusOK, logs)
 }
 
 // ClearLogs deletes all captured log entries.
-func (controller *LogController) ClearLogs(context *gin.Context) {
-	reqContext := mockscontext.New(context)
+func (controller *LogController) ClearLogs(writer http.ResponseWriter, request *http.Request) {
+	reqContext := mockscontext.New(request)
 	logger := mockscontext.Logger(reqContext)
 
 	logger.Debug(controller, nil, "Entering LogController ClearLogs()")
 
 	controller.LogService.Clear()
-	context.Status(http.StatusNoContent)
+	writer.WriteHeader(http.StatusNoContent)
 }

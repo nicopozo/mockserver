@@ -2,23 +2,15 @@ package testutils
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
+	"net/http/httptest"
 	"os"
 
-	"github.com/gin-gonic/gin"
 	"github.com/nicopozo/mockserver/internal/model"
-	"github.com/nicopozo/mockserver/internal/utils/test/mocks"
 )
-
-type Body struct {
-	io.Reader
-}
-
-func (Body) Close() error { return nil }
 
 func GetJSONFromFile(filename string) (string, error) {
 	contentBytes, err := os.ReadFile(filename)
@@ -31,33 +23,27 @@ func GetJSONFromFile(filename string) (string, error) {
 	return contentString, nil
 }
 
-func GetGinContext() (*gin.Context, *mocks.MockGinResponseWriter) {
-	request := http.Request{}
+func GetHTTPContext() (*httptest.ResponseRecorder, *http.Request) {
+	request := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/?callback=thecallback.com", nil)
+	responseWriter := httptest.NewRecorder()
 
-	theURL := url.URL{RawQuery: "callback:thecallback.com"}
-
-	request.URL = &theURL
-	ginContext := gin.Context{Request: &request}
-	responseWriter := mocks.MockGinResponseWriter{}
-	ginContext.Writer = &responseWriter
-
-	return &ginContext, &responseWriter
+	return responseWriter, request
 }
 
-func GetGinContextWithBody(requestBodyFile string) (*gin.Context, *mocks.MockGinResponseWriter, error) {
+func GetHTTPContextWithBody(requestBodyFile string) (*httptest.ResponseRecorder, *http.Request, error) {
 	bodyStr, err := GetJSONFromFile(requestBodyFile)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	body := Body{bytes.NewBufferString(bodyStr)}
-	u := url.URL{RawQuery: "callback:thecallback.com"}
+	request := httptest.NewRequestWithContext(
+		context.Background(),
+		http.MethodPost,
+		"/?callback=thecallback.com",
+		bytes.NewBufferString(bodyStr))
+	responseWriter := httptest.NewRecorder()
 
-	ginContext, response := getGinContext()
-	ginContext.Request.Body = body
-	ginContext.Request.URL = &u
-
-	return ginContext, response, nil
+	return responseWriter, request, nil
 }
 
 func GetErrorFromResponse(response []byte) (*model.Error, error) {
@@ -69,20 +55,6 @@ func GetErrorFromResponse(response []byte) (*model.Error, error) {
 	}
 
 	return errorResponse, nil
-}
-
-func getGinContext() (*gin.Context, *mocks.MockGinResponseWriter) {
-	request := http.Request{}
-
-	theURL := url.URL{RawQuery: "callback:thecallback.com"}
-
-	request.URL = &theURL
-
-	ginContext := gin.Context{Request: &request}
-	responseWriter := mocks.MockGinResponseWriter{}
-	ginContext.Writer = &responseWriter
-
-	return &ginContext, &responseWriter
 }
 
 func GetRuleFromResponse(response []byte) (*model.Rule, error) {

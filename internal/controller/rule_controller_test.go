@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/nicopozo/mockserver/internal/controller"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
@@ -119,6 +118,7 @@ func TestRuleController_Create(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
+
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Save(gomock.Any(), gomock.Any()).
@@ -134,7 +134,7 @@ func TestRuleController_Create(t *testing.T) {
 					return rule, nil
 				}).Times(tt.serviceCallTimes)
 
-			ctx, response, err := testutils.GetGinContextWithBody(tt.requestFile)
+			response, request, err := testutils.GetHTTPContextWithBody(tt.requestFile)
 			if err != nil {
 				t.Fatalf("Error reading file: %s", err.Error())
 			}
@@ -142,12 +142,12 @@ func TestRuleController_Create(t *testing.T) {
 			rc := &controller.RuleController{
 				RuleService: ruleServiceMock,
 			}
-			rc.Create(ctx)
+			rc.Create(response, request)
 
-			assert.Equal(t, tt.wantStatus, response.Status())
+			assert.Equal(t, tt.wantStatus, response.Code)
 
 			if tt.wantedErr != nil {
-				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
+				errorResponse, err := testutils.GetErrorFromResponse(response.Body.Bytes())
 
 				assert.Nil(t, err)
 				assert.Equal(t, tt.wantedErr, errorResponse)
@@ -155,7 +155,7 @@ func TestRuleController_Create(t *testing.T) {
 				return
 			}
 
-			rule, err := testutils.GetRuleFromResponse(response.Bytes)
+			rule, err := testutils.GetRuleFromResponse(response.Body.Bytes())
 
 			assert.Nil(t, err)
 			assert.Equal(t, tt.want, rule)
@@ -174,7 +174,7 @@ func TestRuleController_Get(t *testing.T) {
 		key              string
 	}{
 		{
-			name:       "Get Reconcilable successfully",
+			name:       "Get Rule successfully",
 			serviceErr: nil,
 			want: &model.Rule{
 				Key:      "myapp_get_4016913947",
@@ -244,6 +244,7 @@ func TestRuleController_Get(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
+
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Get(gomock.Any(), tt.key).
@@ -273,19 +274,18 @@ func TestRuleController_Get(t *testing.T) {
 					return result, nil
 				}).Times(tt.serviceCallTimes)
 
-			ginContext, response := testutils.GetGinContext()
-			ruleKey := gin.Param{Key: "key", Value: tt.key}
-			ginContext.Params = []gin.Param{ruleKey}
+			response, request := testutils.GetHTTPContext()
+			request.SetPathValue("key", tt.key)
 
 			rc := &controller.RuleController{
 				RuleService: ruleServiceMock,
 			}
-			rc.Get(ginContext)
+			rc.Get(response, request)
 
-			assert.Equal(t, tt.wantStatus, response.Status())
+			assert.Equal(t, tt.wantStatus, response.Code)
 
 			if tt.wantedErr != nil {
-				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
+				errorResponse, err := testutils.GetErrorFromResponse(response.Body.Bytes())
 
 				assert.Nil(t, err)
 				assert.Equal(t, tt.wantedErr, errorResponse)
@@ -293,7 +293,7 @@ func TestRuleController_Get(t *testing.T) {
 				return
 			}
 
-			rule, err := testutils.GetRuleFromResponse(response.Bytes)
+			rule, err := testutils.GetRuleFromResponse(response.Body.Bytes())
 
 			assert.Nil(t, err)
 			assert.Equal(t, tt.want, rule)
@@ -301,7 +301,6 @@ func TestRuleController_Get(t *testing.T) {
 	}
 }
 
-//nolint
 func TestRuleController_Search(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -364,7 +363,7 @@ func TestRuleController_Search(t *testing.T) {
 			serviceCallTimes: 1,
 		},
 		{
-			name:       "Search Reconcilables successfully with custom paging",
+			name:       "Search Rules successfully with custom paging",
 			wantStatus: http.StatusOK,
 			want: &model.RuleList{
 				Paging: model.Paging{
@@ -459,6 +458,7 @@ func TestRuleController_Search(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
+
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Search(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -471,68 +471,28 @@ func TestRuleController_Search(t *testing.T) {
 					if !reflect.DeepEqual(expectedPaging, paging) {
 						t.Errorf("Request Paging is not the expected. Expected: %v - Actual: %v", expectedPaging, paging)
 					}
-					return model.RuleList{
-						Paging: model.Paging{
-							Total:  2,
-							Limit:  tt.want.Paging.Limit,
-							Offset: tt.want.Paging.Offset,
-						},
-						Results: []*model.Rule{
-							{
-								Key:      "myapp_get_4016913947",
-								Group:    "myapp",
-								Name:     "get balance",
-								Path:     "/myapp/{user}/balance",
-								Strategy: "normal",
-								Method:   "GET",
-								Status:   "enabled",
-								Responses: []model.Response{
-									{
-										Body:        "{\"balance\":5000}",
-										ContentType: "application/json",
-										HTTPStatus:  http.StatusOK,
-										Delay:       100,
-									},
-								},
-							},
-							{
-								Key:      "myapp_get_123123",
-								Group:    "myapp",
-								Name:     "get user",
-								Path:     "/myapp/{user}",
-								Strategy: "normal",
-								Method:   "GET",
-								Status:   "enabled",
-								Responses: []model.Response{
-									{
-										Body:        "{\"user\":\"nico\"}",
-										ContentType: "application/json",
-										HTTPStatus:  http.StatusOK,
-										Delay:       0,
-									},
-								},
-							},
-						},
-					}, nil
+
+					return *tt.want, nil
 				}).Times(tt.serviceCallTimes)
 
-			ginContext, response := testutils.GetGinContext()
-			values := ginContext.Request.URL.Query()
+			response, request := testutils.GetHTTPContext()
+
+			values := request.URL.Query()
 			for key, value := range tt.queries {
 				values.Add(key, value)
 			}
 
-			ginContext.Request.URL.RawQuery = values.Encode()
+			request.URL.RawQuery = values.Encode()
 
 			rc := &controller.RuleController{
 				RuleService: ruleServiceMock,
 			}
-			rc.Search(ginContext)
+			rc.Search(response, request)
 
-			assert.Equal(t, tt.wantStatus, response.Status())
+			assert.Equal(t, tt.wantStatus, response.Code)
 
 			if tt.wantedErr != nil {
-				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
+				errorResponse, err := testutils.GetErrorFromResponse(response.Body.Bytes())
 
 				assert.Nil(t, err)
 				assert.Equal(t, tt.wantedErr, errorResponse)
@@ -540,7 +500,7 @@ func TestRuleController_Search(t *testing.T) {
 				return
 			}
 
-			rules, err := testutils.GetRuleListFromResponse(response.Bytes)
+			rules, err := testutils.GetRuleListFromResponse(response.Body.Bytes())
 
 			assert.Nil(t, err)
 			assert.Equal(t, tt.want, rules)
@@ -558,7 +518,7 @@ func TestRuleController_Delete(t *testing.T) {
 		key              string
 	}{
 		{
-			name:             "Delete Reconcilable successfully",
+			name:             "Delete Rule successfully",
 			serviceErr:       nil,
 			wantStatus:       http.StatusNoContent,
 			wantedErr:        nil,
@@ -599,23 +559,23 @@ func TestRuleController_Delete(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 
 			ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
+
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Delete(gomock.Any(), tt.key).Return(tt.serviceErr).Times(tt.serviceCallTimes)
 
-			ginContext, response := testutils.GetGinContext()
-			ruleKey := gin.Param{Key: "key", Value: tt.key}
-			ginContext.Params = []gin.Param{ruleKey}
+			response, request := testutils.GetHTTPContext()
+			request.SetPathValue("key", tt.key)
 
 			rc := &controller.RuleController{
 				RuleService: ruleServiceMock,
 			}
-			rc.Delete(ginContext)
+			rc.Delete(response, request)
 
-			assert.Equal(t, tt.wantStatus, response.Status())
+			assert.Equal(t, tt.wantStatus, response.Code)
 
 			if tt.wantedErr != nil {
-				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
+				errorResponse, err := testutils.GetErrorFromResponse(response.Body.Bytes())
 
 				assert.Nil(t, err)
 				assert.Equal(t, tt.wantedErr, errorResponse)

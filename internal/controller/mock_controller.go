@@ -4,13 +4,14 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	ruleserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/service"
+	httputils "github.com/nicopozo/mockserver/internal/utils/http"
 	"github.com/nicopozo/mockserver/internal/utils/log"
 )
 
@@ -26,40 +27,52 @@ func NewMockController(mockService service.MockService, logService service.LogSe
 	}
 }
 
-func (controller *MockController) Execute(context *gin.Context) {
-	reqContext := mockscontext.New(context)
+func (controller *MockController) Execute(writer http.ResponseWriter, request *http.Request) {
+	reqContext := mockscontext.New(request)
 	logger := mockscontext.Logger(reqContext)
 
 	logger.Debug(controller, nil, "Entering MockController Execute()")
 
-	path := context.Param("rule")
-	reqBody := controller.extractExecutionBody(logger, context.Request.Body)
+	path := request.PathValue("rule")
+	if path == "" {
+		// Fallback for cases where it might not be matched as a named param
+		path = request.URL.Path
+	}
+
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	reqBody := controller.extractExecutionBody(logger, request.Body)
 
 	// Build base log entry from the incoming request.
-	logEntry := controller.buildLogEntry(context, path, reqBody)
+	logEntry := controller.buildLogEntry(request, path, reqBody)
 
 	response, assertionResult, err := controller.MockService.SearchResponseForRequest(
-		reqContext, context.Request, path, reqBody)
+		reqContext, request, path, reqBody)
 
 	// Attach assertion errors to the log entry regardless of outcome.
 	logEntry.AssertionErrors = assertionResult.AssertionErrors
 
 	if err != nil {
-		controller.handleExecutionError(context, logger, path, logEntry, err)
+		controller.handleExecutionError(writer, request, logger, path, logEntry, err)
 
 		return
 	}
 
-	context.Header("content-type", response.ContentType)
+	writer.Header().Set("content-type", response.ContentType)
 
 	time.Sleep(time.Duration(response.Delay) * time.Millisecond)
-	context.String(response.HTTPStatus, response.Body)
+	writer.WriteHeader(response.HTTPStatus)
+
+	_, _ = writer.Write([]byte(response.Body))
 
 	controller.recordLog(logEntry, response.HTTPStatus, response.Body)
 }
 
 func (controller *MockController) handleExecutionError(
-	context *gin.Context,
+	writer http.ResponseWriter,
+	request *http.Request,
 	logger log.ILogger,
 	path string,
 	logEntry model.LogEntry,
@@ -67,12 +80,12 @@ func (controller *MockController) handleExecutionError(
 ) {
 	if errors.As(err, &ruleserrors.RuleNotFoundError{}) {
 		logger.Debug(controller, nil, "No rule found for path: %v and method: %s",
-			path, context.Request.Method)
+			path, request.Method)
 
 		errorResult := model.NewError(model.ResourceNotFoundError,
-			"No rule found for path: %v and method: %s. %v", path, context.Request.Method, err.Error())
-		context.JSON(http.StatusNotFound, errorResult)
+			"No rule found for path: %v and method: %s. %v", path, request.Method, err.Error())
 
+		httputils.WriteJSON(writer, http.StatusNotFound, errorResult)
 		controller.recordLog(logEntry, http.StatusNotFound, errorResult.Message)
 
 		return
@@ -80,11 +93,11 @@ func (controller *MockController) handleExecutionError(
 
 	if errors.As(err, &ruleserrors.InvalidRulesError{}) {
 		logger.Debug(controller, nil, "No valid rule found for path: %v and method: %s",
-			path, context.Request.Method)
+			path, request.Method)
 
 		errorResult := model.NewError(model.ValidationError, "%s", err.Error())
-		context.JSON(http.StatusNotFound, errorResult)
 
+		httputils.WriteJSON(writer, http.StatusNotFound, errorResult)
 		controller.recordLog(logEntry, http.StatusNotFound, errorResult.Message)
 
 		return
@@ -92,29 +105,30 @@ func (controller *MockController) handleExecutionError(
 
 	if errors.As(err, &ruleserrors.AssertionError{}) {
 		logger.Debug(controller, nil, "One or more assertions failed.",
-			path, context.Request.Method)
+			path, request.Method)
 
 		errorResult := model.NewError(model.ValidationError, "%s", err.Error())
-		context.JSON(http.StatusBadRequest, errorResult)
 
+		httputils.WriteJSON(writer, http.StatusBadRequest, errorResult)
 		controller.recordLog(logEntry, http.StatusBadRequest, errorResult.Message)
 
 		return
 	}
 
 	logger.Error(controller, nil, err,
-		"Failed to execute rule for method %v: and path %v", context.Request.Method, path)
+		"Failed to execute rule for method %v: and path %v", request.Method, path)
 
 	errorResult := model.NewError(model.InternalError, "Error occurred when getting rule. %s", err.Error())
-	context.JSON(http.StatusInternalServerError, errorResult)
 
+	httputils.WriteJSON(writer, http.StatusInternalServerError, errorResult)
 	controller.recordLog(logEntry, http.StatusInternalServerError, errorResult.Message)
 }
 
-// buildLogEntry constructs a LogEntry from the incoming Gin context.
-func (controller *MockController) buildLogEntry(context *gin.Context, path, reqBody string) model.LogEntry {
-	headers := make(map[string]string, len(context.Request.Header))
-	for key, values := range context.Request.Header {
+// buildLogEntry constructs a LogEntry from the incoming request.
+func (controller *MockController) buildLogEntry(request *http.Request, path, reqBody string) model.LogEntry {
+	headers := make(map[string]string, len(request.Header))
+
+	for key, values := range request.Header {
 		if len(values) > 0 {
 			headers[key] = values[0]
 		}
@@ -122,19 +136,19 @@ func (controller *MockController) buildLogEntry(context *gin.Context, path, reqB
 
 	queryParams := make(map[string]string)
 
-	for key, values := range context.Request.URL.Query() {
+	for key, values := range request.URL.Query() {
 		if len(values) > 0 {
 			queryParams[key] = values[0]
 		}
 	}
 
 	fullURL := path
-	if context.Request.URL.RawQuery != "" {
-		fullURL = path + "?" + context.Request.URL.RawQuery
+	if request.URL.RawQuery != "" {
+		fullURL = path + "?" + request.URL.RawQuery
 	}
 
 	return model.LogEntry{
-		Method:         context.Request.Method,
+		Method:         request.Method,
 		URL:            fullURL,
 		RequestBody:    reqBody,
 		RequestHeaders: headers,

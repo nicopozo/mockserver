@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/nicopozo/mockserver/internal/controller"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
@@ -44,7 +43,7 @@ func TestMockController_Execute(t *testing.T) {
 			want:       "",
 			wantStatus: http.StatusNotFound,
 			wantedErr: &model.Error{
-				Message: "No rule found for path: /test and method: get. no rule found for path",
+				Message: "No rule found for path: /test and method: GET. no rule found for path",
 				Error:   "Not Found",
 				Status:  http.StatusNotFound,
 				ErrorCause: []model.ErrorCause{
@@ -133,20 +132,19 @@ func TestMockController_Execute(t *testing.T) {
 			mockServiceMock.EXPECT().SearchResponseForRequest(gomock.Any(), gomock.Any(), "/test", gomock.Any()).
 				Return(tt.serviceResponse, model.AssertionResult{}, tt.serviceErr).Times(tt.serviceCallTimes)
 
-			ginContext, response := testutils.GetGinContext()
-			path := gin.Param{Key: "rule", Value: "/test"}
-			ginContext.Params = []gin.Param{path}
-			ginContext.Request.Method = "get"
+			response, request := testutils.GetHTTPContext()
+			request.SetPathValue("rule", "/test")
+			request.Method = http.MethodGet
 
 			mc := &controller.MockController{
 				MockService: mockServiceMock,
 			}
-			mc.Execute(ginContext)
+			mc.Execute(response, request)
 
-			assert.Equal(t, tt.wantStatus, response.Status())
+			assert.Equal(t, tt.wantStatus, response.Code)
 
 			if tt.wantedErr != nil {
-				errorResponse, err := testutils.GetErrorFromResponse(response.Bytes)
+				errorResponse, err := testutils.GetErrorFromResponse(response.Body.Bytes())
 
 				assert.Nil(t, err)
 				assert.Equal(t, tt.wantedErr, errorResponse)
@@ -154,7 +152,7 @@ func TestMockController_Execute(t *testing.T) {
 				return
 			}
 
-			res := string(response.Bytes)
+			res := response.Body.String()
 
 			assert.Equal(t, tt.want, res)
 		})

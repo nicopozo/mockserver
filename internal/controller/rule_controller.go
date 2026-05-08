@@ -4,11 +4,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	ruleserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/service"
+	httputils "github.com/nicopozo/mockserver/internal/utils/http"
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 )
 
@@ -25,27 +25,15 @@ func NewRuleController(ruleService service.RuleService) *RuleController {
 }
 
 // Create a Rule.
-// @Tags Rules
-// @Summary Create a Rule
-// @Description Create a Rule for serving a mock response
-// @ID create-rule
-// @Accept  json
-// @Produce  json
-// @Param rule body model.Rule true "The rule to be created"
-// @Success 201 {object} model.Rule "Rule successfully created"
-// @Failure 400 {object} model.Error "Validation of the rule failed"
-// @Failure 500 {object} model.Error "Internal server error"
-// @Router /rules [post].
-func (controller *RuleController) Create(context *gin.Context) {
-	reqContext := mockscontext.New(context)
+func (controller *RuleController) Create(writer http.ResponseWriter, request *http.Request) {
+	reqContext := mockscontext.New(request)
 	logger := mockscontext.Logger(reqContext)
 	logger.Debug(controller, nil, "Entering RuleController Save()")
 
-	rule, err := model.UnmarshalRule(context.Request.Body)
+	rule, err := model.UnmarshalRule(request.Body)
 	if err != nil {
-		errorResult := model.NewError(model.ValidationError, "Invalid JSON. %s", err.Error())
 		logger.Error(controller, nil, err, "Error unmarshalling Rule JSON")
-		context.JSON(http.StatusBadRequest, errorResult)
+		httputils.WriteError(writer, model.ValidationError, "Invalid JSON. %s", err.Error())
 
 		return
 	}
@@ -55,49 +43,30 @@ func (controller *RuleController) Create(context *gin.Context) {
 		switch err.(type) { //nolint:errorlint
 		case ruleserrors.InvalidRulesError:
 			logger.Error(controller, nil, err, "Invalid rule: %v", jsonutils.Marshal(rule))
-
-			errorResult := model.NewError(model.ValidationError, "%s", err.Error())
-			context.JSON(http.StatusBadRequest, errorResult)
+			httputils.WriteError(writer, model.ValidationError, "%s", err.Error())
 		default:
-			errorResult := model.NewError(model.InternalError, "Error occurred when saving rule. %s", err.Error())
-
 			logger.Error(controller, nil, err, "Error occurred when saving rule")
-			context.JSON(http.StatusInternalServerError, errorResult)
-
-			return
+			httputils.WriteError(writer, model.InternalError, "Error occurred when saving rule. %s", err.Error())
 		}
 
 		return
 	}
 
-	context.JSON(http.StatusCreated, serviceRule)
+	httputils.WriteJSON(writer, http.StatusCreated, serviceRule)
 }
 
 // Update a Rule.
-// @Tags Rules
-// @Summary Update a Rule
-// @Description Update an existing Rule for serving a mock response
-// @ID update-rule
-// @Accept  json
-// @Produce  json
-// @Param key path string true "Key of rule to update"
-// @Param rule body model.Rule true "The rule to be updated"
-// @Success 200 {object} model.Rule "Rule successfully updated"
-// @Failure 400 {object} model.Error "Validation of the rule failed"
-// @Failure 500 {object} model.Error "Internal server error"
-// @Router /rules/{key} [put].
-func (controller *RuleController) Update(context *gin.Context) {
-	reqContext := mockscontext.New(context)
+func (controller *RuleController) Update(writer http.ResponseWriter, request *http.Request) {
+	reqContext := mockscontext.New(request)
 	logger := mockscontext.Logger(reqContext)
 	logger.Debug(controller, nil, "Entering RuleController Save()")
 
-	key := context.Param("key")
+	key := request.PathValue("key")
 
-	rule, err := model.UnmarshalRule(context.Request.Body)
+	rule, err := model.UnmarshalRule(request.Body)
 	if err != nil {
-		errorResult := model.NewError(model.ValidationError, "Invalid JSON. %s", err.Error())
 		logger.Error(controller, nil, err, "Error unmarshalling Rule JSON")
-		context.JSON(http.StatusBadRequest, errorResult)
+		httputils.WriteError(writer, model.ValidationError, "Invalid JSON. %s", err.Error())
 
 		return
 	}
@@ -107,52 +76,33 @@ func (controller *RuleController) Update(context *gin.Context) {
 		switch err.(type) { //nolint:errorlint
 		case ruleserrors.RuleNotFoundError:
 			logger.Debug(controller, nil, "No rule found with key: %v", key)
-
-			errorResult := model.NewError(model.ResourceNotFoundError, "%s", err.Error())
-			context.JSON(http.StatusNotFound, errorResult)
+			httputils.WriteError(writer, model.ResourceNotFoundError, "%s", err.Error())
 		case ruleserrors.InvalidRulesError:
 			logger.Error(controller, nil, err, "Invalid rule: %v", jsonutils.Marshal(rule))
-
-			errorResult := model.NewError(model.ValidationError, "%s", err.Error())
-			context.JSON(http.StatusBadRequest, errorResult)
+			httputils.WriteError(writer, model.ValidationError, "%s", err.Error())
 		default:
-			errorResult := model.NewError(model.InternalError, "Error occurred when saving rule. %s", err.Error())
-
 			logger.Error(controller, nil, err, "Error occurred when saving rule")
-			context.JSON(http.StatusInternalServerError, errorResult)
+			httputils.WriteError(writer, model.InternalError, "Error occurred when saving rule. %s", err.Error())
 		}
 
 		return
 	}
 
-	context.JSON(http.StatusOK, serviceRule)
+	httputils.WriteJSON(writer, http.StatusOK, serviceRule)
 }
 
 // UpdateStatus updates a Rule Status.
-// @Tags Rules
-// @Summary Update a Rule Status
-// @Description Update an existing Rule for serving a mock response
-// @ID update-rule-status
-// @Accept  json
-// @Produce  json
-// @Param key path string true "Key of rule to update"
-// @Param rule body model.RuleStatus true "The rule to be updated"
-// @Success 200 {object} model.Rule "Rule successfully updated"
-// @Failure 400 {object} model.Error "Validation of the rule failed"
-// @Failure 500 {object} model.Error "Internal server error"
-// @Router /rules/{key}/status [put].
-func (controller *RuleController) UpdateStatus(context *gin.Context) {
-	reqContext := mockscontext.New(context)
+func (controller *RuleController) UpdateStatus(writer http.ResponseWriter, request *http.Request) {
+	reqContext := mockscontext.New(request)
 	logger := mockscontext.Logger(reqContext)
 	logger.Debug(controller, nil, "Entering RuleController Save()")
 
-	key := context.Param("key")
+	key := request.PathValue("key")
 
-	ruleStatus, err := model.UnmarshalRuleStatus(context.Request.Body)
+	ruleStatus, err := model.UnmarshalRuleStatus(request.Body)
 	if err != nil {
-		errorResult := model.NewError(model.ValidationError, "Invalid JSON. %s", err.Error())
 		logger.Error(controller, nil, err, "Error unmarshalling Rule JSON")
-		context.JSON(http.StatusBadRequest, errorResult)
+		httputils.WriteError(writer, model.ValidationError, "Invalid JSON. %s", err.Error())
 
 		return
 	}
@@ -162,175 +112,111 @@ func (controller *RuleController) UpdateStatus(context *gin.Context) {
 		switch err.(type) { //nolint:errorlint
 		case ruleserrors.RuleNotFoundError:
 			logger.Debug(controller, nil, "No rule found with key: %v", key)
-
-			errorResult := model.NewError(model.ResourceNotFoundError, "%s", err.Error())
-			context.JSON(http.StatusNotFound, errorResult)
+			httputils.WriteError(writer, model.ResourceNotFoundError, "%s", err.Error())
 		case ruleserrors.InvalidRulesError:
 			logger.Error(controller, nil, err, "Invalid status: %v", ruleStatus.Status)
-
-			errorResult := model.NewError(model.ValidationError, "%s", err.Error())
-			context.JSON(http.StatusBadRequest, errorResult)
+			httputils.WriteError(writer, model.ValidationError, "%s", err.Error())
 		default:
-			errorResult := model.NewError(model.InternalError, "Error occurred when saving rule. %s", err.Error())
-
 			logger.Error(controller, nil, err, "Error occurred when saving rule")
-			context.JSON(http.StatusInternalServerError, errorResult)
+			httputils.WriteError(writer, model.InternalError, "Error occurred when saving rule. %s", err.Error())
 		}
 
 		return
 	}
 
-	context.JSON(http.StatusOK, serviceRule)
+	httputils.WriteJSON(writer, http.StatusOK, serviceRule)
 }
 
 // Get a Rule.
-// @Tags Rules
-// @Summary Get Rule by Key
-// @Description Get a Rule, if not found return 404
-// @ID get-rule
-// @Produce json
-// @Param key path string true "Key generated by service"
-// @Success 200 {object} model.Rule "Result"
-// @Failure 400 {object} model.Error
-// @Failure 404 {object} model.Error
-// @Failure 500 {object} model.Error
-// @Router /rules/{key} [get].
-func (controller *RuleController) Get(context *gin.Context) {
-	reqContext := mockscontext.New(context)
+func (controller *RuleController) Get(writer http.ResponseWriter, request *http.Request) {
+	reqContext := mockscontext.New(request)
 	logger := mockscontext.Logger(reqContext)
 
 	logger.Debug(controller, nil, "Entering RuleController Get()")
 
-	key := context.Param("key")
+	key := request.PathValue("key")
 
 	task, err := controller.RuleService.Get(reqContext, key)
 	if err != nil {
 		if errors.As(err, &ruleserrors.RuleNotFoundError{}) {
 			logger.Debug(controller, nil, "No rule found with key: %v", key)
-
-			errorResult := model.NewError(model.ResourceNotFoundError, "%s", err.Error())
-			context.JSON(http.StatusNotFound, errorResult)
+			httputils.WriteError(writer, model.ResourceNotFoundError, "%s", err.Error())
 
 			return
 		}
 
-		logger.Error(controller, nil, err,
-			"Failed to get task with key: %v", key)
-
-		errorResult := model.NewError(model.InternalError, "Error occurred when getting rule. %s", err.Error())
-		context.JSON(http.StatusInternalServerError, errorResult)
+		logger.Error(controller, nil, err, "Failed to get task with key: %v", key)
+		httputils.WriteError(writer, model.InternalError, "Error occurred when getting rule. %s", err.Error())
 
 		return
 	}
 
-	context.JSON(http.StatusOK, task)
+	httputils.WriteJSON(writer, http.StatusOK, task)
 }
 
 // Search Rules.
-// @Tags Rules
-// @Summary Search Rule
-// @Description Search Rule by key, name, group, method or status
-// @ID search-rule
-// @Produce json
-// @Param key query string false "Rule key generated by service"
-// @Param name query string false "Name of the key"
-// @Param group query string false "Group"
-// @Param method query string false "Method"
-// @Param status query string false "Enabled/Disabled"
-// @Param limit query number false "Max expected number of results" default(30)
-// @Param offset query string false "number of results to be skipped" default(0)
-// @Param last_id query string false "ID of the last item from the previous page"
-// @Success 200 {object} model.RuleList "Result"
-// @Failure 400 {object} model.Error
-// @Failure 404 {object} model.Error
-// @Failure 500 {object} model.Error
-// @Router /rules [get].
-func (controller *RuleController) Search(context *gin.Context) {
-	reqContext := mockscontext.New(context)
+func (controller *RuleController) Search(writer http.ResponseWriter, request *http.Request) {
+	reqContext := mockscontext.New(request)
 	logger := mockscontext.Logger(reqContext)
 
 	logger.Debug(controller, nil, "Entering RuleController Search()")
 
-	paging, err := getPagingFromRequest(context.Request)
+	paging, err := getPagingFromRequest(request)
 	if err != nil {
 		logger.Error(controller, nil, err, "Error searching rules. Error parsing pagination params")
-		errorResult := model.NewError(model.ValidationError, "Error parsing pagination params: %s", err.Error())
-		context.JSON(http.StatusBadRequest, errorResult)
+		httputils.WriteError(writer, model.ValidationError, "Error parsing pagination params: %s", err.Error())
 
 		return
 	}
 
-	params := getParametersFromRequest(context.Request)
+	params := getParametersFromRequest(request)
 
 	ruleList, err := controller.RuleService.Search(reqContext, params, *paging)
 	if err != nil {
 		if errors.As(err, &ruleserrors.InvalidRulesError{}) {
-			errorResult := model.NewError(model.ValidationError, "Invalid parameters. %s", err.Error())
-
-			context.JSON(http.StatusBadRequest, errorResult)
+			httputils.WriteError(writer, model.ValidationError, "Invalid parameters. %s", err.Error())
 
 			return
 		}
 
 		logger.Error(controller, nil, err, "Failed to search rules")
-
-		errorResult := model.NewError(model.InternalError, "Error occurred when searching rules. %s", err.Error())
-		context.JSON(http.StatusInternalServerError, errorResult)
+		httputils.WriteError(writer, model.InternalError, "Error occurred when searching rules. %s", err.Error())
 
 		return
 	}
 
-	context.JSON(http.StatusOK, ruleList)
+	httputils.WriteJSON(writer, http.StatusOK, ruleList)
 }
 
 // Delete Rule.
-// @Tags Rules
-// @Summary Delete Rule by key
-// @Description Delete Rule by Key
-// @ID delete-rule
-// @Produce json
-// @Param key path string true "Key generated by service"
-// @Success 204
-// @Failure 500 {object} model.Error
-// @Router /rules/{key} [delete].
-func (controller *RuleController) Delete(context *gin.Context) {
-	reqContext := mockscontext.New(context)
+func (controller *RuleController) Delete(writer http.ResponseWriter, request *http.Request) {
+	reqContext := mockscontext.New(request)
 	logger := mockscontext.Logger(reqContext)
 
 	logger.Debug(controller, nil, "Entering RuleController Delete()")
 
-	key := context.Param("key")
+	key := request.PathValue("key")
 
 	err := controller.RuleService.Delete(reqContext, key)
 	if err != nil {
 		if errors.As(err, &ruleserrors.RuleNotFoundError{}) {
-			context.Status(http.StatusNoContent)
+			writer.WriteHeader(http.StatusNoContent)
 
 			return
 		}
 
 		logger.Error(controller, nil, err, "Failed to delete rule with key: %v", key)
-
-		errorResult := model.NewError(model.InternalError, "Error occurred when deleting rule. %s", err.Error())
-		context.JSON(http.StatusInternalServerError, errorResult)
+		httputils.WriteError(writer, model.InternalError, "Error occurred when deleting rule. %s", err.Error())
 
 		return
 	}
 
-	context.Status(http.StatusNoContent)
+	writer.WriteHeader(http.StatusNoContent)
 }
 
 // Export all Rules.
-// @Tags Rules
-// @Summary Export all Rules
-// @Description Export all Rules in a JSON array
-// @ID export-rules
-// @Produce json
-// @Success 200 {array} model.Rule "Result"
-// @Failure 500 {object} model.Error
-// @Router /rules/export [get].
-func (controller *RuleController) Export(context *gin.Context) {
-	reqContext := mockscontext.New(context)
+func (controller *RuleController) Export(writer http.ResponseWriter, request *http.Request) {
+	reqContext := mockscontext.New(request)
 	logger := mockscontext.Logger(reqContext)
 
 	logger.Debug(controller, nil, "Entering RuleController Export()")
@@ -341,38 +227,25 @@ func (controller *RuleController) Export(context *gin.Context) {
 	ruleList, err := controller.RuleService.Search(reqContext, nil, paging)
 	if err != nil {
 		logger.Error(controller, nil, err, "Failed to export rules")
-		errorResult := model.NewError(model.InternalError, "Error occurred when exporting rules. %s", err.Error())
-		context.JSON(http.StatusInternalServerError, errorResult)
+		httputils.WriteError(writer, model.InternalError, "Error occurred when exporting rules. %s", err.Error())
 
 		return
 	}
 
-	context.JSON(http.StatusOK, ruleList.Results)
+	httputils.WriteJSON(writer, http.StatusOK, ruleList.Results)
 }
 
 // Import Rules.
-// @Tags Rules
-// @Summary Import Rules
-// @Description Import a JSON array of Rules. Updates if key exists, otherwise creates.
-// @ID import-rules
-// @Accept json
-// @Produce json
-// @Param rules body []model.Rule true "The rules to be imported"
-// @Success 200 {object} map[string]int "Summary of imports"
-// @Failure 400 {object} model.Error
-// @Failure 500 {object} model.Error
-// @Router /rules/import [post].
-func (controller *RuleController) Import(context *gin.Context) {
-	reqContext := mockscontext.New(context)
+func (controller *RuleController) Import(writer http.ResponseWriter, request *http.Request) {
+	reqContext := mockscontext.New(request)
 	logger := mockscontext.Logger(reqContext)
 
 	logger.Debug(controller, nil, "Entering RuleController Import()")
 
-	rules, err := model.UnmarshalRules(context.Request.Body)
+	rules, err := model.UnmarshalRules(request.Body)
 	if err != nil {
-		errorResult := model.NewError(model.ValidationError, "Invalid JSON array. %s", err.Error())
 		logger.Error(controller, nil, err, "Error unmarshalling Rules JSON array")
-		context.JSON(http.StatusBadRequest, errorResult)
+		httputils.WriteError(writer, model.ValidationError, "Invalid JSON array. %s", err.Error())
 
 		return
 	}
@@ -415,5 +288,5 @@ func (controller *RuleController) Import(context *gin.Context) {
 		}
 	}
 
-	context.JSON(http.StatusOK, stats)
+	httputils.WriteJSON(writer, http.StatusOK, stats)
 }

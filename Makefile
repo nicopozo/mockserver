@@ -4,9 +4,6 @@ BINARY=service
 build:
 	go build -o ${BINARY} cmd/mocks/*.go
 
-generate-swagger:
-	swag init -g cmd/mocks/main.go
-
 generate-mocks:
 	go generate ./...
 

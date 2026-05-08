@@ -2,20 +2,21 @@ package mockscontext
 
 import (
 	"context"
+	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/nicopozo/mockserver/internal/utils/log"
 )
 
 type loggerKey struct{}
 
-func New(ctx *gin.Context) context.Context {
-	trackingID := ctx.GetHeader("x-tracking-id")
+func New(request *http.Request) context.Context {
+	trackingID := request.Header.Get("x-tracking-id")
+
 	if len(trackingID) == 0 {
-		return context.WithValue(ctx.Request.Context(), loggerKey{}, log.DefaultLogger())
+		return context.WithValue(request.Context(), loggerKey{}, log.DefaultLogger())
 	}
 
-	return context.WithValue(ctx.Request.Context(), loggerKey{}, log.NewLogger(trackingID))
+	return context.WithValue(request.Context(), loggerKey{}, log.NewLogger(trackingID))
 }
 
 func Logger(ctx context.Context) log.ILogger {

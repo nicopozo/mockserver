@@ -12,7 +12,7 @@ WORKDIR /app
 COPY --from=buildcontainer /go/src/app/cmd/mocks/mocks .
 COPY --from=buildcontainer /go/src/app/web/dist web/dist
 
-ENV GIN_MODE=release
+ENV MOCKS_MODE=release
 
 ENV HOST=0.0.0.0
 ENV PORT=8080

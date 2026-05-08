@@ -316,9 +316,6 @@
               </tbody>
             </v-table>
 
-            <v-alert type="info" variant="tonal" density="compact" class="mt-4">
-              Swagger UI is available at <code>/mock-service/swagger/index.html</code> for interactive API exploration.
-            </v-alert>
           </div>
         </v-expansion-panel-text>
       </v-expansion-panel>
