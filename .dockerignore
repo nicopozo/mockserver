@@ -1,0 +1,12 @@
+web/node_modules
+web/dist
+web/.eslintcache
+web/tsconfig.app.tsbuildinfo
+web/tsconfig.node.tsbuildinfo
+.git
+.idea
+.vscode
+local.env
+.env
+mocks
+service
