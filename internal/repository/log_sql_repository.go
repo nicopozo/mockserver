@@ -74,8 +74,8 @@ func (r *logSQLRepository) GetAll(ctx context.Context, paging model.Paging) (mod
 		query = FormatQuery("SELECT * FROM request_logs WHERE id < ? ORDER BY id DESC LIMIT ?", r.db.DriverName())
 		errSelect = r.db.Select(&rows, query, paging.LastID, paging.Limit)
 	} else {
-		query = FormatQuery("SELECT * FROM request_logs ORDER BY id DESC LIMIT ?", r.db.DriverName())
-		errSelect = r.db.Select(&rows, query, paging.Limit)
+		query = FormatQuery("SELECT * FROM request_logs ORDER BY id DESC LIMIT ? OFFSET ?", r.db.DriverName())
+		errSelect = r.db.Select(&rows, query, paging.Limit, paging.Offset)
 	}
 
 	if errSelect != nil {

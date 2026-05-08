@@ -319,6 +319,7 @@ func TestRuleController_Search(t *testing.T) {
 				Paging: model.Paging{
 					Total:  2,
 					Limit:  30,
+					Offset: 0,
 				},
 				Results: []*model.Rule{
 					{
@@ -369,6 +370,7 @@ func TestRuleController_Search(t *testing.T) {
 				Paging: model.Paging{
 					Total:  2,
 					Limit:  3,
+					Offset: 1,
 				},
 				Results: []*model.Rule{
 					{
@@ -409,7 +411,7 @@ func TestRuleController_Search(t *testing.T) {
 			},
 			wantedErr:        nil,
 			serviceErr:       nil,
-			queries:          map[string]string{"status": "enabled", "limit": "3"},
+			queries:          map[string]string{"status": "enabled", "offset": "1", "limit": "3"},
 			serviceCallTimes: 1,
 		},
 
@@ -465,7 +467,7 @@ func TestRuleController_Search(t *testing.T) {
 						return model.RuleList{}, tt.serviceErr
 					}
 
-					expectedPaging := model.Paging{Limit: tt.want.Paging.Limit}
+					expectedPaging := model.Paging{Limit: tt.want.Paging.Limit, Offset: tt.want.Paging.Offset}
 					if !reflect.DeepEqual(expectedPaging, paging) {
 						t.Errorf("Request Paging is not the expected. Expected: %v - Actual: %v", expectedPaging, paging)
 					}
@@ -473,6 +475,7 @@ func TestRuleController_Search(t *testing.T) {
 						Paging: model.Paging{
 							Total:  2,
 							Limit:  tt.want.Paging.Limit,
+							Offset: tt.want.Paging.Offset,
 						},
 						Results: []*model.Rule{
 							{

@@ -246,6 +246,8 @@ function queryParams() {
   let params: any = {
     limit: itemsPerPage,
     last_id: lastId || undefined,
+    // Only send offset if we don't have a cursor and it's not the first page
+    offset: (lastId || page === 1) ? undefined : (page - 1) * itemsPerPage,
   };
 
   if (group) params.group = group;

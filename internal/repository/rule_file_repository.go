@@ -175,7 +175,7 @@ func (repository *ruleFileRepository) Search(ctx context.Context, params map[str
 
 	ruleList.Paging.Total = int64(len(filtered))
 
-	start := 0
+	start := int(paging.Offset)
 
 	if paging.LastID != "" {
 		start = -1

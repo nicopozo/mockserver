@@ -473,9 +473,9 @@ func newSearchQuery(params map[string]interface{}, paging model.Paging, driver s
 		return query + where + order, append(args, paging.Limit), nil
 	}
 
-	order := FormatQuery(" ORDER BY `key` DESC LIMIT ?", driver)
+	order := FormatQuery(" ORDER BY `key` DESC LIMIT ? OFFSET ?", driver)
 
-	return query + where + order, append(args, paging.Limit), nil
+	return query + where + order, append(args, paging.Limit, paging.Offset), nil
 }
 
 func newWhereClause(params map[string]interface{}, driver string) (string, error) {

@@ -61,7 +61,7 @@ func (r *logMemoryRepository) GetAll(ctx context.Context, paging model.Paging) (
 
 	var result []model.LogEntry
 
-	start := 0
+	start := int(paging.Offset)
 	if paging.LastID != "" {
 		start = findStartIndex(allEntries, paging.LastID)
 	}

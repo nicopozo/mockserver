@@ -282,6 +282,7 @@ async function fetchLogs(isAuto = false) {
   if (!isAuto) loading.value = true
   
   const { page, itemsPerPage } = tableOptions.value
+  const offset = (page - 1) * itemsPerPage
   
   // Try to use the cursor for the current page
   const lastId = pageCursors.value[page]
@@ -291,6 +292,8 @@ async function fetchLogs(isAuto = false) {
       params: {
         limit: itemsPerPage,
         last_id: lastId || undefined,
+        // Only send offset if we don't have a cursor (for initial page jumps)
+        offset: (lastId || page === 1) ? undefined : offset
       }
     })
     
