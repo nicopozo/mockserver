@@ -9,3 +9,4 @@ mocks
 # IDEs
 .vscode/
 web/dist
+mocks.json

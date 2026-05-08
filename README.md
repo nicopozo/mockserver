@@ -79,52 +79,38 @@ and then run the app with `./mocks` command (run the [`init database script`](ht
 
 ## How to use it
 
-### Create a new mock
+### Administer your mocks via UI
 
-```sh
-curl --location --request POST 'localhost:8080/mock-service/rules' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "group": "Users",
-    "name": "Get User",
-    "path": "/users/{id}",
-    "strategy": "normal",
-    "method": "GET",
-    "status": "enabled",
-    "responses": [
-        {
-            "body": "{\"user_id\":\"{the_id}\"}",
-            "content_type": "application/json",
-            "http_status": 200,
-            "delay": 0,
-            "scene": ""
-        }
-    ],
-    "variables": [
-        {
-            "type": "path",
-            "name": "the_id",
-            "key": "id"
-        }
-    ]
-}'
-```
+The easiest way to manage your mocks is through the built-in administration panel.
 
-### Execute the mock for the path set in the previously created mock
+**URL:** [http://localhost:8080/mock-service/admin/](http://localhost:8080/mock-service/admin/)
+
+From the UI, you can:
+- Create, edit, and delete mocks.
+- Configure variables (Path, Query, Header, Body).
+- Define assertions (Equals, Regex, Contains, JSON Schema, etc.).
+- View real-time logs of mocked requests.
+
+![UI](assets/ui.png)
+
+### Execute a mock
+
+Once you have created a mock (for example, with path `/users/{id}`), you can execute it by calling the following endpoint:
 
 ```sh
 curl --location --request GET 'http://localhost:8080/mock-service/mock/users/123'
 ```
 
-This example will return the following response:
+This will trigger the mock engine, which will:
+1. Extract variables (like `id=123`).
+2. Run assertions.
+3. Replace variables in the response body.
+4. Return the configured response.
+
+**Example Response:**
 
 ```json
 {
     "user_id": "123"
 }
 ```
-
-Alternatively, mocks can be created and edited [via UI](http://localhost:8080/mock-service/admin/#/)
-
-![UI](https://raw.githubusercontent.com/nicopozo/mockserver/master/assets/ui.png)
-Thanks [hecekiel](https://github.com/hecekiel) for your artwork!

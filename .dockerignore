@@ -10,3 +10,4 @@ local.env
 .env
 mocks
 service
+mocks.json
