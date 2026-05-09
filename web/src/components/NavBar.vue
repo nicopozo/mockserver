@@ -1,17 +1,17 @@
 <template>
   <v-app-bar 
     app 
-    color="primary-darken-1"
+    :color="color"
     theme="dark"
     elevation="2" 
     height="80"
     class="main-navbar px-4"
   >
     <template #prepend>
-      <v-img :src="mockLogo" alt="Mocks Server" width="140" height="90" class="ml-2" />
+      <v-img :src="mockLogo" alt="Mocks Server" width="50" height="50" class="ml-2" />
     </template>
 
-    <div class="font-weight-black" style="letter-spacing: 0.5px; font-size: 1.6rem; white-space: nowrap; margin-left: -25px;">
+    <div class="font-weight-black ml-2" style="letter-spacing: 0.5px; font-size: 1.4rem; white-space: nowrap;">
       Mocks Server
     </div>
 
@@ -37,6 +37,10 @@
     <v-spacer></v-spacer>
 
     <div class="d-flex align-center ga-2">
+      <v-btn icon variant="text" size="small" @click="$emit('open-settings')" title="Settings">
+        <v-icon size="20">mdi-cog</v-icon>
+      </v-btn>
+
       <v-btn icon variant="text" size="small" @click="toggleTheme" title="Toggle Theme">
         <v-icon size="20">{{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
       </v-btn>
@@ -53,8 +57,14 @@ import { computed } from 'vue'
 import { useTheme } from 'vuetify'
 import mockLogo from '@/assets/mock.png'
 
+const props = defineProps<{
+  color: string
+}>()
+
 const theme = useTheme()
 const isDark = computed(() => theme.global.name.value === 'dark')
+
+const emit = defineEmits(['open-settings'])
 
 function toggleTheme() {
   const newTheme = isDark.value ? 'light' : 'dark'
@@ -76,9 +86,5 @@ function toggleTheme() {
 
 .v-btn--active.nav-btn {
   background-color: rgba(255, 255, 255, 0.2);
-}
-
-.v-app-bar-title {
-  font-size: 1.1rem;
 }
 </style>
