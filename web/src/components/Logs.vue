@@ -20,7 +20,7 @@
               prepend-icon="mdi-refresh-auto"
               @click="toggleAutoRefresh"
             >
-              {{ autoRefresh ? 'Auto-refresh ON' : 'Auto-refresh OFF' }}
+              {{ autoRefresh ? 'Auto' : 'Off' }}
             </v-btn>
             <!-- Manual refresh -->
             <v-btn
@@ -374,34 +374,3 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-.code-block {
-  font-family: 'Fira Code', 'Courier New', monospace;
-  font-size: 0.75rem;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 6px;
-  padding: 10px;
-  overflow-x: auto;
-  max-height: 200px;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.text-mono {
-  font-family: 'Fira Code', 'Courier New', monospace;
-}
-
-.text-truncate-cell {
-  display: block;
-  max-width: 300px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.table-card {
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-</style>

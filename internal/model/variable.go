@@ -7,18 +7,23 @@ import (
 )
 
 const (
-	VariableTypeBody   = "body"
-	VariableTypeHeader = "header"
-	VariableTypeRandom = "random"
-	VariableTypeHash   = "hash"
-	VariableTypeQuery  = "query"
-	VariableTypePath   = "path"
+	VariableTypeBody          = "body"
+	VariableTypeHeader        = "header"
+	VariableTypeRandom        = "random"
+	VariableTypeRandomInt     = "random_int"
+	VariableTypeRandomDecimal = "random_decimal"
+	VariableTypeHash          = "hash"
+	VariableTypeQuery         = "query"
+	VariableTypePath          = "path"
 )
 
 type Variable struct {
 	Type       string       `json:"type" example:"body"`
 	Name       string       `json:"name" example:"nickname"`
 	Key        string       `json:"key" example:"$.nickname"`
+	Min        *float64     `json:"min,omitempty"`
+	Max        *float64     `json:"max,omitempty"`
+	Decimals   *int         `json:"decimals,omitempty"`
 	Assertions []*Assertion `json:"assertions"`
 	Value      string       `json:"-"`
 }
@@ -26,9 +31,11 @@ type Variable struct {
 func (variable *Variable) Validate() error {
 	if variable.Type != VariableTypeBody && variable.Type != VariableTypeHeader &&
 		variable.Type != VariableTypeRandom && variable.Type != VariableTypeHash &&
-		variable.Type != VariableTypeQuery && variable.Type != VariableTypePath {
+		variable.Type != VariableTypeQuery && variable.Type != VariableTypePath &&
+		variable.Type != VariableTypeRandomInt && variable.Type != VariableTypeRandomDecimal {
 		return mockserrors.InvalidRulesError{
-			Message: "variable Type must be 'body', 'header', 'query', 'random', 'hash', 'query' or 'path'",
+			Message: "variable Type must be 'body', 'header', 'query', 'random', " +
+				"'hash', 'path', 'random_int' or 'random_decimal'",
 		}
 	}
 

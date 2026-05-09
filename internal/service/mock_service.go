@@ -206,6 +206,53 @@ func (svc *mockService) getRandomVariableValue() string {
 	return strconv.FormatInt(n, 10)
 }
 
+func (svc *mockService) getRandomIntVariableValue(variable model.Variable) string {
+	minValue := int64(0)
+	maxValue := int64(maxRand)
+
+	if variable.Min != nil {
+		minValue = int64(*variable.Min)
+	}
+
+	if variable.Max != nil {
+		maxValue = int64(*variable.Max)
+	}
+
+	if minValue >= maxValue {
+		return strconv.FormatInt(minValue, 10)
+	}
+
+	n := minValue + rand.Int63n(maxValue-minValue+1) //nolint:gosec
+
+	return strconv.FormatInt(n, 10)
+}
+
+func (svc *mockService) getRandomDecimalVariableValue(variable model.Variable) string {
+	minValue := 0.0
+	maxValue := float64(maxRand)
+	decimals := 2
+
+	if variable.Min != nil {
+		minValue = *variable.Min
+	}
+
+	if variable.Max != nil {
+		maxValue = *variable.Max
+	}
+
+	if variable.Decimals != nil {
+		decimals = *variable.Decimals
+	}
+
+	if minValue >= maxValue {
+		return strconv.FormatFloat(minValue, 'f', decimals, 64)
+	}
+
+	n := minValue + rand.Float64()*(maxValue-minValue) //nolint:gosec
+
+	return strconv.FormatFloat(n, 'f', decimals, 64)
+}
+
 func (svc *mockService) getQueryVariableValue(key string, request *http.Request) (string, error) {
 	queries, err := url.ParseQuery(request.URL.RawQuery)
 	if err != nil {
@@ -242,6 +289,10 @@ func (svc *mockService) getVariableValue(variable model.Variable, request *http.
 		return svc.getHashVariableValue(), nil
 	case model.VariableTypeRandom:
 		return svc.getRandomVariableValue(), nil
+	case model.VariableTypeRandomInt:
+		return svc.getRandomIntVariableValue(variable), nil
+	case model.VariableTypeRandomDecimal:
+		return svc.getRandomDecimalVariableValue(variable), nil
 	case model.VariableTypeQuery:
 		return svc.getQueryVariableValue(variable.Key, request)
 	case model.VariableTypePath:

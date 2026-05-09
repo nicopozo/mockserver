@@ -4,33 +4,21 @@
     
     <!--MOCK BASIC INFO-->
     <v-card class="section-card mb-6" elevation="2">
-      <v-toolbar color="primary-darken-1" density="compact" dark flat>
+      <v-toolbar density="compact" dark flat>
         <v-icon start class="ml-4">mdi-cog-outline</v-icon>
         <v-toolbar-title class="text-subtitle-1 font-weight-bold">General Configuration</v-toolbar-title>
       </v-toolbar>
       
       <v-container fluid class="pa-6">
         <v-row>
+          <!-- ROW 1: KEY (Hidden/Disabled) & PATH -->
           <v-col cols="12" md="6">
             <v-text-field label="Key"
                           v-model="mock.key"
                           variant="filled" density="comfortable" disabled
-                          prepend-inner-icon="mdi-key-variant"/>
-            
-            <v-text-field label="Name"
-                          v-model="mock.name"
-                          :rules="[v => !!v || 'Name is required']"
-                          required variant="outlined" density="comfortable"
-                          prepend-inner-icon="mdi-format-title"/>
-            
-            <v-text-field label="Group"
-                          v-model="mock.group"
-                          placeholder="Examples: users, payments, auth"
-                          :rules="[v => !!v || 'Group is required']"
-                          required variant="outlined" density="comfortable"
-                          prepend-inner-icon="mdi-folder-outline"/>
+                          prepend-inner-icon="mdi-key-variant"
+                          tabindex="-1"/>
           </v-col>
-          
           <v-col cols="12" md="6">
             <v-text-field label="Path"
                           v-model="mock.path"
@@ -41,14 +29,35 @@
                               v => !!v.startsWith('/') || 'Path must start with \'/\'']"
                           required variant="outlined" density="comfortable"
                           prepend-inner-icon="mdi-link-variant"/>
-            
+          </v-col>
+
+          <!-- ROW 2: NAME & METHOD -->
+          <v-col cols="12" md="6">
+            <v-text-field label="Name"
+                          v-model="mock.name"
+                          :rules="[v => !!v || 'Name is required']"
+                          required variant="outlined" density="comfortable"
+                          prepend-inner-icon="mdi-format-title"/>
+          </v-col>
+          <v-col cols="12" md="6">
             <v-select label="HTTP Method"
                       v-model="mock.method"
                       :items="httpMethods"
                       :rules="[v => !!v || 'HTTP Method is required']"
                       required variant="outlined" density="comfortable"
                       prepend-inner-icon="mdi-api"/>
-            
+          </v-col>
+
+          <!-- ROW 3: GROUP & STRATEGY -->
+          <v-col cols="12" md="6">
+            <v-text-field label="Group"
+                          v-model="mock.group"
+                          placeholder="Examples: users, payments, auth"
+                          :rules="[v => !!v || 'Group is required']"
+                          required variant="outlined" density="comfortable"
+                          prepend-inner-icon="mdi-folder-outline"/>
+          </v-col>
+          <v-col cols="12" md="6">
             <v-select label="Strategy"
                       v-model="mock.strategy"
                       :items="strategies"
@@ -84,7 +93,7 @@
 
     <!--RESPONSES SECTION-->
     <v-card class="section-card mb-6" elevation="2">
-      <v-toolbar color="primary-darken-1" density="compact" dark flat>
+      <v-toolbar density="compact" dark flat>
         <v-icon start class="ml-4">mdi-undo-variant</v-icon>
         <v-toolbar-title class="text-subtitle-1 font-weight-bold">Server Responses</v-toolbar-title>
         <v-spacer></v-spacer>
@@ -105,7 +114,6 @@
               </v-chip>
               <span class="font-weight-medium">{{ response.description || 'Response ' + (index + 1) }}</span>
               <v-spacer></v-spacer>
-              <v-btn icon="mdi-delete-outline" variant="text" color="error" density="comfortable" @click.stop="removeResponse(index)"></v-btn>
             </div>
           </v-expansion-panel-title>
           
@@ -134,6 +142,12 @@
                             auto-grow
                             rows="10"
                             placeholder='{ "status": "ok" }'/>
+                
+                <div class="d-flex justify-end mt-2">
+                  <v-btn prepend-icon="mdi-delete-outline" variant="tonal" color="error" size="small" @click.stop="removeResponse(index)">
+                    Remove Response
+                  </v-btn>
+                </div>
               </v-col>
             </v-row>
           </v-expansion-panel-text>
@@ -144,7 +158,7 @@
 
     <!--VARIABLES SECTION-->
     <v-card class="section-card mb-8" elevation="2">
-      <v-toolbar color="primary-darken-1" density="compact" dark flat>
+      <v-toolbar density="compact" dark flat>
         <v-icon start class="ml-4">mdi-variable</v-icon>
         <v-toolbar-title class="text-subtitle-1 font-weight-bold">Dynamic Variables</v-toolbar-title>
         <v-spacer></v-spacer>
@@ -158,7 +172,6 @@
             <v-avatar color="secondary" size="24" class="mr-2 text-caption font-weight-bold">{{ index + 1 }}</v-avatar>
             <span class="font-weight-bold">Variable Configuration</span>
             <v-spacer></v-spacer>
-            <v-btn icon="mdi-delete-outline" variant="text" color="error" density="comfortable" @click="removeVariable(index)"></v-btn>
           </div>
           
           <v-row>
@@ -168,12 +181,29 @@
             <v-col cols="12" md="4">
               <v-text-field label="Variable Name" v-model="variable.name" variant="outlined" density="comfortable" placeholder="How to call it in the body"/>
             </v-col>
-            <v-col cols="12" md="4">
+            <v-col cols="12" md="4" v-if="isVariableTypeRequired(variable)">
               <v-text-field label="Source Key/Path" v-model="variable.key" variant="outlined" density="comfortable" 
-                            :disabled="!isVariableTypeRequired(variable)"
                             :placeholder="variableKeyPlaceholder(variable.type)"
                             :hint="variableKeyHint(variable.type)"
                             persistent-hint/>
+            </v-col>
+            <v-col cols="12" md="8" v-else-if="isRandomType(variable.type)">
+              <v-row dense>
+                <v-col cols="12" md="4">
+                  <v-text-field label="Min" v-model.number="variable.min" variant="outlined" density="comfortable" type="number" hide-details/>
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-text-field label="Max" v-model.number="variable.max" variant="outlined" density="comfortable" type="number" hide-details/>
+                </v-col>
+                <v-col cols="12" md="4" v-if="variable.type === 'random_decimal'">
+                  <v-text-field label="Decimals" v-model.number="variable.decimals" variant="outlined" density="comfortable" type="number" hide-details/>
+                </v-col>
+              </v-row>
+            </v-col>
+            <v-col cols="12" class="d-flex justify-end pt-0">
+               <v-btn prepend-icon="mdi-delete-outline" variant="text" color="error" size="x-small" @click="removeVariable(index)">
+                  Remove Variable
+               </v-btn>
             </v-col>
           </v-row>
 
@@ -314,7 +344,9 @@ const varTypes = [
   {title: "Body (JSON Path)", value: "body"},
   {title: "Header", value: "header"},
   {title: "Query Param", value: "query"},
-  {title: "Random Number", value: "random"},
+  {title: "Random (Any)", value: "random"},
+  {title: "Random Integer", value: "random_int"},
+  {title: "Random Decimal", value: "random_decimal"},
   {title: "SHA256 Hash", value: "hash"},
   {title: "Path Variable", value: "path"},
 ];
@@ -512,8 +544,17 @@ function updateResponses() {
 
 function updateVariables() {
   mock.value.variables?.forEach(v => {
-    if (v.type !== "body" && v.type !== "query" && v.type !== "header" && v.type !== "path") {
+    if (!isVariableTypeRequired(v)) {
       v.key = "";
+    }
+    if (!isRandomType(v.type)) {
+      v.min = undefined;
+      v.max = undefined;
+      v.decimals = undefined;
+    } else {
+      if (v.min === undefined) v.min = 0;
+      if (v.max === undefined) v.max = 1000;
+      if (v.type === 'random_decimal' && v.decimals === undefined) v.decimals = 2;
     }
   });
 }
@@ -538,6 +579,10 @@ function isResponseSceneRequired(m: Mock) {
 
 function isVariableTypeRequired(variable: Variable) {
   return variable.type === 'body' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
+}
+
+function isRandomType(type: string) {
+  return type === 'random_int' || type === 'random_decimal';
 }
 
 function variableKeyPlaceholder(type: string): string {
@@ -670,34 +715,23 @@ watch(() => route.path, () => {
 .section-card {
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(var(--v-border-color), 0.05);
 }
 
 .response-panel {
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(var(--v-border-color), 0.05);
   margin-bottom: 8px !important;
   border-radius: 8px !important;
 }
 
 .variable-row {
-  border: 1px solid rgba(0,0,0,0.1);
-}
-
-.border-left {
-  border-left: 3px solid #1976D2;
-}
-
-.code-editor :deep(textarea) {
-  font-family: 'Fira Code', 'Roboto Mono', monospace !important;
-  font-size: 0.85rem !important;
-  line-height: 1.5 !important;
+  border: 1px solid rgba(var(--v-border-color), 0.1);
 }
 
 .actions-bar {
   position: sticky;
   bottom: 16px;
   z-index: 10;
-  border: 1px solid rgba(0,0,0,0.05);
 }
 
 .status-switch {
@@ -705,51 +739,6 @@ watch(() => route.path, () => {
 }
 
 .assertion-box {
-  border: 1px dashed #ccc;
-}
-</style>
-
-<style>
-/* Estilos Globales para Temas */
-.v-theme--light .variable-row {
-  background: white !important;
-}
-
-.v-theme--dark .variable-row {
-  background: #2a2a2a !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-}
-
-.v-theme--light .actions-bar {
-  background: white !important;
-}
-
-.v-theme--dark .actions-bar {
-  background: #1e1e1e !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-.v-theme--dark .assertion-box {
-  background: #212121 !important;
-  border: 1px dashed rgba(255, 255, 255, 0.3) !important;
-}
-
-.v-theme--light .code-editor :deep(textarea) {
-  background-color: #fafafa !important;
-  color: #2c3e50 !important;
-}
-
-.v-theme--dark .code-editor :deep(textarea) {
-  background-color: #1a1a1a !important;
-  color: #64ffda !important; /* Un toque de color para el código en dark mode */
-}
-
-.v-theme--light .url-container {
-  background-color: #f5f5f5 !important;
-}
-
-.v-theme--dark .url-container {
-  background-color: #1a1a1a !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px dashed rgba(var(--v-border-color), 0.3);
 }
 </style>

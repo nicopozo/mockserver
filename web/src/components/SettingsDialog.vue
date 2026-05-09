@@ -95,12 +95,13 @@ const modelLayout = computed({
 })
 
 const colors = [
-  { name: 'Default Blue', value: 'primary-darken-1' },
-  { name: 'Indigo', value: 'indigo-darken-2' },
-  { name: 'Deep Purple', value: 'deep-purple-darken-2' },
-  { name: 'Slate Gray', value: 'blue-grey-darken-4' },
-  { name: 'Emerald', value: 'teal-darken-3' },
-  { name: 'Crimson', value: 'red-darken-4' }
+  { name: 'Pizarra', value: '#475569' },
+  { name: 'Noche', value: '#1e293b' },
+  { name: 'Acero', value: '#64748b' },
+  { name: 'Bosque', value: '#14532d' },
+  { name: 'Vino', value: '#7f1d1d' },
+  { name: 'Grafito', value: '#27272a' },
+  { name: 'Petróleo', value: '#0c4a6e' }
 ]
 </script>
 

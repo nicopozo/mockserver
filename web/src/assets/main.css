@@ -1,0 +1,78 @@
+/* Global styles for consistent premium look */
+
+:root {
+  --v-table-header-bg: #f1f5f9 !important; /* Slate 100 */
+  --v-table-header-color: #475569 !important; /* Slate 600 */
+  --v-primary-color: #0ea5e9 !important; /* Sky 500 */
+}
+
+.v-theme--dark {
+  --v-table-header-bg: #1e293b !important; /* Slate 800 */
+  --v-table-header-color: #f1f5f9 !important; /* Slate 100 */
+  --v-primary-color: #38bdf8 !important; /* Sky 400 */
+}
+
+/* Force all table headers (Vuetify 3 specific selectors) */
+.v-application .v-table .v-table__wrapper > table > thead > tr > th,
+.v-application .v-data-table-header th {
+  background-color: var(--v-table-header-bg) !important;
+  color: var(--v-table-header-color) !important;
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+  letter-spacing: 0.5px !important;
+  border-bottom: 1px solid rgba(var(--v-border-color), 0.1) !important;
+}
+
+/* Force all section toolbars to match */
+.v-application .v-toolbar,
+.v-application .v-card-title,
+.v-application .section-card .v-toolbar {
+  background-color: var(--v-table-header-bg) !important;
+  color: var(--v-table-header-color) !important;
+}
+
+.v-application .v-toolbar-title,
+.v-application .v-toolbar-title__placeholder {
+  font-weight: 800 !important;
+  font-size: 0.8rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  color: var(--v-table-header-color) !important;
+}
+
+.v-application .v-card {
+  border-radius: 12px !important;
+  border: 1px solid rgba(var(--v-border-color), 0.05) !important;
+}
+
+/* Actions Bar (Save/Discard) */
+.actions-bar {
+  background-color: rgb(var(--v-theme-surface)) !important;
+  border: 1px solid rgba(var(--v-border-color), 0.1) !important;
+  border-radius: 12px !important;
+}
+
+/* Utilities */
+.code-block, .path-code {
+  font-family: 'Fira Code', 'Roboto Mono', monospace !important;
+  font-size: 0.75rem !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  background-color: rgba(var(--v-theme-primary), 0.05) !important;
+  color: rgb(var(--v-theme-primary)) !important;
+  overflow-x: auto;
+}
+
+.mock-link {
+  text-decoration: none !important;
+  color: rgb(var(--v-theme-primary)) !important;
+  font-weight: 600 !important;
+}
+
+.mock-link:hover {
+  text-decoration: underline !important;
+}
+
+.text-mono {
+  font-family: 'Fira Code', 'Roboto Mono', monospace !important;
+}

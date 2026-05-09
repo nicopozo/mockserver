@@ -11,6 +11,9 @@ export interface Variable {
   type: string;
   name: string;
   key: string;
+  min?: number;
+  max?: number;
+  decimals?: number;
   assertions: Assertion[];
 }
 

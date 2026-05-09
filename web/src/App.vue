@@ -46,7 +46,7 @@ export default {
   },
   setup() {
     const layout = ref('sidebar')
-    const navColor = ref('primary-darken-1')
+    const navColor = ref('primary')
     const showSettings = ref(false)
 
     onMounted(() => {
@@ -54,7 +54,15 @@ export default {
       if (savedLayout) layout.value = savedLayout
 
       const savedColor = localStorage.getItem('mockserver-nav-color')
-      if (savedColor) navColor.value = savedColor
+      if (savedColor) {
+        // Migrate old default color to new primary
+        if (savedColor === 'primary-darken-1') {
+          navColor.value = 'primary'
+          localStorage.setItem('mockserver-nav-color', 'primary')
+        } else {
+          navColor.value = savedColor
+        }
+      }
     })
 
     function toggleLayout() {

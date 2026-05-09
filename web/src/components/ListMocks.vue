@@ -411,44 +411,4 @@ watch(options, () => {
   border-radius: 12px;
 }
 
-.mock-link {
-  text-decoration: none;
-  color: #1976D2;
-  transition: color 0.2s;
-}
-
-.mock-link:hover {
-  color: #1565C0;
-  text-decoration: underline;
-}
-
-.path-code {
-  background-color: #f5f5f5;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-family: 'Fira Code', 'Roboto Mono', monospace;
-  font-size: 0.85rem;
-  color: #E91E63;
-}
-
-.status-switch {
-  transform: scale(0.8);
-}
-
-.custom-table :deep(tr:hover) {
-  background-color: rgba(25, 118, 210, 0.04) !important;
-}
-</style>
-
-<style>
-/* Estilos específicos de ListMocks */
-.v-theme--light .search-card {
-  background: rgba(255, 255, 255, 0.7) !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-}
-
-.v-theme--dark .search-card {
-  background: rgba(33, 33, 33, 0.7) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
 </style>
