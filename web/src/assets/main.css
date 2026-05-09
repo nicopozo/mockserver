@@ -23,10 +23,9 @@
   border-bottom: 1px solid rgba(var(--v-border-color), 0.1) !important;
 }
 
-/* Force all section toolbars to match */
-.v-application .v-toolbar,
-.v-application .v-card-title,
-.v-application .section-card .v-toolbar {
+/* Force section toolbars and card titles to match table headers */
+.v-application .section-card .v-toolbar,
+.v-application .v-card-title {
   background-color: var(--v-table-header-bg) !important;
   color: var(--v-table-header-color) !important;
 }

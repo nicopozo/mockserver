@@ -116,11 +116,11 @@ const rail = ref(false)
 const width = ref(280)
 const isResizing = ref(false)
 
-const props = defineProps<{
+defineProps<{
   color: string
 }>()
 
-const emit = defineEmits(['open-settings'])
+defineEmits(['open-settings'])
 
 function toggleTheme() {
   const newTheme = isDark.value ? 'light' : 'dark'
@@ -129,7 +129,7 @@ function toggleTheme() {
 }
 
 // Resizing Logic
-function startResize(_: MouseEvent) {
+function startResize() {
   isResizing.value = true
   document.addEventListener('mousemove', handleResize)
   document.addEventListener('mouseup', stopResize)

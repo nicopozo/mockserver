@@ -86,6 +86,7 @@ The easiest way to manage your mocks is through the built-in administration pane
 **URL:** [http://localhost:8080/mock-service/admin/](http://localhost:8080/mock-service/admin/)
 
 From the UI, you can:
+
 - Create, edit, and delete mocks.
 - Configure variables (Path, Query, Header, Body).
 - Define assertions (Equals, Regex, Contains, JSON Schema, etc.).
@@ -102,6 +103,7 @@ curl --location --request GET 'http://localhost:8080/mock-service/mock/users/123
 ```
 
 This will trigger the mock engine, which will:
+
 1. Extract variables (like `id=123`).
 2. Run assertions.
 3. Replace variables in the response body.

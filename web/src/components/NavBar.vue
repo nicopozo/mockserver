@@ -57,14 +57,14 @@ import { computed } from 'vue'
 import { useTheme } from 'vuetify'
 import mockLogo from '@/assets/mock.png'
 
-const props = defineProps<{
+defineProps<{
   color: string
 }>()
 
 const theme = useTheme()
 const isDark = computed(() => theme.global.name.value === 'dark')
 
-const emit = defineEmits(['open-settings'])
+defineEmits(['open-settings'])
 
 function toggleTheme() {
   const newTheme = isDark.value ? 'light' : 'dark'
