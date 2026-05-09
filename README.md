@@ -22,10 +22,18 @@ By default, the application will look for mocks in the file set in `MOCKS_FILE` 
 docker run -v /tmp:/tmp -e MOCKS_FILE=/tmp/mocks.json -p 8080:8080 --name mock-service mock-service
 ```
 
-Alternatively, Mock Service can be run with MySQL database:
+Alternatively, Mock Service can be run with MySQL or PostgreSQL database:
+
+**MySQL:**
 
 ```sh
 docker run -e MOCKS_DATASOURCE=mysql -e DB_USER={{user}} -e DB_PASSWORD={{password}} -e DB_HOST={{host}} -e DB_PORT={{port}} -e DB_NAME={{db_name}} -p 8080:8080 --name mock-service mock-service
+```
+
+**PostgreSQL:**
+
+```sh
+docker run -e MOCKS_DATASOURCE=postgres -e DB_USER={{user}} -e DB_PASSWORD={{password}} -e DB_HOST={{host}} -e DB_PORT={{port}} -e DB_NAME={{db_name}} -p 8080:8080 --name mock-service mock-service
 ```
 
 If you are deploying to a PaaS like Railway, you can alternatively use `MYSQL_URL` directly:
@@ -68,11 +76,20 @@ export DB_PORT={{port}}
 export DB_NAME={{db_name}}
 ```
 
-Alternatively, you can provide a full connection URL (e.g. if deploying to Railway):
+Alternatively, you can provide a full connection URL (e.g. if deploying to Railway or Supabase):
+
+**MySQL:**
 
 ```sh
 export MOCKS_DATASOURCE=mysql
 export MYSQL_URL="mysql://user:password@host:port/db_name"
+```
+
+**PostgreSQL:**
+
+```sh
+export MOCKS_DATASOURCE=postgres
+export POSTGRES_URL="postgres://user:password@host:port/db_name?sslmode=disable"
 ```
 
 and then run the app with `./mocks` command (run the [`init database script`](https://github.com/nicopozo/mockserver/blob/master/scripts/init.sql "Init sql script") before running the app).
