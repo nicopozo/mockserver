@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  localstack:
+    image: localstack/localstack
+    container_name: localstack-container
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=dynamodb
+      - DEFAULT_REGION=us-east-1
+    networks:
+      - mocks-network
+
+  table-creator:
+    image: amazon/aws-cli
+    container_name: table-creator
+    depends_on:
+      - localstack
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - DYNAMO_ENDPOINT=http://localstack-container:4566
+    volumes:
+      - ../../../scripts/aws:/scripts
+    entrypoint: /bin/bash
+    command: -c "sleep 10 && /scripts/create_tables.sh"
+    networks:
+      - mocks-network
+
+  mock-service:
+    container_name: mock-service-dynamo
+    build:
+      context: ../../../.
+      dockerfile: Dockerfile
+    depends_on:
+      - localstack
+      - table-creator
+    environment:
+      - MOCKS_DATASOURCE=dynamodb
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - DYNAMO_ENDPOINT=http://localstack-container:4566
+      - DYNAMO_TABLE_PREFIX=mockserver_
+    ports:
+      - "8080:8080"
+    networks:
+      - mocks-network
+
+networks:
+  mocks-network:
+    driver: bridge
