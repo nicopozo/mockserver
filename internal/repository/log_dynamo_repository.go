@@ -36,14 +36,27 @@ func (r *DynamoLogRepository) Add(ctx context.Context, entry model.LogEntry) err
 		entry.Timestamp = time.Now()
 	}
 
-	item, err := attributevalue.MarshalMap(entry)
+	item := logItem{
+		ID:              entry.ID,
+		Timestamp:       entry.Timestamp,
+		Method:          entry.Method,
+		URL:             entry.URL,
+		RequestBody:     entry.RequestBody,
+		RequestHeaders:  entry.RequestHeaders,
+		QueryParams:     entry.QueryParams,
+		ResponseStatus:  entry.ResponseStatus,
+		ResponseBody:    entry.ResponseBody,
+		AssertionErrors: entry.AssertionErrors,
+	}
+
+	attributes, err := attributevalue.MarshalMap(item)
 	if err != nil {
-		return fmt.Errorf("error marshaling log entry: %w", err)
+		return fmt.Errorf("error marshaling log item: %w", err)
 	}
 
 	_, err = r.client.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: aws.String(r.tableName),
-		Item:      item,
+		Item:      attributes,
 	})
 	if err != nil {
 		return fmt.Errorf("error adding log to DynamoDB: %w", err)
@@ -72,17 +85,33 @@ func (r *DynamoLogRepository) GetAll(ctx context.Context, paging model.Paging) (
 		return model.LogList{}, fmt.Errorf("error scanning logs in DynamoDB: %w", err)
 	}
 
-	var logs []model.LogEntry
+	var items []logItem
 
-	err = attributevalue.UnmarshalListOfMaps(result.Items, &logs)
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &items)
 	if err != nil {
 		return model.LogList{}, fmt.Errorf("error unmarshaling logs: %w", err)
+	}
+
+	results := make([]model.LogEntry, 0, len(items))
+	for _, item := range items {
+		results = append(results, model.LogEntry{
+			ID:              item.ID,
+			Timestamp:       item.Timestamp,
+			Method:          item.Method,
+			URL:             item.URL,
+			RequestBody:     item.RequestBody,
+			RequestHeaders:  item.RequestHeaders,
+			QueryParams:     item.QueryParams,
+			ResponseStatus:  item.ResponseStatus,
+			ResponseBody:    item.ResponseBody,
+			AssertionErrors: item.AssertionErrors,
+		})
 	}
 
 	paging.Total = int64(result.ScannedCount)
 
 	return model.LogList{
-		Results: logs,
+		Results: results,
 		Paging:  paging,
 	}, nil
 }
@@ -117,4 +146,17 @@ func (r *DynamoLogRepository) Clear(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+type logItem struct {
+	ID              string            `dynamodbav:"id"`
+	Timestamp       time.Time         `dynamodbav:"timestamp"`
+	Method          string            `dynamodbav:"method"`
+	URL             string            `dynamodbav:"url"`
+	RequestBody     string            `dynamodbav:"request_body"`
+	RequestHeaders  map[string]string `dynamodbav:"request_headers"`
+	QueryParams     map[string]string `dynamodbav:"query_params"`
+	ResponseStatus  int               `dynamodbav:"response_status"`
+	ResponseBody    string            `dynamodbav:"response_body"`
+	AssertionErrors []string          `dynamodbav:"assertion_errors"`
 }

@@ -15,6 +15,19 @@ type logSQLRepository struct {
 	db Database
 }
 
+type LogRow struct {
+	ID              string    `db:"id"`
+	Timestamp       time.Time `db:"timestamp"`
+	Method          string    `db:"method"`
+	URL             string    `db:"url"`
+	RequestBody     string    `db:"request_body"`
+	ResponseStatus  int       `db:"response_status"`
+	ResponseBody    string    `db:"response_body"`
+	RequestHeaders  string    `db:"request_headers"`
+	QueryParams     string    `db:"query_params"`
+	AssertionErrors string    `db:"assertion_errors"`
+}
+
 func NewLogSQLRepository(db Database) LogRepository {
 	return &logSQLRepository{
 		db: db,
@@ -51,7 +64,7 @@ func (r *logSQLRepository) Add(ctx context.Context, entry model.LogEntry) error 
 }
 
 func (r *logSQLRepository) GetAll(ctx context.Context, paging model.Paging) (model.LogList, error) {
-	var rows []model.LogEntry
+	var rows []LogRow
 
 	// Get total count
 	var total int64
@@ -82,22 +95,35 @@ func (r *logSQLRepository) GetAll(ctx context.Context, paging model.Paging) (mod
 		return model.LogList{}, fmt.Errorf("error fetching logs from DB: %w", errSelect)
 	}
 
-	for index := range rows {
-		if rows[index].RawHeaders != nil {
-			_ = jsonutils.Unmarshal(strings.NewReader(*rows[index].RawHeaders), &rows[index].RequestHeaders)
+	results := make([]model.LogEntry, 0, len(rows))
+	for _, row := range rows {
+		entry := model.LogEntry{
+			ID:             row.ID,
+			Timestamp:      row.Timestamp,
+			Method:         row.Method,
+			URL:            row.URL,
+			RequestBody:    row.RequestBody,
+			ResponseStatus: row.ResponseStatus,
+			ResponseBody:   row.ResponseBody,
 		}
 
-		if rows[index].RawQueryParams != nil {
-			_ = jsonutils.Unmarshal(strings.NewReader(*rows[index].RawQueryParams), &rows[index].QueryParams)
+		if row.RequestHeaders != "" {
+			_ = jsonutils.Unmarshal(strings.NewReader(row.RequestHeaders), &entry.RequestHeaders)
 		}
 
-		if rows[index].RawAssertions != nil {
-			_ = jsonutils.Unmarshal(strings.NewReader(*rows[index].RawAssertions), &rows[index].AssertionErrors)
+		if row.QueryParams != "" {
+			_ = jsonutils.Unmarshal(strings.NewReader(row.QueryParams), &entry.QueryParams)
 		}
+
+		if row.AssertionErrors != "" {
+			_ = jsonutils.Unmarshal(strings.NewReader(row.AssertionErrors), &entry.AssertionErrors)
+		}
+
+		results = append(results, entry)
 	}
 
 	return model.LogList{
-		Results: rows,
+		Results: results,
 		Paging:  paging,
 	}, nil
 }

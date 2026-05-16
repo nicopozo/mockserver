@@ -5,14 +5,17 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
+	"github.com/nicopozo/mockserver/internal/configs"
 	httputils "github.com/nicopozo/mockserver/internal/utils/http"
 )
 
-// main.
 func main() {
 	mux := http.NewServeMux()
 
-	api := BuildContainer()
+	cfg := configs.New()
+	api := BuildContainer(cfg)
 
 	mapRoutes(mux, api)
 
@@ -27,9 +30,14 @@ func main() {
 		handler = httputils.CORS(handler)
 	}
 
-	log.Println("Starting server on :8080")
+	if cfg.IsLambda {
+		log.Println("Starting AWS Lambda handler")
+		lambda.Start(httpadapter.NewV2(handler).ProxyWithContext)
+	} else {
+		log.Println("Starting server on :8080")
 
-	if err := http.ListenAndServe(":8080", handler); err != nil { //nolint:gosec
-		panic(err.Error())
+		if err := http.ListenAndServe(":8080", handler); err != nil { //nolint:gosec
+			panic(err.Error())
+		}
 	}
 }

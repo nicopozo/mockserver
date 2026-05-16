@@ -2,129 +2,109 @@
 
 ![technology Go](https://img.shields.io/badge/technology-go-blue.svg)
 
-A simple mock server in Go.
+A simple and powerful mock server in Go with support for dynamic variables, assertions, and multiple persistence backends.
 
-## Installation
+## Installation & Deployment
 
-### With Dockers
+### Local with Docker
 
-Running this project with Dockers is the best and easiest option.
+The easiest way to run the project is using Docker.
 
-Once we have checked out our project, and we are in the root folder we need to build our image:
-
-```sh
-docker build -t mock-service:latest . 
-```
-
-By default, the application will look for mocks in the file set in `MOCKS_FILE` environment variable inside the container. So we can simply run this project by running our image with the following command:
+**Build the image:**
 
 ```sh
-docker run -v /tmp:/tmp -e MOCKS_FILE=/tmp/mocks.json -p 8080:8080 --name mock-service mock-service
+make docker-build
 ```
 
-Alternatively, Mock Service can be run with MySQL or PostgreSQL database:
-
-**MySQL:**
+**Run with File persistence:**
 
 ```sh
-docker run -e MOCKS_DATASOURCE=mysql -e DB_USER={{user}} -e DB_PASSWORD={{password}} -e DB_HOST={{host}} -e DB_PORT={{port}} -e DB_NAME={{db_name}} -p 8080:8080 --name mock-service mock-service
+docker run -v /tmp:/tmp -e MOCKS_FILE=/tmp/mocks.json -p 8080:8080 --name mock-service nicopozo/mock-service:latest
 ```
 
-**PostgreSQL:**
+**Run with MySQL/PostgreSQL:**
 
 ```sh
-docker run -e MOCKS_DATASOURCE=postgres -e DB_USER={{user}} -e DB_PASSWORD={{password}} -e DB_HOST={{host}} -e DB_PORT={{port}} -e DB_NAME={{db_name}} -p 8080:8080 --name mock-service mock-service
+docker run -e MOCKS_DATASOURCE=mysql -e MYSQL_URL=mysql://user:password@host:port/db_name -p 8080:8080 --name mock-service nicopozo/mock-service:latest
 ```
 
-If you are deploying to a PaaS like Railway, you can alternatively use `MYSQL_URL` directly:
+### AWS Deployment (Lambda & DynamoDB)
+
+Mock Service is ready to be deployed as a Docker-based Lambda function behind API Gateway.
+
+1. **Initialize Infrastructure:**
+
+    ```sh
+    make aws-create-role  # Creates IAM Role
+    make aws-init-db     # Provisions DynamoDB tables
+    ```
+
+2. **Deploy:**
+
+    ```sh
+    make aws-lambda-full  # Build, Push to ECR and Deploy to Lambda
+    make aws-enable-api-gateway # Configure API Gateway
+    ```
+
+### Development
+
+**Compile locally:**
 
 ```sh
-docker run -e MOCKS_DATASOURCE=mysql -e MYSQL_URL=mysql://user:password@host:port/db_name -p 8080:8080 --name mock-service mock-service
+make build
+./service
 ```
 
-Database must contain a schema `mockserver` (or the one specified in `DB_NAME`/`MYSQL_URL`) with required tables. Follow[`this link`](https://github.com/nicopozo/mockserver/blob/master/scripts/init.sql "Init sql script") to get the creation script.
-
-### By compiling with Go
-
-Mock Service can be compiled and run without the need of a Dockers installation. In order to compile this application, we need Go 1.18 installed.
+**Run tests:**
 
 ```sh
-cd cmd/mocks 
-go build .
+make test
 ```
 
-Before running we configure the JSON file with the mocks.
+## Configuration
+
+| Environment Variable | Description | Default |
+| --- | --- | --- |
+| `MOCKS_DATASOURCE` | `file`, `mysql`, `postgres`, or `dynamo` | `file` |
+| `MOCKS_FILE` | Path to JSON file (only for `file` mode) | `/tmp/mocks.json` |
+| `MYSQL_URL` / `POSTGRES_URL` | Full connection string for SQL databases | |
+| `DYNAMO_TABLE_PREFIX` | Prefix for DynamoDB tables | `mockserver_` |
+| `AWS_REGION` | AWS Region for DynamoDB/Lambda | `us-east-1` |
+
+## Versioning
+
+We use a centralized versioning system. The version is stored in the `VERSION` file.
+
+**Bump version:**
 
 ```sh
-export MOCKS_FILE=/tmp/mocks.json
+make bump PART=patch  # 3.5.1 -> 3.5.2 (default)
+make bump PART=minor  # 3.5.2 -> 3.6.0
+make bump PART=major  # 3.6.0 -> 4.0.0
 ```
-
-Now, simply run the application:
-
-```sh
-./mocks
-```
-
-In order to use the application with MySQL database instead of a file, set these environment variables before running the app.
-
-```sh
-export MOCKS_DATASOURCE=mysql
-export DB_USER={{user}}
-export DB_PASSWORD={{password}} 
-export DB_HOST={{host}}
-export DB_PORT={{port}}
-export DB_NAME={{db_name}}
-```
-
-Alternatively, you can provide a full connection URL (e.g. if deploying to Railway or Supabase):
-
-**MySQL:**
-
-```sh
-export MOCKS_DATASOURCE=mysql
-export MYSQL_URL="mysql://user:password@host:port/db_name"
-```
-
-**PostgreSQL:**
-
-```sh
-export MOCKS_DATASOURCE=postgres
-export POSTGRES_URL="postgres://user:password@host:port/db_name?sslmode=disable"
-```
-
-and then run the app with `./mocks` command (run the [`init database script`](https://github.com/nicopozo/mockserver/blob/master/scripts/init.sql "Init sql script") before running the app).
 
 ## How to use it
 
 ### Administer your mocks via UI
 
-The easiest way to manage your mocks is through the built-in administration panel.
+Manage your mocks through the built-in administration panel.
 
 **URL:** [http://localhost:8080/mock-service/admin/](http://localhost:8080/mock-service/admin/)
 
 From the UI, you can:
 
 - Create, edit, and delete mocks.
-- Configure variables (Path, Query, Header, Body).
+- Configure variables (Path, Query, Header, Body, Random, Hash).
 - Define assertions (Equals, Regex, Contains, JSON Schema, etc.).
 - View real-time logs of mocked requests.
 
-![UI](assets/ui.png)
-
 ### Execute a mock
 
-Once you have created a mock (for example, with path `/users/{id}`), you can execute it by calling the following endpoint:
+Once you have created a mock (e.g., path `/users/{id}`), you can execute it:
 
 ```sh
 curl --location --request GET 'http://localhost:8080/mock-service/mock/users/123'
 ```
-
-This will trigger the mock engine, which will:
-
-1. Extract variables (like `id=123`).
-2. Run assertions.
-3. Replace variables in the response body.
-4. Return the configured response.
 
 **Example Response:**
 

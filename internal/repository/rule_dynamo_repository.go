@@ -35,13 +35,13 @@ func (r *DynamoRuleRepository) Create(ctx context.Context, rule *model.Rule) (*m
 		rule.Key = ulid.Make().String()
 	}
 
-	item, err := attributevalue.MarshalMap(rule)
+	itemStruct := toRuleItem(rule)
+	itemStruct.Pattern = CreateExpression(rule.Path)
+
+	item, err := attributevalue.MarshalMap(itemStruct)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling rule: %w", err)
 	}
-
-	// Add pattern attribute (calculated field)
-	item["pattern"] = &types.AttributeValueMemberS{Value: CreateExpression(rule.Path)}
 
 	_, err = r.client.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: aws.String(r.tableName),
@@ -81,14 +81,14 @@ func (r *DynamoRuleRepository) Get(ctx context.Context, key string) (*model.Rule
 		}
 	}
 
-	var rule model.Rule
+	var item ruleItem
 
-	err = attributevalue.UnmarshalMap(result.Item, &rule)
+	err = attributevalue.UnmarshalMap(result.Item, &item)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling rule: %w", err)
 	}
 
-	return &rule, nil
+	return toRuleModel(&item), nil
 }
 
 func (r *DynamoRuleRepository) Search(
@@ -114,11 +114,16 @@ func (r *DynamoRuleRepository) Search(
 		return nil, fmt.Errorf("error scanning rules in DynamoDB: %w", err)
 	}
 
-	var rules []*model.Rule
+	var items []ruleItem
 
-	err = attributevalue.UnmarshalListOfMaps(result.Items, &rules)
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &items)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling rules: %w", err)
+	}
+
+	rules := make([]*model.Rule, 0, len(items))
+	for i := range items {
+		rules = append(rules, toRuleModel(&items[i]))
 	}
 
 	paging.Total = int64(result.ScannedCount)
@@ -186,8 +191,13 @@ func (r *DynamoRuleRepository) SearchByMethodAndPath(
 		return nil, fmt.Errorf("error querying rules by method: %w", err)
 	}
 
-	for _, item := range result.Items {
-		rule, ok, err := r.matchItem(item, path)
+	for _, itemAV := range result.Items {
+		var item ruleItem
+		if err := attributevalue.UnmarshalMap(itemAV, &item); err != nil {
+			continue
+		}
+
+		rule, ok, err := r.matchItem(&item, path)
 		if err != nil {
 			return nil, err
 		}
@@ -202,17 +212,10 @@ func (r *DynamoRuleRepository) SearchByMethodAndPath(
 	}
 }
 
-func (r *DynamoRuleRepository) matchItem(item map[string]types.AttributeValue, path string) (*model.Rule, bool, error) {
-	pattern := ""
-	if p, ok := item["pattern"].(*types.AttributeValueMemberS); ok {
-		pattern = p.Value
-	}
-
+func (r *DynamoRuleRepository) matchItem(item *ruleItem, path string) (*model.Rule, bool, error) {
+	pattern := item.Pattern
 	if pattern == "" {
-		var rule model.Rule
-
-		_ = attributevalue.UnmarshalMap(item, &rule)
-		pattern = CreateExpression(rule.Path)
+		pattern = CreateExpression(item.Path)
 	}
 
 	regex, err := regexp.Compile(pattern)
@@ -221,20 +224,8 @@ func (r *DynamoRuleRepository) matchItem(item map[string]types.AttributeValue, p
 	}
 
 	if regex.MatchString(path) {
-		status := ""
-		if s, ok := item["status"].(*types.AttributeValueMemberS); ok {
-			status = s.Value
-		}
-
-		if status == model.RuleStatusEnabled {
-			var rule model.Rule
-
-			err = attributevalue.UnmarshalMap(item, &rule)
-			if err != nil {
-				return nil, false, fmt.Errorf("error unmarshaling matching rule: %w", err)
-			}
-
-			return &rule, true, nil
+		if item.Status == model.RuleStatusEnabled {
+			return toRuleModel(item), true, nil
 		}
 	}
 
@@ -257,4 +248,146 @@ func (r *DynamoRuleRepository) Delete(ctx context.Context, key string) error {
 	}
 
 	return nil
+}
+
+// Internal Item Structs for DynamoDB mapping (LOWERCASE as per user request).
+type ruleItem struct {
+	Key       string         `dynamodbav:"key"`
+	Group     string         `dynamodbav:"group"`
+	Name      string         `dynamodbav:"name"`
+	Path      string         `dynamodbav:"path"`
+	Strategy  string         `dynamodbav:"strategy"`
+	Method    string         `dynamodbav:"method"`
+	Status    string         `dynamodbav:"status"`
+	Responses []responseItem `dynamodbav:"responses"`
+	Variables []variableItem `dynamodbav:"variables"`
+	Pattern   string         `dynamodbav:"pattern"`
+}
+
+type responseItem struct {
+	Body        string `dynamodbav:"body"`
+	ContentType string `dynamodbav:"content_type"`
+	HTTPStatus  int    `dynamodbav:"http_status"`
+	Delay       int    `dynamodbav:"delay"`
+	Scene       string `dynamodbav:"scene"`
+	Description string `dynamodbav:"description"`
+}
+
+type variableItem struct {
+	Type       string          `dynamodbav:"type"`
+	Name       string          `dynamodbav:"name"`
+	Key        string          `dynamodbav:"key"`
+	Min        *float64        `dynamodbav:"min,omitempty"`
+	Max        *float64        `dynamodbav:"max,omitempty"`
+	Decimals   *int            `dynamodbav:"decimals,omitempty"`
+	Assertions []assertionItem `dynamodbav:"assertions"`
+}
+
+type assertionItem struct {
+	FailOnError bool    `dynamodbav:"fail_on_error"`
+	Type        string  `dynamodbav:"type"`
+	Value       string  `dynamodbav:"value"`
+	Min         float64 `dynamodbav:"min"`
+	Max         float64 `dynamodbav:"max"`
+}
+
+// Mappers.
+func toRuleItem(rule *model.Rule) *ruleItem {
+	responses := make([]responseItem, 0, len(rule.Responses))
+	for _, resp := range rule.Responses {
+		responses = append(responses, responseItem{
+			Body:        resp.Body,
+			ContentType: resp.ContentType,
+			HTTPStatus:  resp.HTTPStatus,
+			Delay:       resp.Delay,
+			Scene:       resp.Scene,
+			Description: resp.Description,
+		})
+	}
+
+	variables := make([]variableItem, 0, len(rule.Variables))
+	for _, variable := range rule.Variables {
+		assertions := make([]assertionItem, 0, len(variable.Assertions))
+		for _, assertion := range variable.Assertions {
+			assertions = append(assertions, assertionItem{
+				FailOnError: assertion.FailOnError,
+				Type:        assertion.Type,
+				Value:       assertion.Value,
+				Min:         assertion.Min,
+				Max:         assertion.Max,
+			})
+		}
+
+		variables = append(variables, variableItem{
+			Type:       variable.Type,
+			Name:       variable.Name,
+			Key:        variable.Key,
+			Min:        variable.Min,
+			Max:        variable.Max,
+			Decimals:   variable.Decimals,
+			Assertions: assertions,
+		})
+	}
+
+	return &ruleItem{
+		Key:       rule.Key,
+		Group:     rule.Group,
+		Name:      rule.Name,
+		Path:      rule.Path,
+		Strategy:  rule.Strategy,
+		Method:    rule.Method,
+		Status:    rule.Status,
+		Responses: responses,
+		Variables: variables,
+	}
+}
+
+func toRuleModel(item *ruleItem) *model.Rule {
+	responses := make([]model.Response, 0, len(item.Responses))
+	for _, resp := range item.Responses {
+		responses = append(responses, model.Response{
+			Body:        resp.Body,
+			ContentType: resp.ContentType,
+			HTTPStatus:  resp.HTTPStatus,
+			Delay:       resp.Delay,
+			Scene:       resp.Scene,
+			Description: resp.Description,
+		})
+	}
+
+	variables := make([]*model.Variable, 0, len(item.Variables))
+	for _, variable := range item.Variables {
+		assertions := make([]*model.Assertion, 0, len(variable.Assertions))
+		for _, assertion := range variable.Assertions {
+			assertions = append(assertions, &model.Assertion{
+				FailOnError: assertion.FailOnError,
+				Type:        assertion.Type,
+				Value:       assertion.Value,
+				Min:         assertion.Min,
+				Max:         assertion.Max,
+			})
+		}
+
+		variables = append(variables, &model.Variable{
+			Type:       variable.Type,
+			Name:       variable.Name,
+			Key:        variable.Key,
+			Min:        variable.Min,
+			Max:        variable.Max,
+			Decimals:   variable.Decimals,
+			Assertions: assertions,
+		})
+	}
+
+	return &model.Rule{
+		Key:       item.Key,
+		Group:     item.Group,
+		Name:      item.Name,
+		Path:      item.Path,
+		Strategy:  item.Strategy,
+		Method:    item.Method,
+		Status:    item.Status,
+		Responses: responses,
+		Variables: variables,
+	}
 }

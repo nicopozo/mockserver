@@ -11,6 +11,7 @@ type Config struct {
 	Database   DatabaseConfig
 	Dynamo     DynamoConfig
 	AWS        AWSConfig
+	IsLambda   bool
 }
 
 type DatabaseConfig struct {
@@ -52,6 +53,7 @@ func New() *Config {
 		AWS: AWSConfig{
 			Region: getEnv("AWS_REGION", "us-east-1"),
 		},
+		IsLambda: os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "",
 	}
 }
 

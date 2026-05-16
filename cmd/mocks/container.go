@@ -34,12 +34,12 @@ type MockContainer struct {
 }
 
 // BuildContainer initialize the dependency injection container.
-func BuildContainer() MockContainer {
+func BuildContainer(cfg *configs.Config) MockContainer {
 	container := dig.New()
 
 	providers := []any{
 		// Config
-		configs.New,
+		func() *configs.Config { return cfg },
 
 		// Persistence
 		provideSQLDB,
