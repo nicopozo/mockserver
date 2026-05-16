@@ -9,14 +9,13 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/nicopozo/mockserver/internal/configs"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 	"github.com/oklog/ulid/v2"
 )
-
-const defaultFilePath = "/tmp/mocks.json"
 
 type ruleFileRepository struct {
 	rules    []fileRule
@@ -28,10 +27,8 @@ type fileRule struct {
 	NextResponseIndex int `json:"next_response_index"`
 }
 
-func NewRuleFileRepository(filePath string) (RuleRepository, error) {
-	if filePath == "" {
-		filePath = defaultFilePath
-	}
+func NewRuleFileRepository(cfg *configs.Config) (RuleRepository, error) {
+	filePath := cfg.MocksFile
 
 	repo := ruleFileRepository{
 		rules:    make([]fileRule, 0),

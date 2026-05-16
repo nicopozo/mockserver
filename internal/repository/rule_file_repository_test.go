@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/nicopozo/mockserver/internal/configs"
 	ruleserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/repository"
@@ -68,7 +69,7 @@ func Test_ruleFileRepository_Get(t *testing.T) {
 			name := getMocksFile()
 			defer func(fileName string) { _ = os.Remove(fileName) }(name)
 
-			fileRepository, err := repository.NewRuleFileRepository(name)
+			fileRepository, err := repository.NewRuleFileRepository(&configs.Config{MocksFile: name})
 			if assert.Nil(t, err) {
 				got, err := fileRepository.Get(tt.args.ctx, tt.args.key)
 
@@ -146,7 +147,7 @@ func Test_ruleFileRepository_Search(t *testing.T) {
 			name := getMocksFile()
 			defer func(fileName string) { _ = os.Remove(fileName) }(name)
 
-			fileRepository, err := repository.NewRuleFileRepository(name)
+			fileRepository, err := repository.NewRuleFileRepository(&configs.Config{MocksFile: name})
 			if assert.Nil(t, err) {
 				got, err := fileRepository.Search(tt.args.ctx, tt.args.params, tt.args.paging)
 
