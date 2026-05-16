@@ -2,6 +2,7 @@
 web/node_modules
 local.env
 .env
+aws-lambda.env
 
 # Binaries
 mocks
