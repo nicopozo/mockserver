@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS mockserver.variables
     name       varchar(255) NOT NULL,
     "key"      varchar(255) NOT NULL,
     rule_key   varchar(255) NOT NULL,
+    min        float8       DEFAULT NULL,
+    max        float8       DEFAULT NULL,
+    decimals   int          DEFAULT NULL,
     assertions json         DEFAULT NULL,
     PRIMARY KEY (id),
     CONSTRAINT fk_rule FOREIGN KEY (rule_key) REFERENCES mockserver.rules ("key")

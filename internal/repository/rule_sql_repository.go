@@ -33,12 +33,15 @@ type RuleRow struct {
 }
 
 type VariableRow struct {
-	ID         int64   `db:"id"`
-	Type       string  `db:"type"`
-	Name       string  `db:"name"`
-	Key        string  `db:"key"`
-	RuleKey    string  `db:"rule_key"`
-	Assertions *string `db:"assertions"`
+	ID         int64    `db:"id"`
+	Type       string   `db:"type"`
+	Name       string   `db:"name"`
+	Key        string   `db:"key"`
+	RuleKey    string   `db:"rule_key"`
+	Min        *float64 `db:"min"`
+	Max        *float64 `db:"max"`
+	Decimals   *int     `db:"decimals"`
+	Assertions *string  `db:"assertions"`
 }
 
 type ResponseRow struct {
@@ -242,7 +245,7 @@ func (repository *ruleSQLRepository) Get(ctx context.Context, key string) (*mode
 	var variables []VariableRow
 
 	query = FormatQuery(
-		"SELECT id, type, name, `key`, rule_key, assertions FROM variables WHERE rule_key = ?",
+		"SELECT id, type, name, `key`, rule_key, min, max, decimals, assertions FROM variables WHERE rule_key = ?",
 		repository.db.DriverName(),
 	)
 
@@ -399,7 +402,7 @@ func (repository *ruleSQLRepository) insertVariables(ctx context.Context, rule *
 	logger := mockscontext.Logger(ctx)
 
 	query := FormatQuery(
-		"INSERT INTO variables (type, name, `key`, rule_key, assertions) VALUES (?, ?, ?, ?, ?)",
+		"INSERT INTO variables (type, name, `key`, rule_key, min, max, decimals, assertions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 		repository.db.DriverName(),
 	)
 
@@ -411,7 +414,8 @@ func (repository *ruleSQLRepository) insertVariables(ctx context.Context, rule *
 			assertions = &a
 		}
 
-		_, err := trx.ExecContext(ctx, query, variable.Type, variable.Name, variable.Key, rule.Key, assertions)
+		_, err := trx.ExecContext(ctx, query, variable.Type, variable.Name, variable.Key, rule.Key,
+			variable.Min, variable.Max, variable.Decimals, assertions)
 		if err != nil {
 			logger.Error(repository, nil, err, "error creating rule variable in DB")
 
@@ -516,10 +520,13 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 	vars := make([]*model.Variable, 0, len(variables))
 
 	for _, variable := range variables {
-		newVar := model.Variable{
-			Type: variable.Type,
-			Name: variable.Name,
-			Key:  variable.Key,
+		newVar := &model.Variable{
+			Type:     variable.Type,
+			Name:     variable.Name,
+			Key:      variable.Key,
+			Min:      variable.Min,
+			Max:      variable.Max,
+			Decimals: variable.Decimals,
 		}
 
 		var assertions []*model.Assertion
@@ -529,7 +536,7 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 			newVar.Assertions = assertions
 		}
 
-		vars = append(vars, &newVar)
+		vars = append(vars, newVar)
 	}
 
 	resps := make([]model.Response, 0, len(responses))

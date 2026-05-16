@@ -39,7 +39,10 @@ CREATE TABLE `mockserver`.`variables`
     `name`       varchar(255) NOT NULL,
     `key`        varchar(255) NOT NULL,
     `rule_key`   varchar(255) NOT NULL,
-    `assertions` json DEFAULT NULL,
+    `min`        double       DEFAULT NULL,
+    `max`        double       DEFAULT NULL,
+    `decimals`   int          DEFAULT NULL,
+    `assertions` json         DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `rule_idx` (`rule_key`),
     CONSTRAINT `rule` FOREIGN KEY (`rule_key`) REFERENCES `rules` (`key`)
