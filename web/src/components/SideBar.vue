@@ -11,7 +11,7 @@
     class="sidebar-drawer"
   >
     <div class="pa-2 d-flex align-center header-container" :class="{ 'flex-column': rail, 'px-4': !rail }">
-      <v-img :src="mockLogo" alt="Mocks Server" :width="rail ? 40 : 50" :height="rail ? 40 : 50" class="flex-shrink-0" />
+      <img :src="mockLogo" alt="Mocks Server" class="flex-shrink-0" :style="{ width: rail ? '36px' : '40px', height: rail ? '36px' : '40px', 'object-fit': 'contain' }" />
       <div v-if="!rail" class="font-weight-black text-h6 ml-2 title-text">
         Mocks Server
       </div>

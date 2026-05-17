@@ -8,7 +8,7 @@
     class="main-navbar px-4"
   >
     <template #prepend>
-      <v-img :src="mockLogo" alt="Mocks Server" width="50" height="50" class="ml-2" />
+      <img :src="mockLogo" alt="Mocks Server" class="ml-2 flex-shrink-0" style="width: 40px; height: 40px; object-fit: contain;" />
     </template>
 
     <div class="font-weight-black ml-2" style="letter-spacing: 0.5px; font-size: 1.4rem; white-space: nowrap;">

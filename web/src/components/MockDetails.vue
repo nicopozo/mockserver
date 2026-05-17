@@ -283,7 +283,6 @@
                       <v-icon
                         class="drag-handle mr-2"
                         color="medium-emphasis"
-                        size="small"
                         @mousedown="isAssertHandlePressed = true; activeAssertParentIndex = index"
                         @mouseup="isAssertHandlePressed = false; activeAssertParentIndex = null"
                         @touchstart="isAssertHandlePressed = true; activeAssertParentIndex = index"

@@ -58,7 +58,10 @@
 
       <v-divider></v-divider>
 
-      <v-card-actions class="pa-4">
+      <v-card-actions class="pa-4 d-flex align-center">
+        <span class="text-caption text-medium-emphasis ml-2">
+          Version {{ version }}
+        </span>
         <v-spacer></v-spacer>
         <v-btn color="primary" variant="flat" @click="internalValue = false">
           Close
@@ -70,6 +73,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+
+const version = __APP_VERSION__
 
 const props = defineProps<{
   modelValue: boolean
