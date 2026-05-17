@@ -350,6 +350,7 @@ const varTypes = [
   {title: "Random Decimal", value: "random_decimal"},
   {title: "SHA256 Hash", value: "hash"},
   {title: "Path Variable", value: "path"},
+  {title: "Composite Template", value: "composite"},
 ];
 const assertionTypes = [
   {title: "Equals", value: "equals"},
@@ -579,7 +580,7 @@ function isResponseSceneRequired(m: Mock) {
 }
 
 function isVariableTypeRequired(variable: Variable) {
-  return variable.type === 'body' || variable.type === 'xml' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
+  return variable.type === 'body' || variable.type === 'xml' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path' || variable.type === 'composite';
 }
 
 function isRandomType(type: string) {
@@ -593,6 +594,7 @@ function variableKeyPlaceholder(type: string): string {
     case 'header': return 'X-Custom-Header'
     case 'query':  return 'paramName'
     case 'path':   return 'paramName (matches {paramName} in path)'
+    case 'composite': return '{var1}-{var2}'
     default:       return 'N/A — not required for this type'
   }
 }
@@ -604,6 +606,7 @@ function variableKeyHint(type: string): string {
     case 'header': return 'Name of the HTTP request header to read'
     case 'query':  return 'Query string parameter name (e.g. for ?page=2 use "page")'
     case 'path':   return 'Path segment name defined in curly braces, e.g. user_id for /users/{user_id}'
+    case 'composite': return 'Template string interpolating other variables, e.g. {action}-{api_key}'
     default:       return ''
   }
 }
@@ -628,7 +631,7 @@ function isAssertionFieldRequired(assertion: Assertion, field: string) {
 }
 
 function isAssertionAllowed(variable: Variable) {
-  return variable.type === 'body' || variable.type === 'xml' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
+  return variable.type === 'body' || variable.type === 'xml' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path' || variable.type === 'composite';
 }
 
 function newMock(): Mock {

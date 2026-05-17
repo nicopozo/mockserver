@@ -981,3 +981,77 @@ func getRuleFromFile(t *testing.T, path string) model.Rule {
 
 	return rule
 }
+
+func TestMockService_CompositeVariables(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
+
+	req := getMockRequest(
+		http.MethodPost,
+		"url",
+		`{"action": "BuscarTicket"}`,
+		map[string][]string{
+			"X-Api-Key": {
+				"VIP-123",
+			},
+		},
+		map[string]string{
+			"env": "production",
+		},
+	)
+
+	rule := model.Rule{
+		Key:      "test_composite",
+		Path:     "/test",
+		Strategy: model.RuleStrategyScene,
+		Method:   "POST",
+		Status:   "enabled",
+		Variables: []*model.Variable{
+			{
+				Type: model.VariableTypeBody,
+				Name: "soap_method",
+				Key:  "$.action",
+			},
+			{
+				Type: model.VariableTypeHeader,
+				Name: "api_key",
+				Key:  "X-Api-Key",
+			},
+			{
+				Type: model.VariableTypeQuery,
+				Name: "environment",
+				Key:  "env",
+			},
+			{
+				Type: model.VariableTypeComposite,
+				Name: "scene",
+				Key:  "{soap_method}-{api_key}-{environment}",
+			},
+		},
+		Responses: []model.Response{
+			{
+				Body:        "VIP response",
+				ContentType: "text/plain",
+				HTTPStatus:  200,
+				Scene:       "BuscarTicket-VIP-123-production",
+			},
+			{
+				Body:        "Default response",
+				ContentType: "text/plain",
+				HTTPStatus:  200,
+				Scene:       "default",
+			},
+		},
+	}
+
+	ruleServiceMock.EXPECT().SearchByMethodAndPath(gomock.Any(), "POST", "/test").Return(rule, nil)
+
+	srv, err := service.NewMockService(ruleServiceMock)
+	assert.Nil(t, err)
+
+	resp, _, err := srv.SearchResponseForRequest(context.Background(), req, "/test", `{"action": "BuscarTicket"}`)
+	assert.Nil(t, err)
+	assert.Equal(t, "VIP response", resp.Body)
+}

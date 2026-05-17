@@ -322,23 +322,34 @@ func (svc *mockService) getVariableValue(variable model.Variable, request *http.
 		return svc.getBodyVariableValue(variable.Key, body)
 	case model.VariableTypeXML:
 		return svc.getXMLVariableValue(variable.Key, body)
-	case model.VariableTypeHash:
-		return svc.getHashVariableValue(), nil
-	case model.VariableTypeRandom:
-		return svc.getRandomVariableValue(), nil
-	case model.VariableTypeRandomInt:
-		return svc.getRandomIntVariableValue(variable), nil
-	case model.VariableTypeRandomDecimal:
-		return svc.getRandomDecimalVariableValue(variable), nil
 	case model.VariableTypeQuery:
 		return svc.getQueryVariableValue(variable.Key, request)
 	case model.VariableTypePath:
 		return svc.getPathVariableValue(variable.Key, rule.Path, path)
+	case model.VariableTypeComposite:
+		return svc.applyVariables(variable.Key, rule.Variables), nil
+	case model.VariableTypeHash, model.VariableTypeRandom, model.VariableTypeRandomInt, model.VariableTypeRandomDecimal:
+		return svc.getRandomOrHashVariableValue(variable), nil
 	}
 
 	return "", mockserrors.InvalidRulesError{
 		Message: fmt.Sprintf("%s is invalid variable type", variable.Type),
 	}
+}
+
+func (svc *mockService) getRandomOrHashVariableValue(variable model.Variable) string {
+	switch variable.Type {
+	case model.VariableTypeHash:
+		return svc.getHashVariableValue()
+	case model.VariableTypeRandom:
+		return svc.getRandomVariableValue()
+	case model.VariableTypeRandomInt:
+		return svc.getRandomIntVariableValue(variable)
+	case model.VariableTypeRandomDecimal:
+		return svc.getRandomDecimalVariableValue(variable)
+	}
+
+	return ""
 }
 
 func (svc *mockService) getPathParams(rulePath, reqPath string) (map[string]string, error) {
@@ -377,16 +388,38 @@ func (svc *mockService) getVariableValues(request http.Request, body string, rul
 	path string,
 ) ([]*model.Variable, error) {
 	variables := rule.Variables
+
+	// First pass: evaluate all non-composite variables
+	if err := svc.evaluateVariables(variables, &request, body, rule, path, false); err != nil {
+		return nil, err
+	}
+
+	// Second pass: evaluate all composite variables
+	if err := svc.evaluateVariables(variables, &request, body, rule, path, true); err != nil {
+		return nil, err
+	}
+
+	return variables, nil
+}
+
+func (svc *mockService) evaluateVariables(variables []*model.Variable, request *http.Request, body string,
+	rule model.Rule, path string, isComposite bool,
+) error {
 	for idx := range variables {
-		value, err := svc.getVariableValue(*variables[idx], &request, body, rule, path)
+		// Skip variables that do not match the expected phase (composite vs non-composite)
+		if (variables[idx].Type == model.VariableTypeComposite) != isComposite {
+			continue
+		}
+
+		value, err := svc.getVariableValue(*variables[idx], request, body, rule, path)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		variables[idx].Value = value
 	}
 
-	return variables, nil
+	return nil
 }
 
 func (svc *mockService) applyAssertionsFromRule(rule model.Rule, variables []*model.Variable) model.AssertionResult {
