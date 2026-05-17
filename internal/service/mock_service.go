@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/antchfx/xmlquery"
+	"github.com/antchfx/xpath"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
@@ -198,16 +199,31 @@ func (svc *mockService) getXMLVariableValue(key, body string) (string, error) {
 		return "", fmt.Errorf("error parsing XML body: %w", err)
 	}
 
-	node, err := xmlquery.Query(doc, key)
+	expr, err := xpath.Compile(key)
 	if err != nil {
 		return "", fmt.Errorf("invalid XPath for key %s - %w", key, err)
 	}
 
-	if node == nil {
-		return "", nil
+	nav := xmlquery.CreateXPathNavigator(doc)
+	result := expr.Evaluate(nav)
+
+	switch res := result.(type) {
+	case string:
+		return res, nil
+	case float64:
+		return fmt.Sprintf("%v", res), nil
+	case bool:
+		return fmt.Sprintf("%v", res), nil
+	case *xpath.NodeIterator:
+		if res.MoveNext() {
+			node, ok := res.Current().(*xmlquery.NodeNavigator)
+			if ok {
+				return node.Value(), nil
+			}
+		}
 	}
 
-	return node.InnerText(), nil
+	return "", nil
 }
 
 func (svc *mockService) getHashVariableValue() string {
