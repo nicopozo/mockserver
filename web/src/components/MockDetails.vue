@@ -385,7 +385,7 @@
 
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted, onUnmounted, computed } from 'vue';
+import { ref, reactive, watch, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import axios from 'axios';
 import type { Mock, Variable, Assertion, Response } from '@/types';
@@ -872,13 +872,18 @@ function initialize() {
         .then((res) => {
           mock.value = res.data;
           originalMockString.value = JSON.stringify(res.data);
+          nextTick(() => {
+            form.value?.resetValidation();
+          });
         })
         .catch((err) => showAlert("Error getting mock info!", err))
         .finally(() => loading.value = false);
   } else {
     mock.value = newMock();
     originalMockString.value = JSON.stringify(mock.value);
-    form.value?.resetValidation();
+    nextTick(() => {
+      form.value?.resetValidation();
+    });
   }
 }
 
