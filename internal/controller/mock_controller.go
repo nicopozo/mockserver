@@ -60,7 +60,7 @@ func (controller *MockController) Execute(writer http.ResponseWriter, request *h
 		return
 	}
 
-	writer.Header().Set("content-type", response.ContentType)
+	writer.Header().Set("Content-Type", response.ContentType)
 
 	time.Sleep(time.Duration(response.Delay) * time.Millisecond)
 	writer.WriteHeader(response.HTTPStatus)

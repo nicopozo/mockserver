@@ -8,6 +8,7 @@ import (
 
 const (
 	VariableTypeBody          = "body"
+	VariableTypeXML           = "xml"
 	VariableTypeHeader        = "header"
 	VariableTypeRandom        = "random"
 	VariableTypeRandomInt     = "random_int"
@@ -29,12 +30,13 @@ type Variable struct {
 }
 
 func (variable *Variable) Validate() error {
-	if variable.Type != VariableTypeBody && variable.Type != VariableTypeHeader &&
-		variable.Type != VariableTypeRandom && variable.Type != VariableTypeHash &&
-		variable.Type != VariableTypeQuery && variable.Type != VariableTypePath &&
-		variable.Type != VariableTypeRandomInt && variable.Type != VariableTypeRandomDecimal {
+	if variable.Type != VariableTypeBody && variable.Type != VariableTypeXML &&
+		variable.Type != VariableTypeHeader && variable.Type != VariableTypeRandom &&
+		variable.Type != VariableTypeHash && variable.Type != VariableTypeQuery &&
+		variable.Type != VariableTypePath && variable.Type != VariableTypeRandomInt &&
+		variable.Type != VariableTypeRandomDecimal {
 		return mockserrors.InvalidRulesError{
-			Message: "variable Type must be 'body', 'header', 'query', 'random', " +
+			Message: "variable Type must be 'body', 'xml', 'header', 'query', 'random', " +
 				"'hash', 'path', 'random_int' or 'random_decimal'",
 		}
 	}

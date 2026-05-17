@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/antchfx/xmlquery"
 	mockscontext "github.com/nicopozo/mockserver/internal/context"
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
@@ -191,6 +192,24 @@ func (svc *mockService) getBodyVariableValue(key, body string) (string, error) {
 	return jsonutils.Marshal(value), nil
 }
 
+func (svc *mockService) getXMLVariableValue(key, body string) (string, error) {
+	doc, err := xmlquery.Parse(strings.NewReader(body))
+	if err != nil {
+		return "", fmt.Errorf("error parsing XML body: %w", err)
+	}
+
+	node, err := xmlquery.Query(doc, key)
+	if err != nil {
+		return "", fmt.Errorf("invalid XPath for key %s - %w", key, err)
+	}
+
+	if node == nil {
+		return "", nil
+	}
+
+	return node.InnerText(), nil
+}
+
 func (svc *mockService) getHashVariableValue() string {
 	n := rand.Int63n(maxRand) //nolint:gosec
 	h := sha256.New()
@@ -285,6 +304,8 @@ func (svc *mockService) getVariableValue(variable model.Variable, request *http.
 		return svc.getHeaderVariableValue(variable.Key, request), nil
 	case model.VariableTypeBody:
 		return svc.getBodyVariableValue(variable.Key, body)
+	case model.VariableTypeXML:
+		return svc.getXMLVariableValue(variable.Key, body)
 	case model.VariableTypeHash:
 		return svc.getHashVariableValue(), nil
 	case model.VariableTypeRandom:

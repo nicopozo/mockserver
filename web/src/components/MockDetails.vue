@@ -342,6 +342,7 @@ const strategies = [
 ];
 const varTypes = [
   {title: "Body (JSON Path)", value: "body"},
+  {title: "Body (XML XPath)", value: "xml"},
   {title: "Header", value: "header"},
   {title: "Query Param", value: "query"},
   {title: "Random (Any)", value: "random"},
@@ -578,7 +579,7 @@ function isResponseSceneRequired(m: Mock) {
 }
 
 function isVariableTypeRequired(variable: Variable) {
-  return variable.type === 'body' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
+  return variable.type === 'body' || variable.type === 'xml' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
 }
 
 function isRandomType(type: string) {
@@ -588,6 +589,7 @@ function isRandomType(type: string) {
 function variableKeyPlaceholder(type: string): string {
   switch (type) {
     case 'body':   return '$.field or $.nested.field'
+    case 'xml':    return '/user/id or //node[@attr="val"]'
     case 'header': return 'X-Custom-Header'
     case 'query':  return 'paramName'
     case 'path':   return 'paramName (matches {paramName} in path)'
@@ -598,6 +600,7 @@ function variableKeyPlaceholder(type: string): string {
 function variableKeyHint(type: string): string {
   switch (type) {
     case 'body':   return 'JSONPath expression to extract a value from the request body'
+    case 'xml':    return 'XPath expression to extract a value from the XML request body'
     case 'header': return 'Name of the HTTP request header to read'
     case 'query':  return 'Query string parameter name (e.g. for ?page=2 use "page")'
     case 'path':   return 'Path segment name defined in curly braces, e.g. user_id for /users/{user_id}'
@@ -625,7 +628,7 @@ function isAssertionFieldRequired(assertion: Assertion, field: string) {
 }
 
 function isAssertionAllowed(variable: Variable) {
-  return variable.type === 'body' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
+  return variable.type === 'body' || variable.type === 'xml' || variable.type === 'query' || variable.type === 'header' || variable.type === 'path';
 }
 
 function newMock(): Mock {
