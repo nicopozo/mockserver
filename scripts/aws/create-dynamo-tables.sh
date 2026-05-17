@@ -48,8 +48,21 @@ else
     echo "✨ Creating table '$LOGS_TABLE'..."
     aws dynamodb create-table \
         --table-name "$LOGS_TABLE" \
-        --attribute-definitions AttributeName=id,AttributeType=S \
+        --attribute-definitions \
+            AttributeName=id,AttributeType=S \
+            AttributeName=type,AttributeType=S \
         --key-schema AttributeName=id,KeyType=HASH \
+        --global-secondary-indexes \
+            "[
+                {
+                    \"IndexName\": \"type-id-index\",
+                    \"KeySchema\": [
+                        {\"AttributeName\": \"type\",\"KeyType\": \"HASH\"},
+                        {\"AttributeName\": \"id\",\"KeyType\": \"RANGE\"}
+                    ],
+                    \"Projection\": {\"ProjectionType\": \"ALL\"}
+                }
+            ]" \
         --billing-mode PAY_PER_REQUEST \
         --region "$REGION"
     echo "⏳ Waiting for table '$LOGS_TABLE' to be created..."

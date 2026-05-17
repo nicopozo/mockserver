@@ -38,6 +38,7 @@ func (r *DynamoLogRepository) Add(ctx context.Context, entry model.LogEntry) err
 
 	item := logItem{
 		ID:              entry.ID,
+		Type:            "log",
 		Timestamp:       entry.Timestamp,
 		Method:          entry.Method,
 		URL:             entry.URL,
@@ -70,19 +71,29 @@ func (r *DynamoLogRepository) GetAll(ctx context.Context, paging model.Paging) (
 
 	if paging.LastID != "" {
 		exclusiveStartKey = map[string]types.AttributeValue{
-			"id": &types.AttributeValueMemberS{Value: paging.LastID},
+			"id":   &types.AttributeValueMemberS{Value: paging.LastID},
+			"type": &types.AttributeValueMemberS{Value: "log"},
 		}
 	}
 
-	input := &dynamodb.ScanInput{
-		TableName:         aws.String(r.tableName),
+	input := &dynamodb.QueryInput{
+		TableName:              aws.String(r.tableName),
+		IndexName:              aws.String("type-id-index"),
+		KeyConditionExpression: aws.String("#t = :t"),
+		ExpressionAttributeNames: map[string]string{
+			"#t": "type",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":t": &types.AttributeValueMemberS{Value: "log"},
+		},
+		ScanIndexForward:  aws.Bool(false), // Sort order: descending (newest first)
 		Limit:             aws.Int32(paging.Limit),
 		ExclusiveStartKey: exclusiveStartKey,
 	}
 
-	result, err := r.client.Scan(ctx, input)
+	result, err := r.client.Query(ctx, input)
 	if err != nil {
-		return model.LogList{}, fmt.Errorf("error scanning logs in DynamoDB: %w", err)
+		return model.LogList{}, fmt.Errorf("error querying logs GSI in DynamoDB: %w", err)
 	}
 
 	var items []logItem
@@ -92,6 +103,26 @@ func (r *DynamoLogRepository) GetAll(ctx context.Context, paging model.Paging) (
 		return model.LogList{}, fmt.Errorf("error unmarshaling logs: %w", err)
 	}
 
+	// Fetch accurate total count using a fast count scan
+	countInput := &dynamodb.ScanInput{
+		TableName: aws.String(r.tableName),
+		Select:    types.SelectCount,
+	}
+
+	countResult, err := r.client.Scan(ctx, countInput)
+	if err == nil {
+		paging.Total = int64(countResult.Count)
+	} else {
+		paging.Total = int64(result.Count)
+	}
+
+	return model.LogList{
+		Results: toLogEntryModels(items),
+		Paging:  paging,
+	}, nil
+}
+
+func toLogEntryModels(items []logItem) []model.LogEntry {
 	results := make([]model.LogEntry, 0, len(items))
 	for _, item := range items {
 		results = append(results, model.LogEntry{
@@ -108,12 +139,7 @@ func (r *DynamoLogRepository) GetAll(ctx context.Context, paging model.Paging) (
 		})
 	}
 
-	paging.Total = int64(result.ScannedCount)
-
-	return model.LogList{
-		Results: results,
-		Paging:  paging,
-	}, nil
+	return results
 }
 
 func (r *DynamoLogRepository) Clear(ctx context.Context) error {
@@ -150,6 +176,7 @@ func (r *DynamoLogRepository) Clear(ctx context.Context) error {
 
 type logItem struct {
 	ID              string            `dynamodbav:"id"`
+	Type            string            `dynamodbav:"type"`
 	Timestamp       time.Time         `dynamodbav:"timestamp"`
 	Method          string            `dynamodbav:"method"`
 	URL             string            `dynamodbav:"url"`
