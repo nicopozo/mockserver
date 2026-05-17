@@ -345,7 +345,6 @@ const varTypes = [
   {title: "Body (XML XPath)", value: "xml"},
   {title: "Header", value: "header"},
   {title: "Query Param", value: "query"},
-  {title: "Random (Any)", value: "random"},
   {title: "Random Integer", value: "random_int"},
   {title: "Random Decimal", value: "random_decimal"},
   {title: "SHA256 Hash", value: "hash"},

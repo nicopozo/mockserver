@@ -138,6 +138,21 @@
                 <li>Optionally, set one response's scene name to <code>default</code> as a fallback.</li>
               </ol>
             </v-alert>
+
+            <v-alert type="success" variant="tonal" density="compact" class="mt-4">
+              <strong>Wildcard Scene Matching:</strong>
+              <p class="mt-2">
+                You can use the wildcard character <code>*</code> in scene names to match dynamic groups of scenes:
+              </p>
+              <ul class="mt-1 ml-4">
+                <li><code>BuscarTicket-*</code> matches any scene starting with <code>BuscarTicket-</code> (e.g. <code>BuscarTicket-12345</code>).</li>
+                <li><code>*-prod</code> matches any scene ending with <code>-prod</code>.</li>
+                <li><code>Buscar/*</code> matches sub-paths, crossing the <code>/</code> path separator seamlessly.</li>
+              </ul>
+              <p class="mt-2 text-caption font-weight-bold">
+                Resolution Priority: 1. Exact match (highest), 2. Wildcard pattern match, 3. Default fallback.
+              </p>
+            </v-alert>
           </div>
         </v-expansion-panel-text>
       </v-expansion-panel>
@@ -159,10 +174,16 @@
               <thead><tr><th>Type</th><th>Source</th><th>Key / Path</th><th>Example</th></tr></thead>
               <tbody>
                 <tr>
-                  <td><v-chip size="x-small" color="blue" label>body</v-chip></td>
+                  <td><v-chip size="x-small" color="blue" label>JSON Body</v-chip></td>
                   <td>Request JSON body</td>
                   <td>JSONPath expression</td>
                   <td><code>$.user.name</code></td>
+                </tr>
+                <tr>
+                  <td><v-chip size="x-small" color="cyan" label>XML Body</v-chip></td>
+                  <td>Request XML body</td>
+                  <td>XPath expression</td>
+                  <td><code>//user/id</code> or <code>/response/status</code></td>
                 </tr>
                 <tr>
                   <td><v-chip size="x-small" color="green" label>header</v-chip></td>
@@ -186,13 +207,31 @@
                   <td><v-chip size="x-small" color="teal" label>random</v-chip></td>
                   <td>Generated random number</td>
                   <td>—</td>
-                  <td>Returns a random integer</td>
+                  <td>Returns a large random integer</td>
+                </tr>
+                <tr>
+                  <td><v-chip size="x-small" color="teal-darken-2" label>random_int</v-chip></td>
+                  <td>Random Integer (custom range)</td>
+                  <td>Configured Min / Max fields</td>
+                  <td>Returns an integer between min and max (e.g. <code>10</code>)</td>
+                </tr>
+                <tr>
+                  <td><v-chip size="x-small" color="teal-lighten-2" label>random_decimal</v-chip></td>
+                  <td>Random Decimal (custom range)</td>
+                  <td>Configured Min / Max / Decimals</td>
+                  <td>Returns a float (e.g. <code>10.55</code>)</td>
                 </tr>
                 <tr>
                   <td><v-chip size="x-small" color="grey" label>hash</v-chip></td>
                   <td>Generated SHA-256 hash</td>
                   <td>—</td>
                   <td>Returns a random hash string</td>
+                </tr>
+                <tr>
+                  <td><v-chip size="x-small" color="indigo" label>composite</v-chip></td>
+                  <td>Composite Template</td>
+                  <td>Template string with {variables}</td>
+                  <td><code>{action}-{api_key}</code></td>
                 </tr>
               </tbody>
             </v-table>
@@ -383,17 +422,17 @@ const strategyDetails = [
     name: 'Scene',
     title: 'Selects response based on request data',
     color: 'purple',
-    description: 'The most powerful strategy. It reads a value from the request (via a variable named "scene") and matches it to a response\'s Scene Name. If no match is found, a response with scene "default" is used as fallback.',
+    description: 'The most powerful strategy. It reads a value from the request (via a variable named "scene") and matches it to a response\'s Scene Name. Supports exact matches, wildcard patterns (e.g. "BuscarTicket-*"), and a "default" scene as fallback.',
     example: `// Example: Route by request body field "status"
 // 1. Variable: type=body, name=scene, key=$.status
 // 2. Responses:
-//    - Scene "approved"  → { "result": "Payment OK" }
-//    - Scene "rejected"  → { "result": "Payment failed" }
-//    - Scene "default"   → { "result": "Unknown status" }
+//    - Scene "BuscarTicket-2604" → { "result": "Specific ticket" }
+//    - Scene "BuscarTicket-*"    → { "result": "Any other BuscarTicket query" }
+//    - Scene "default"            → { "result": "Unknown status" }
 //
-// POST with {"status": "approved"} → returns "Payment OK"
-// POST with {"status": "rejected"} → returns "Payment failed"
-// POST with {"status": "xyz"}      → returns "Unknown status"`,
+// POST with {"status": "BuscarTicket-2604"} → returns "Specific ticket"
+// POST with {"status": "BuscarTicket-1234"} → returns "Any other BuscarTicket query"
+// POST with {"status": "xyz"}               → returns "Unknown status"`,
   },
 ]
 

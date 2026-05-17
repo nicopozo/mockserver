@@ -1055,3 +1055,99 @@ func TestMockService_CompositeVariables(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "VIP response", resp.Body)
 }
+
+func TestMockService_WildcardScenes(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ruleServiceMock := mocks.NewMockRuleService(mockCtrl)
+
+	rule := model.Rule{
+		Key:      "test_wildcard",
+		Path:     "/test",
+		Strategy: model.RuleStrategyScene,
+		Method:   "POST",
+		Status:   "enabled",
+		Variables: []*model.Variable{
+			{
+				Type: model.VariableTypeBody,
+				Name: "scene",
+				Key:  "$.scene_name",
+			},
+		},
+		Responses: []model.Response{
+			{
+				Body:       "exact match",
+				HTTPStatus: 200,
+				Scene:      "BuscarTicket-2604101505235",
+			},
+			{
+				Body:       "wildcard suffix match",
+				HTTPStatus: 200,
+				Scene:      "BuscarTicket-*",
+			},
+			{
+				Body:       "wildcard prefix match",
+				HTTPStatus: 200,
+				Scene:      "*-12345",
+			},
+			{
+				Body:       "slash wildcard match",
+				HTTPStatus: 200,
+				Scene:      "Buscar/*",
+			},
+			{
+				Body:       "default fallback",
+				HTTPStatus: 200,
+				Scene:      "default",
+			},
+		},
+	}
+
+	srv, err := service.NewMockService(ruleServiceMock)
+	assert.Nil(t, err)
+
+	tests := []struct {
+		sceneInput   string
+		expectedBody string
+	}{
+		{
+			sceneInput:   "BuscarTicket-2604101505235",
+			expectedBody: "exact match",
+		},
+		{
+			sceneInput:   "BuscarTicket-1234",
+			expectedBody: "wildcard suffix match",
+		},
+		{
+			sceneInput:   "RegistrarPago-12345",
+			expectedBody: "wildcard prefix match",
+		},
+		{
+			sceneInput:   "Buscar/Ticket/SubPath",
+			expectedBody: "slash wildcard match",
+		},
+		{
+			sceneInput:   "SomeOtherRandomScene",
+			expectedBody: "default fallback",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.sceneInput, func(t *testing.T) {
+			ruleServiceMock.EXPECT().SearchByMethodAndPath(gomock.Any(), "POST", "/test").Return(rule, nil)
+
+			req := getMockRequest(
+				http.MethodPost,
+				"url",
+				fmt.Sprintf(`{"scene_name": "%s"}`, tt.sceneInput),
+				nil,
+				nil,
+			)
+
+			resp, _, err := srv.SearchResponseForRequest(context.Background(), req, "/test", fmt.Sprintf(`{"scene_name": "%s"}`, tt.sceneInput))
+			assert.Nil(t, err)
+			assert.Equal(t, tt.expectedBody, resp.Body)
+		})
+	}
+}

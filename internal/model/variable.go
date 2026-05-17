@@ -10,7 +10,6 @@ const (
 	VariableTypeBody          = "body"
 	VariableTypeXML           = "xml"
 	VariableTypeHeader        = "header"
-	VariableTypeRandom        = "random"
 	VariableTypeRandomInt     = "random_int"
 	VariableTypeRandomDecimal = "random_decimal"
 	VariableTypeHash          = "hash"
@@ -33,7 +32,7 @@ type Variable struct {
 func (variable *Variable) Validate() error {
 	if !variable.hasValidType() {
 		return mockserrors.InvalidRulesError{
-			Message: "variable Type must be 'body', 'xml', 'header', 'query', 'random', " +
+			Message: "variable Type must be 'body', 'xml', 'header', 'query', " +
 				"'hash', 'path', 'random_int', 'random_decimal' or 'composite'",
 		}
 	}
@@ -43,7 +42,7 @@ func (variable *Variable) Validate() error {
 
 func (variable *Variable) hasValidType() bool {
 	switch variable.Type {
-	case VariableTypeBody, VariableTypeXML, VariableTypeHeader, VariableTypeRandom,
+	case VariableTypeBody, VariableTypeXML, VariableTypeHeader,
 		VariableTypeRandomInt, VariableTypeRandomDecimal, VariableTypeHash,
 		VariableTypeQuery, VariableTypePath, VariableTypeComposite:
 		return true

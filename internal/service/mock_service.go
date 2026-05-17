@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -150,27 +151,57 @@ func (svc *mockService) getResponseByScene(rule model.Rule, request *http.Reques
 		return model.Response{}, err
 	}
 
-	respIndex := -1
+	return svc.findResponseBySceneName(rule, sceneName)
+}
 
+func (svc *mockService) findResponseBySceneName(rule model.Rule, sceneName string) (model.Response, error) {
+	// 1. Exact Match (highest priority)
 	for index, resp := range rule.Responses {
 		if resp.Scene == sceneName {
-			respIndex = index
-
-			break
-		}
-
-		if strings.ToLower(resp.Scene) == "default" {
-			respIndex = index
+			return rule.Responses[index], nil
 		}
 	}
 
-	if respIndex >= 0 {
-		return rule.Responses[respIndex], nil
+	// 2. Wildcard Match (e.g. "BuscarTicket-*")
+	for index, resp := range rule.Responses {
+		if strings.Contains(resp.Scene, "*") {
+			if matched := matchWildcardScene(resp.Scene, sceneName); matched {
+				return rule.Responses[index], nil
+			}
+		}
+	}
+
+	// 3. Default Catch-All
+	for index, resp := range rule.Responses {
+		if strings.ToLower(resp.Scene) == "default" {
+			return rule.Responses[index], nil
+		}
 	}
 
 	return model.Response{}, mockserrors.InvalidRulesError{
 		Message: fmt.Sprintf("rule doesn't have an scene called %s", sceneName),
 	}
+}
+
+func matchWildcardScene(pattern, name string) bool {
+	parts := strings.Split(pattern, "*")
+	if len(parts) == 1 {
+		return pattern == name
+	}
+
+	var quotedParts []string
+	for _, part := range parts {
+		quotedParts = append(quotedParts, regexp.QuoteMeta(part))
+	}
+
+	regexStr := "^" + strings.Join(quotedParts, ".*") + "$"
+
+	matched, err := regexp.MatchString(regexStr, name)
+	if err != nil {
+		return false
+	}
+
+	return matched
 }
 
 func (svc *mockService) getHeaderVariableValue(key string, request *http.Request) string {
@@ -233,12 +264,6 @@ func (svc *mockService) getHashVariableValue() string {
 	bs := h.Sum(nil)
 
 	return fmt.Sprintf("%x", bs)
-}
-
-func (svc *mockService) getRandomVariableValue() string {
-	n := rand.Int63n(maxRand) //nolint:gosec
-
-	return strconv.FormatInt(n, 10)
 }
 
 func (svc *mockService) getRandomIntVariableValue(variable model.Variable) string {
@@ -328,7 +353,7 @@ func (svc *mockService) getVariableValue(variable model.Variable, request *http.
 		return svc.getPathVariableValue(variable.Key, rule.Path, path)
 	case model.VariableTypeComposite:
 		return svc.applyVariables(variable.Key, rule.Variables), nil
-	case model.VariableTypeHash, model.VariableTypeRandom, model.VariableTypeRandomInt, model.VariableTypeRandomDecimal:
+	case model.VariableTypeHash, model.VariableTypeRandomInt, model.VariableTypeRandomDecimal:
 		return svc.getRandomOrHashVariableValue(variable), nil
 	}
 
@@ -341,8 +366,6 @@ func (svc *mockService) getRandomOrHashVariableValue(variable model.Variable) st
 	switch variable.Type {
 	case model.VariableTypeHash:
 		return svc.getHashVariableValue()
-	case model.VariableTypeRandom:
-		return svc.getRandomVariableValue()
 	case model.VariableTypeRandomInt:
 		return svc.getRandomIntVariableValue(variable)
 	case model.VariableTypeRandomDecimal:
