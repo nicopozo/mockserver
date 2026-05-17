@@ -106,9 +106,27 @@
           v-for="(response, index) in mock.responses"
           :key="index"
           class="response-panel"
+          :class="{ 'is-dragging': draggedIndex === index }"
+          :draggable="isHandlePressed"
+          @dragstart="onDragStart(index, $event)"
+          @dragend="onDragEnd"
+          @dragover.prevent
+          @drop="onDrop(index)"
         >
           <v-expansion-panel-title>
             <div class="d-flex align-center w-100 pr-4">
+              <!-- Drag Handle -->
+              <v-icon
+                class="drag-handle mr-3"
+                color="medium-emphasis"
+                @mousedown="isHandlePressed = true"
+                @mouseup="isHandlePressed = false"
+                @touchstart="isHandlePressed = true"
+                @touchend="isHandlePressed = false"
+              >
+                mdi-menu
+              </v-icon>
+              
               <v-chip :color="getStatusColor(response.http_status)" size="small" class="mr-3 font-weight-bold">
                 {{ response.http_status }}
               </v-chip>
@@ -166,81 +184,160 @@
       </v-toolbar>
 
       <v-container fluid class="pa-4" v-if="mock.variables && mock.variables.length > 0">
-      <v-row v-for="(variable, index) in mock.variables" :key="index" class="variable-row mb-4 pa-2 rounded-lg border">
-        <v-col cols="12">
-          <div class="d-flex align-center mb-2">
-            <v-avatar color="secondary" size="24" class="mr-2 text-caption font-weight-bold">{{ index + 1 }}</v-avatar>
-            <span class="font-weight-bold">Variable Configuration</span>
-            <v-spacer></v-spacer>
-          </div>
-          
-          <v-row>
-            <v-col cols="12" md="4">
-              <v-select label="Source Type" v-model="variable.type" :items="varTypes" variant="outlined" density="comfortable" @update:model-value="updateVariables()"/>
-            </v-col>
-            <v-col cols="12" md="4">
-              <v-text-field label="Variable Name" v-model="variable.name" variant="outlined" density="comfortable" placeholder="How to call it in the body"/>
-            </v-col>
-            <v-col cols="12" md="4" v-if="isVariableTypeRequired(variable)">
-              <v-text-field label="Source Key/Path" v-model="variable.key" variant="outlined" density="comfortable" 
-                            :placeholder="variableKeyPlaceholder(variable.type)"
-                            :hint="variableKeyHint(variable.type)"
-                            persistent-hint/>
-            </v-col>
-            <v-col cols="12" md="8" v-else-if="isRandomType(variable.type)">
-              <v-row dense>
-                <v-col cols="12" md="4">
-                  <v-text-field label="Min" v-model.number="variable.min" variant="outlined" density="comfortable" type="number" hide-details/>
-                </v-col>
-                <v-col cols="12" md="4">
-                  <v-text-field label="Max" v-model.number="variable.max" variant="outlined" density="comfortable" type="number" hide-details/>
-                </v-col>
-                <v-col cols="12" md="4" v-if="variable.type === 'random_decimal'">
-                  <v-text-field label="Decimals" v-model.number="variable.decimals" variant="outlined" density="comfortable" type="number" hide-details/>
-                </v-col>
-              </v-row>
-            </v-col>
-            <v-col cols="12" class="d-flex justify-end pt-0">
-               <v-btn prepend-icon="mdi-delete-outline" variant="text" color="error" size="x-small" @click="removeVariable(index)">
-                  Remove Variable
-               </v-btn>
-            </v-col>
-          </v-row>
-
-          <!--ASSERTIONS-->
-          <div class="mt-2 pl-4 border-left">
-            <div class="d-flex align-center mb-2">
-              <v-icon size="small" color="grey" class="mr-1">mdi-shield-check-outline</v-icon>
-              <span class="text-caption font-weight-bold text-grey">Assertions</span>
-              <v-spacer></v-spacer>
-              <v-btn variant="text" color="primary" size="x-small" prepend-icon="mdi-plus" :disabled="!isAssertionAllowed(variable)" @click="addAssertion(index)">
-                Add Assertion
-              </v-btn>
+      <v-expansion-panels variant="accordion">
+        <v-expansion-panel
+          v-for="(variable, index) in mock.variables"
+          :key="index"
+          class="variable-panel"
+          :class="{ 'is-dragging': draggedVarIndex === index }"
+          :draggable="isVarHandlePressed"
+          @dragstart="onVarDragStart(index, $event)"
+          @dragend="onVarDragEnd"
+          @dragover.prevent
+          @drop="onVarDrop(index)"
+        >
+          <v-expansion-panel-title>
+            <div class="d-flex align-center w-100 pr-4">
+              <!-- Drag Handle -->
+              <v-icon
+                class="drag-handle mr-2"
+                color="medium-emphasis"
+                @mousedown="isVarHandlePressed = true"
+                @mouseup="isVarHandlePressed = false"
+                @touchstart="isVarHandlePressed = true"
+                @touchend="isVarHandlePressed = false"
+              >
+                mdi-menu
+              </v-icon>
+              
+              <v-avatar color="secondary" size="24" class="mr-2 text-caption font-weight-bold">{{ index + 1 }}</v-avatar>
+              <span class="font-weight-medium">
+                {{ variable.name || 'Variable ' + (index + 1) }}
+              </span>
+              <v-chip size="x-small" color="grey" class="ml-2 font-weight-bold" v-if="variable.type">
+                {{ variable.type }}
+              </v-chip>
             </div>
-            
-            <v-row v-for="(assertion, assertIndex) in variable.assertions" :key="assertIndex" class="assertion-box mb-2 pa-3 rounded">
-              <v-col cols="12" md="3">
-                <v-select label="Assert Type" v-model="assertion.type" :items="assertionTypes" variant="underlined" density="compact" @update:model-value="updateAssertions(index)"/>
+          </v-expansion-panel-title>
+          
+          <v-expansion-panel-text>
+            <v-row class="mt-2">
+              <v-col cols="12" md="4">
+                <v-select label="Source Type" v-model="variable.type" :items="varTypes" variant="outlined" density="comfortable" @update:model-value="updateVariables()"/>
               </v-col>
-              <v-col cols="12" md="3">
-                <v-text-field label="Expected Value" v-model="assertion.value" variant="underlined" density="compact" :disabled="!isAssertionFieldRequired(assertion, 'value')"/>
+              <v-col cols="12" md="4">
+                <v-text-field label="Variable Name" v-model="variable.name" variant="outlined" density="comfortable" placeholder="How to call it in the body"/>
               </v-col>
-              <v-col cols="12" md="2">
-                <v-text-field label="Min" v-model.number="assertion.min" variant="underlined" density="compact" type="number" :disabled="!isAssertionFieldRequired(assertion, 'min')"/>
+              <v-col cols="12" md="4" v-if="isVariableTypeRequired(variable)">
+                <v-text-field label="Source Key/Path" v-model="variable.key" variant="outlined" density="comfortable" 
+                              :placeholder="variableKeyPlaceholder(variable.type)"
+                              :hint="variableKeyHint(variable.type)"
+                              persistent-hint/>
               </v-col>
-              <v-col cols="12" md="2">
-                <v-text-field label="Max" v-model.number="assertion.max" variant="underlined" density="compact" type="number" :disabled="!isAssertionFieldRequired(assertion, 'max')"/>
+              <v-col cols="12" md="8" v-else-if="isRandomType(variable.type)">
+                <v-row dense>
+                  <v-col cols="12" md="4">
+                    <v-text-field label="Min" v-model.number="variable.min" variant="outlined" density="comfortable" type="number" hide-details/>
+                  </v-col>
+                  <v-col cols="12" md="4">
+                    <v-text-field label="Max" v-model.number="variable.max" variant="outlined" density="comfortable" type="number" hide-details/>
+                  </v-col>
+                  <v-col cols="12" md="4" v-if="variable.type === 'random_decimal'">
+                    <v-text-field label="Decimals" v-model.number="variable.decimals" variant="outlined" density="comfortable" type="number" hide-details/>
+                  </v-col>
+                </v-row>
               </v-col>
-              <v-col cols="12" md="2" class="d-flex align-center justify-end">
-                <v-btn icon="mdi-close" variant="text" color="grey" size="small" @click="removeAssertion(index, assertIndex)"></v-btn>
-              </v-col>
-              <v-col cols="12" class="pt-0">
-                <v-switch v-model="assertion.fail_on_error" color="error" label="Fail request if assertion fails" density="compact" hide-details class="text-caption"/>
+              <v-col cols="12" class="d-flex justify-end pt-0">
+                 <v-btn prepend-icon="mdi-delete-outline" variant="text" color="error" size="x-small" @click="removeVariable(index)">
+                    Remove Variable
+                 </v-btn>
               </v-col>
             </v-row>
-          </div>
-        </v-col>
-      </v-row>
+
+            <!--ASSERTIONS-->
+            <div class="mt-4 pl-4 border-left">
+              <div class="d-flex align-center mb-2">
+                <v-icon size="small" color="grey" class="mr-1">mdi-shield-check-outline</v-icon>
+                <span class="text-caption font-weight-bold text-grey">Assertions</span>
+                <v-spacer></v-spacer>
+                <v-btn variant="text" color="primary" size="x-small" prepend-icon="mdi-plus" :disabled="!isAssertionAllowed(variable)" @click="addAssertion(index)">
+                  Add Assertion
+                </v-btn>
+              </div>
+              
+              <v-expansion-panels variant="accordion" v-if="variable.assertions && variable.assertions.length > 0">
+                <v-expansion-panel
+                  v-for="(assertion, assertIndex) in variable.assertions"
+                  :key="assertIndex"
+                  class="assertion-panel"
+                  :class="{ 'is-dragging': draggedAssertIndex === assertIndex && draggedAssertParentIndex === index }"
+                  :draggable="isAssertHandlePressed && activeAssertParentIndex === index"
+                  @dragstart="onAssertDragStart(index, assertIndex, $event)"
+                  @dragend="onAssertDragEnd"
+                  @dragover.prevent
+                  @drop="onAssertDrop(index, assertIndex)"
+                >
+                  <v-expansion-panel-title class="py-2">
+                    <div class="d-flex align-center w-100 pr-4">
+                      <!-- Drag Handle -->
+                      <v-icon
+                        class="drag-handle mr-2"
+                        color="medium-emphasis"
+                        size="small"
+                        @mousedown="isAssertHandlePressed = true; activeAssertParentIndex = index"
+                        @mouseup="isAssertHandlePressed = false; activeAssertParentIndex = null"
+                        @touchstart="isAssertHandlePressed = true; activeAssertParentIndex = index"
+                        @touchend="isAssertHandlePressed = false; activeAssertParentIndex = null"
+                      >
+                        mdi-menu
+                      </v-icon>
+                      
+                      <span class="font-weight-medium text-body-2">
+                        {{ assertion.type ? assertion.type.toUpperCase() + (assertion.value ? ': "' + assertion.value + '"' : '') : 'Assertion ' + (assertIndex + 1) }}
+                      </span>
+                      
+                      <v-spacer></v-spacer>
+                      
+                      <!-- fail_on_error indicator chip -->
+                      <v-chip size="x-small" :color="assertion.fail_on_error ? 'error' : 'grey'" variant="flat" class="font-weight-bold">
+                        {{ assertion.fail_on_error ? 'Strict' : 'Soft' }}
+                      </v-chip>
+                    </div>
+                  </v-expansion-panel-title>
+                  
+                  <v-expansion-panel-text>
+                    <v-row class="mt-2">
+                      <v-col cols="12" md="3">
+                        <v-select label="Assert Type" v-model="assertion.type" :items="assertionTypes" variant="outlined" density="comfortable" @update:model-value="updateAssertion(assertion)"/>
+                      </v-col>
+                      <v-col cols="12" md="3">
+                        <v-text-field label="Expected Value" v-model="assertion.value" variant="outlined" density="comfortable" :disabled="!isAssertionFieldRequired(assertion, 'value')"/>
+                      </v-col>
+                      <v-col cols="12" md="2">
+                        <v-text-field label="Min" v-model.number="assertion.min" variant="outlined" density="comfortable" type="number" :disabled="!isAssertionFieldRequired(assertion, 'min')"/>
+                      </v-col>
+                      <v-col cols="12" md="2">
+                        <v-text-field label="Max" v-model.number="assertion.max" variant="outlined" density="comfortable" type="number" :disabled="!isAssertionFieldRequired(assertion, 'max')"/>
+                      </v-col>
+                      
+                      <!-- Remove Assertion Button -->
+                      <v-col cols="12" md="2" class="d-flex align-center justify-end">
+                        <v-btn prepend-icon="mdi-delete-outline" variant="text" color="error" size="small" @click="removeAssertion(index, assertIndex)">
+                          Remove
+                        </v-btn>
+                      </v-col>
+                      
+                      <v-col cols="12" class="pt-0">
+                        <v-switch v-model="assertion.fail_on_error" color="error" label="Fail request if assertion fails" density="compact" hide-details class="text-caption"/>
+                      </v-col>
+                    </v-row>
+                  </v-expansion-panel-text>
+                </v-expansion-panel>
+              </v-expansion-panels>
+            </div>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
       </v-container>
     </v-card>
 
@@ -307,6 +404,17 @@ const originalMockString = ref('');
 const valid = ref(false);
 const loading = ref(false);
 const saving = ref(false);
+
+const draggedIndex = ref<number | null>(null);
+const isHandlePressed = ref(false);
+
+const draggedVarIndex = ref<number | null>(null);
+const isVarHandlePressed = ref(false);
+
+const draggedAssertParentIndex = ref<number | null>(null);
+const draggedAssertIndex = ref<number | null>(null);
+const isAssertHandlePressed = ref(false);
+const activeAssertParentIndex = ref<number | null>(null);
 
 const isDirty = computed(() => {
   return JSON.stringify(mock.value) !== originalMockString.value;
@@ -496,6 +604,64 @@ function removeVariable(i: number) {
   mock.value.variables.splice(i, 1);
 }
 
+function onVarDragStart(index: number, event: DragEvent) {
+  draggedVarIndex.value = index;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', index.toString());
+  }
+}
+
+function onVarDrop(targetIndex: number) {
+  if (draggedVarIndex.value === null || draggedVarIndex.value === targetIndex || !mock.value.variables) return;
+  const variables = mock.value.variables;
+  const draggedItem = variables[draggedVarIndex.value];
+  variables.splice(draggedVarIndex.value, 1);
+  variables.splice(targetIndex, 0, draggedItem);
+  draggedVarIndex.value = null;
+  isVarHandlePressed.value = false;
+}
+
+function onVarDragEnd() {
+  draggedVarIndex.value = null;
+  isVarHandlePressed.value = false;
+}
+
+function onAssertDragStart(parentIndex: number, assertIndex: number, event: DragEvent) {
+  draggedAssertParentIndex.value = parentIndex;
+  draggedAssertIndex.value = assertIndex;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', assertIndex.toString());
+  }
+}
+
+function onAssertDrop(parentIndex: number, targetAssertIndex: number) {
+  if (
+    draggedAssertParentIndex.value !== parentIndex ||
+    draggedAssertIndex.value === null ||
+    draggedAssertIndex.value === targetAssertIndex ||
+    !mock.value.variables
+  ) {
+    return;
+  }
+  const assertions = mock.value.variables[parentIndex].assertions;
+  const draggedItem = assertions[draggedAssertIndex.value];
+  assertions.splice(draggedAssertIndex.value, 1);
+  assertions.splice(targetAssertIndex, 0, draggedItem);
+  draggedAssertParentIndex.value = null;
+  draggedAssertIndex.value = null;
+  isAssertHandlePressed.value = false;
+  activeAssertParentIndex.value = null;
+}
+
+function onAssertDragEnd() {
+  draggedAssertParentIndex.value = null;
+  draggedAssertIndex.value = null;
+  isAssertHandlePressed.value = false;
+  activeAssertParentIndex.value = null;
+}
+
 function addAssertion(variableIndex: number) {
   const newAssertion: Assertion = {
     fail_on_error: true,
@@ -535,6 +701,29 @@ function removeResponse(i: number) {
   mock.value.responses.splice(i, 1);
 }
 
+function onDragStart(index: number, event: DragEvent) {
+  draggedIndex.value = index;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', index.toString());
+  }
+}
+
+function onDrop(targetIndex: number) {
+  if (draggedIndex.value === null || draggedIndex.value === targetIndex || !mock.value.responses) return;
+  const responses = mock.value.responses;
+  const draggedItem = responses[draggedIndex.value];
+  responses.splice(draggedIndex.value, 1);
+  responses.splice(targetIndex, 0, draggedItem);
+  draggedIndex.value = null;
+  isHandlePressed.value = false;
+}
+
+function onDragEnd() {
+  draggedIndex.value = null;
+  isHandlePressed.value = false;
+}
+
 function updateResponses() {
   if (mock.value.strategy !== "scene") {
     mock.value.responses?.forEach(r => {
@@ -560,18 +749,16 @@ function updateVariables() {
   });
 }
 
-function updateAssertions(variableIndex: number) {
-  mock.value.variables[variableIndex].assertions?.forEach(a => {
-    if (a.type !== "range") {
-      a.min = 0;
-      a.max = 0;
-      a.value = "";
-    } else {
-      a.min = 0;
-      a.max = 1;
-      a.value = "";
-    }
-  });
+function updateAssertion(assertion: Assertion) {
+  if (assertion.type !== "range") {
+    assertion.min = 0;
+    assertion.max = 0;
+    assertion.value = "";
+  } else {
+    assertion.min = 0;
+    assertion.max = 1;
+    assertion.value = "";
+  }
 }
 
 function isResponseSceneRequired(m: Mock) {
@@ -723,14 +910,32 @@ watch(() => route.path, () => {
   border: 1px solid rgba(var(--v-border-color), 0.05);
 }
 
-.response-panel {
+.response-panel, .variable-panel, .assertion-panel {
   border: 1px solid rgba(var(--v-border-color), 0.05);
   margin-bottom: 8px !important;
   border-radius: 8px !important;
+  transition: all 0.2s ease-in-out;
 }
 
-.variable-row {
-  border: 1px solid rgba(var(--v-border-color), 0.1);
+.response-panel.is-dragging, .variable-panel.is-dragging, .assertion-panel.is-dragging {
+  opacity: 0.4;
+  border: 1px dashed rgb(var(--v-theme-primary)) !important;
+  transform: scale(0.98);
+}
+
+.drag-handle {
+  cursor: grab;
+  user-select: none;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.drag-handle:hover {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  transform: scale(1.1);
 }
 
 .actions-bar {
@@ -743,7 +948,5 @@ watch(() => route.path, () => {
   transform: scale(0.9);
 }
 
-.assertion-box {
-  border: 1px dashed rgba(var(--v-border-color), 0.3);
-}
+
 </style>
