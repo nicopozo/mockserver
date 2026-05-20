@@ -1,5 +1,9 @@
 # Mock Service
 
+<p align="center">
+  <img src="web/src/assets/mock.png" alt="Mock Service Logo" width="200"/>
+</p>
+
 ![technology Go](https://img.shields.io/badge/technology-go-blue.svg)
 
 A simple and powerful mock server in Go with support for dynamic variables, assertions, and multiple persistence backends.
@@ -68,7 +72,14 @@ make test
 | `MOCKS_DATASOURCE` | `file`, `mysql`, `postgres`, or `dynamo` | `file` |
 | `MOCKS_FILE` | Path to JSON file (only for `file` mode) | `/tmp/mocks.json` |
 | `MYSQL_URL` / `POSTGRES_URL` | Full connection string for SQL databases | |
+| `DB_USER` | Database user (optional, used if URL not provided) | `root` |
+| `DB_PASSWORD` | Database password | `password` |
+| `DB_HOST` | Database host | `localhost` |
+| `DB_PORT` | Database port (default 3306 for MySQL, 5432 for PostgreSQL) | `3306` |
+| `DB_NAME` | Database name | `mockserver` |
+| `DB_SSLMODE` | SSL mode for database connection | `disable` |
 | `DYNAMO_TABLE_PREFIX` | Prefix for DynamoDB tables | `mockserver_` |
+| `DYNAMO_ENDPOINT` | DynamoDB endpoint (useful for local DynamoDB like LocalStack) | |
 | `AWS_REGION` | AWS Region for DynamoDB/Lambda | `us-east-1` |
 
 ## Versioning
@@ -94,7 +105,7 @@ Manage your mocks through the built-in administration panel.
 From the UI, you can:
 
 - Create, edit, and delete mocks.
-- Configure variables (Path, Query, Header, Body, Random, Hash).
+- Configure variables (Path, Query, Header, Body, XML, Random, Hash, Composite).
 - Define assertions (Equals, Regex, Contains, JSON Schema, etc.).
 - View real-time logs of mocked requests.
 
