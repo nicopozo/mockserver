@@ -9,8 +9,10 @@
       </v-toolbar>
       <v-container fluid class="pa-6">
         <div class="text-center">
-          <v-icon size="48" color="primary" class="mb-3">mdi-information-outline</v-icon>
-          <h1 class="text-h5 font-weight-bold mb-2">Welcome to Mocks Server</h1>
+          <div class="d-flex align-center justify-center ga-3 mb-3">
+            <img :src="mockLogo" alt="Mocks Server Logo" style="width: 48px; height: 48px; object-fit: contain;" />
+            <h1 class="text-h5 font-weight-bold">Welcome to Mocks Server</h1>
+          </div>
           <p class="text-body-1 text-medium-emphasis" style="max-width: 700px; margin: 0 auto;">
             Mocks Server lets you define HTTP endpoints that return preconfigured responses.
             Use it for integration testing, frontend development, or API prototyping.
@@ -374,6 +376,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import mockLogo from '@/assets/mock.png'
 
 const openPanels = ref<number[]>([])
 
