@@ -134,6 +134,15 @@ func (r *DynamoRuleRepository) Search(
 	}, nil
 }
 
+// lowerFieldMap maps searchable field names to their lowercase shadow field stored in DynamoDB.
+// DynamoDB does not support case-insensitive functions in FilterExpressions, so we store
+// pre-lowercased copies of string fields and search against those instead.
+var lowerFieldMap = map[string]string{
+	"group": "group_lower",
+	"name":  "name_lower",
+	"path":  "path_lower",
+}
+
 func (r *DynamoRuleRepository) buildSearchExpression(
 	params map[string]interface{},
 ) (*string, map[string]types.AttributeValue, map[string]string) {
@@ -150,9 +159,17 @@ func (r *DynamoRuleRepository) buildSearchExpression(
 		placeholder := fmt.Sprintf(":v%d", idx)
 		namePlaceholder := fmt.Sprintf("#n%d", idx)
 
-		filters = append(filters, fmt.Sprintf("contains(to_lower(%s), %s)", namePlaceholder, placeholder))
-		attrValues[placeholder] = &types.AttributeValueMemberS{Value: strings.ToLower(fmt.Sprintf("%v", val))}
-		attrNames[namePlaceholder] = key
+		// Use lowercase shadow field when available for case-insensitive matching.
+		dynamoField := key
+		searchVal := fmt.Sprintf("%v", val)
+		if lf, ok := lowerFieldMap[key]; ok {
+			dynamoField = lf
+			searchVal = strings.ToLower(searchVal)
+		}
+
+		filters = append(filters, fmt.Sprintf("contains(%s, %s)", namePlaceholder, placeholder))
+		attrValues[placeholder] = &types.AttributeValueMemberS{Value: searchVal}
+		attrNames[namePlaceholder] = dynamoField
 		idx++
 	}
 
@@ -252,16 +269,19 @@ func (r *DynamoRuleRepository) Delete(ctx context.Context, key string) error {
 
 // Internal Item Structs for DynamoDB mapping (LOWERCASE as per user request).
 type ruleItem struct {
-	Key       string         `dynamodbav:"key"`
-	Group     string         `dynamodbav:"group"`
-	Name      string         `dynamodbav:"name"`
-	Path      string         `dynamodbav:"path"`
-	Strategy  string         `dynamodbav:"strategy"`
-	Method    string         `dynamodbav:"method"`
-	Status    string         `dynamodbav:"status"`
-	Responses []responseItem `dynamodbav:"responses"`
-	Variables []variableItem `dynamodbav:"variables"`
-	Pattern   string         `dynamodbav:"pattern"`
+	Key        string         `dynamodbav:"key"`
+	Group      string         `dynamodbav:"group"`
+	GroupLower string         `dynamodbav:"group_lower"`
+	Name       string         `dynamodbav:"name"`
+	NameLower  string         `dynamodbav:"name_lower"`
+	Path       string         `dynamodbav:"path"`
+	PathLower  string         `dynamodbav:"path_lower"`
+	Strategy   string         `dynamodbav:"strategy"`
+	Method     string         `dynamodbav:"method"`
+	Status     string         `dynamodbav:"status"`
+	Responses  []responseItem `dynamodbav:"responses"`
+	Variables  []variableItem `dynamodbav:"variables"`
+	Pattern    string         `dynamodbav:"pattern"`
 }
 
 type responseItem struct {
@@ -330,15 +350,18 @@ func toRuleItem(rule *model.Rule) *ruleItem {
 	}
 
 	return &ruleItem{
-		Key:       rule.Key,
-		Group:     rule.Group,
-		Name:      rule.Name,
-		Path:      rule.Path,
-		Strategy:  rule.Strategy,
-		Method:    rule.Method,
-		Status:    rule.Status,
-		Responses: responses,
-		Variables: variables,
+		Key:        rule.Key,
+		Group:      rule.Group,
+		GroupLower: strings.ToLower(rule.Group),
+		Name:       rule.Name,
+		NameLower:  strings.ToLower(rule.Name),
+		Path:       rule.Path,
+		PathLower:  strings.ToLower(rule.Path),
+		Strategy:   rule.Strategy,
+		Method:     rule.Method,
+		Status:     rule.Status,
+		Responses:  responses,
+		Variables:  variables,
 	}
 }
 

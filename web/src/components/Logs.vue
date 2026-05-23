@@ -117,12 +117,12 @@
                   <!-- REQUEST BODY -->
                   <v-col cols="12" md="6">
                     <div class="text-overline text-primary mb-1">Request Body</div>
-                    <pre class="code-block">{{ formatJson(item.request_body) }}</pre>
+                    <pre class="code-block">{{ formatBody(item.request_body) }}</pre>
                   </v-col>
                   <!-- RESPONSE BODY -->
                   <v-col cols="12" md="6">
                     <div class="text-overline text-primary mb-1">Response Body</div>
-                    <pre class="code-block">{{ formatJson(item.response_body) }}</pre>
+                    <pre class="code-block">{{ formatBody(item.response_body) }}</pre>
                   </v-col>
                   <!-- HEADERS -->
                   <v-col cols="12" md="6">
@@ -199,6 +199,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import type { LogEntry, LogList } from '@/types'
+import formatXml from 'xml-formatter'
 
 const logs = ref<LogEntry[]>([])
 const totalItems = ref(0)
@@ -263,13 +264,24 @@ function truncate(text: string, maxLen: number): string {
   return text.length > maxLen ? text.slice(0, maxLen) + '…' : text
 }
 
-function formatJson(text: string): string {
+function formatBody(text: string): string {
   if (!text || text === '<nil>' || text === '<error>') return text || '—'
+  
+  // Try JSON first
   try {
     return JSON.stringify(JSON.parse(text), null, 2)
-  } catch {
-    return text
+  } catch { /* not JSON */ }
+
+  // Try XML – check if looks like XML
+  if (/^\s*</.test(text)) {
+    try {
+      return formatXml(text, { indentation: '  ', collapseContent: true })
+    } catch {
+      // Fall through to plain text
+    }
   }
+
+  return text
 }
 
 function baseURL(): string {
