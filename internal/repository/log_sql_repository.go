@@ -26,6 +26,37 @@ type LogRow struct {
 	RequestHeaders  string    `db:"request_headers"`
 	QueryParams     string    `db:"query_params"`
 	AssertionErrors string    `db:"assertion_errors"`
+	WebhookResults  *string   `db:"webhook_results"`
+}
+
+func rowToLogEntry(row LogRow) model.LogEntry {
+	entry := model.LogEntry{
+		ID:             row.ID,
+		Timestamp:      row.Timestamp,
+		Method:         row.Method,
+		URL:            row.URL,
+		RequestBody:    row.RequestBody,
+		ResponseStatus: row.ResponseStatus,
+		ResponseBody:   row.ResponseBody,
+	}
+
+	if row.RequestHeaders != "" {
+		_ = jsonutils.Unmarshal(strings.NewReader(row.RequestHeaders), &entry.RequestHeaders)
+	}
+
+	if row.QueryParams != "" {
+		_ = jsonutils.Unmarshal(strings.NewReader(row.QueryParams), &entry.QueryParams)
+	}
+
+	if row.AssertionErrors != "" {
+		_ = jsonutils.Unmarshal(strings.NewReader(row.AssertionErrors), &entry.AssertionErrors)
+	}
+
+	if row.WebhookResults != nil && *row.WebhookResults != "" {
+		_ = jsonutils.Unmarshal(strings.NewReader(*row.WebhookResults), &entry.WebhookResults)
+	}
+
+	return entry
 }
 
 func NewLogSQLRepository(db Database) LogRepository {
@@ -46,16 +77,17 @@ func (r *logSQLRepository) Add(ctx context.Context, entry model.LogEntry) error 
 	rawHeaders := jsonutils.Marshal(entry.RequestHeaders)
 	rawParams := jsonutils.Marshal(entry.QueryParams)
 	rawAssertions := jsonutils.Marshal(entry.AssertionErrors)
+	webhookResultsJSON := jsonutils.Marshal(entry.WebhookResults)
 
 	query := FormatQuery(
 		"INSERT INTO request_logs (id, timestamp, method, url, request_body, "+
-			"request_headers, query_params, response_status, response_body, assertion_errors) "+
-			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			"request_headers, query_params, response_status, response_body, assertion_errors, webhook_results) "+
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		r.db.DriverName(),
 	)
 
 	_, err := r.db.Exec(query, entry.ID, entry.Timestamp, entry.Method, entry.URL, entry.RequestBody,
-		rawHeaders, rawParams, entry.ResponseStatus, entry.ResponseBody, rawAssertions)
+		rawHeaders, rawParams, entry.ResponseStatus, entry.ResponseBody, rawAssertions, webhookResultsJSON)
 	if err != nil {
 		return fmt.Errorf("error inserting log into DB: %w", err)
 	}
@@ -97,35 +129,44 @@ func (r *logSQLRepository) GetAll(ctx context.Context, paging model.Paging) (mod
 
 	results := make([]model.LogEntry, 0, len(rows))
 	for _, row := range rows {
-		entry := model.LogEntry{
-			ID:             row.ID,
-			Timestamp:      row.Timestamp,
-			Method:         row.Method,
-			URL:            row.URL,
-			RequestBody:    row.RequestBody,
-			ResponseStatus: row.ResponseStatus,
-			ResponseBody:   row.ResponseBody,
-		}
-
-		if row.RequestHeaders != "" {
-			_ = jsonutils.Unmarshal(strings.NewReader(row.RequestHeaders), &entry.RequestHeaders)
-		}
-
-		if row.QueryParams != "" {
-			_ = jsonutils.Unmarshal(strings.NewReader(row.QueryParams), &entry.QueryParams)
-		}
-
-		if row.AssertionErrors != "" {
-			_ = jsonutils.Unmarshal(strings.NewReader(row.AssertionErrors), &entry.AssertionErrors)
-		}
-
-		results = append(results, entry)
+		results = append(results, rowToLogEntry(row))
 	}
 
 	return model.LogList{
 		Results: results,
 		Paging:  paging,
 	}, nil
+}
+
+func (r *logSQLRepository) Update(ctx context.Context, logID string, updater func(entry *model.LogEntry)) error {
+	// Fetch existing entry
+	query := FormatQuery("SELECT * FROM request_logs WHERE id = ?", r.db.DriverName())
+	row := LogRow{}
+
+	err := r.db.Get(&row, query, logID)
+	if err != nil {
+		return fmt.Errorf("error fetching log entry for update: %w", err)
+	}
+
+	entry := rowToLogEntry(row)
+
+	// Apply the updater function
+	updater(&entry)
+
+	// Serialize webhook results back
+	webhookResultsJSON := jsonutils.Marshal(entry.WebhookResults)
+
+	updateQuery := FormatQuery(
+		"UPDATE request_logs SET webhook_results = ? WHERE id = ?",
+		r.db.DriverName(),
+	)
+
+	_, err = r.db.Exec(updateQuery, webhookResultsJSON, logID)
+	if err != nil {
+		return fmt.Errorf("error updating webhook_results in DB: %w", err)
+	}
+
+	return nil
 }
 
 func (r *logSQLRepository) Clear(ctx context.Context) error {

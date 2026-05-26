@@ -923,11 +923,11 @@ func TestMockService_SearchResponseForRequest(t *testing.T) {
 					Return(tt.rulesServiceCall[idx].searchByMethodAndPathResult, tt.rulesServiceCall[idx].searchByMethodAndPathErr).
 					Times(tt.rulesServiceCall[idx].searchByMethodAndPathTimes)
 
-				srv, err := service.NewMockService(ruleServiceMock)
+				srv, err := service.NewMockService(ruleServiceMock, service.NewWebhookService())
 				assert.Nil(t, err)
 
 				got, _, err := srv.SearchResponseForRequest(
-					tt.args[idx].ctx, tt.args[idx].request, tt.args[idx].path, tt.args[idx].body)
+					tt.args[idx].ctx, tt.args[idx].request, tt.args[idx].path, tt.args[idx].body, nil)
 				if tt.want[idx].err != nil {
 					assert.Equal(t, tt.want[idx].err, err)
 
@@ -1048,10 +1048,10 @@ func TestMockService_CompositeVariables(t *testing.T) {
 
 	ruleServiceMock.EXPECT().SearchByMethodAndPath(gomock.Any(), "POST", "/test").Return(rule, nil)
 
-	srv, err := service.NewMockService(ruleServiceMock)
+	srv, err := service.NewMockService(ruleServiceMock, service.NewWebhookService())
 	assert.Nil(t, err)
 
-	resp, _, err := srv.SearchResponseForRequest(context.Background(), req, "/test", `{"action": "BuscarTicket"}`)
+	resp, _, err := srv.SearchResponseForRequest(context.Background(), req, "/test", `{"action": "BuscarTicket"}`, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, "VIP response", resp.Body)
 }
@@ -1104,7 +1104,7 @@ func TestMockService_WildcardScenes(t *testing.T) {
 		},
 	}
 
-	srv, err := service.NewMockService(ruleServiceMock)
+	srv, err := service.NewMockService(ruleServiceMock, service.NewWebhookService())
 	assert.Nil(t, err)
 
 	tests := []struct {
@@ -1145,7 +1145,7 @@ func TestMockService_WildcardScenes(t *testing.T) {
 				nil,
 			)
 
-			resp, _, err := srv.SearchResponseForRequest(context.Background(), req, "/test", fmt.Sprintf(`{"scene_name": "%s"}`, tt.sceneInput))
+			resp, _, err := srv.SearchResponseForRequest(context.Background(), req, "/test", fmt.Sprintf(`{"scene_name": "%s"}`, tt.sceneInput), nil)
 			assert.Nil(t, err)
 			assert.Equal(t, tt.expectedBody, resp.Body)
 		})

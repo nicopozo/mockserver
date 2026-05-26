@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS mockserver.responses
     scene        varchar(255) DEFAULT NULL,
     rule_key     varchar(255) NOT NULL,
     description  varchar(255) DEFAULT NULL,
+    webhook      text         DEFAULT NULL,
     PRIMARY KEY (id),
     CONSTRAINT fk_rules FOREIGN KEY (rule_key) REFERENCES mockserver.rules ("key")
 );
@@ -59,5 +60,6 @@ CREATE TABLE IF NOT EXISTS mockserver.request_logs
     response_status  int,
     response_body    text,
     assertion_errors jsonb,
+    webhook_results jsonb,
     PRIMARY KEY (id)
 );

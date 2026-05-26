@@ -28,25 +28,33 @@ const maxRand = 9999999999
 type MockService interface {
 	SearchResponseForRequest(
 		ctx context.Context, request *http.Request, path, body string,
+		onWebhookResult func(model.WebhookResult),
 	) (model.Response, model.AssertionResult, error)
 }
 
-func NewMockService(ruleService RuleService) (MockService, error) {
+func NewMockService(ruleService RuleService, webhookService WebhookService) (MockService, error) {
 	if ruleService == nil {
 		return nil, fmt.Errorf("rule service cannot be nil") //nolint:err113
 	}
 
+	if webhookService == nil {
+		return nil, fmt.Errorf("webhook service cannot be nil") //nolint:err113
+	}
+
 	return &mockService{
-		RuleService: ruleService,
+		RuleService:    ruleService,
+		webhookService: webhookService,
 	}, nil
 }
 
 type mockService struct {
-	RuleService RuleService
+	RuleService    RuleService
+	webhookService WebhookService
 }
 
 func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 	request *http.Request, path, body string,
+	onWebhookResult func(model.WebhookResult),
 ) (model.Response, model.AssertionResult, error) {
 	logger := mockscontext.Logger(ctx)
 
@@ -82,6 +90,11 @@ func (svc *mockService) SearchResponseForRequest(ctx context.Context,
 	body = svc.applyVariables(response.Body, variableValues)
 
 	response.Body = body
+
+	if response.Webhook != nil && response.Webhook.Enabled {
+		logger.Debug(svc, map[string]string{"webhook_url": response.Webhook.URL}, "firing webhook")
+		svc.webhookService.Fire(ctx, *response.Webhook, variableValues, onWebhookResult)
+	}
 
 	return response, assertionResult, nil
 }

@@ -48,6 +48,7 @@ func (r *DynamoLogRepository) Add(ctx context.Context, entry model.LogEntry) err
 		ResponseStatus:  entry.ResponseStatus,
 		ResponseBody:    entry.ResponseBody,
 		AssertionErrors: entry.AssertionErrors,
+		WebhookResults:  entry.WebhookResults,
 	}
 
 	attributes, err := attributevalue.MarshalMap(item)
@@ -136,10 +137,74 @@ func toLogEntryModels(items []logItem) []model.LogEntry {
 			ResponseStatus:  item.ResponseStatus,
 			ResponseBody:    item.ResponseBody,
 			AssertionErrors: item.AssertionErrors,
+			WebhookResults:  item.WebhookResults,
 		})
 	}
 
 	return results
+}
+
+func (r *DynamoLogRepository) Update(ctx context.Context, logID string, updater func(entry *model.LogEntry)) error {
+	// Fetch existing item from DynamoDB
+	result, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: aws.String(r.tableName),
+		Key: map[string]types.AttributeValue{
+			"id":   &types.AttributeValueMemberS{Value: logID},
+			"type": &types.AttributeValueMemberS{Value: "log"},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("error fetching log item for update: %w", err)
+	}
+
+	if result.Item == nil {
+		return fmt.Errorf("log entry not found: %s", logID) //nolint:err113
+	}
+
+	var item logItem
+
+	err = attributevalue.UnmarshalMap(result.Item, &item)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling log item: %w", err)
+	}
+
+	// Convert logItem to model.LogEntry
+	entry := model.LogEntry{
+		ID:              item.ID,
+		Timestamp:       item.Timestamp,
+		Method:          item.Method,
+		URL:             item.URL,
+		RequestBody:     item.RequestBody,
+		RequestHeaders:  item.RequestHeaders,
+		QueryParams:     item.QueryParams,
+		ResponseStatus:  item.ResponseStatus,
+		ResponseBody:    item.ResponseBody,
+		AssertionErrors: item.AssertionErrors,
+		WebhookResults:  item.WebhookResults,
+	}
+
+	// Apply the updater
+	updater(&entry)
+
+	// Update the item's WebhookResults
+	item.WebhookResults = entry.WebhookResults
+
+	// Marshal back
+	attributes, err := attributevalue.MarshalMap(item)
+	if err != nil {
+		return fmt.Errorf("error marshaling updated log item: %w", err)
+	}
+
+	// Save it back
+	_, err = r.client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(r.tableName),
+		Item:      attributes,
+	})
+	if err != nil {
+		return fmt.Errorf("error putting updated log item: %w", err)
+	}
+
+	return nil
 }
 
 func (r *DynamoLogRepository) Clear(ctx context.Context) error {
@@ -175,15 +240,16 @@ func (r *DynamoLogRepository) Clear(ctx context.Context) error {
 }
 
 type logItem struct {
-	ID              string            `dynamodbav:"id"`
-	Type            string            `dynamodbav:"type"`
-	Timestamp       time.Time         `dynamodbav:"timestamp"`
-	Method          string            `dynamodbav:"method"`
-	URL             string            `dynamodbav:"url"`
-	RequestBody     string            `dynamodbav:"request_body"`
-	RequestHeaders  map[string]string `dynamodbav:"request_headers"`
-	QueryParams     map[string]string `dynamodbav:"query_params"`
-	ResponseStatus  int               `dynamodbav:"response_status"`
-	ResponseBody    string            `dynamodbav:"response_body"`
-	AssertionErrors []string          `dynamodbav:"assertion_errors"`
+	ID              string                `dynamodbav:"id"`
+	Type            string                `dynamodbav:"type"`
+	Timestamp       time.Time             `dynamodbav:"timestamp"`
+	Method          string                `dynamodbav:"method"`
+	URL             string                `dynamodbav:"url"`
+	RequestBody     string                `dynamodbav:"request_body"`
+	RequestHeaders  map[string]string     `dynamodbav:"request_headers"`
+	QueryParams     map[string]string     `dynamodbav:"query_params"`
+	ResponseStatus  int                   `dynamodbav:"response_status"`
+	ResponseBody    string                `dynamodbav:"response_body"`
+	AssertionErrors []string              `dynamodbav:"assertion_errors"`
+	WebhookResults  []model.WebhookResult `dynamodbav:"webhook_results,omitempty"`
 }

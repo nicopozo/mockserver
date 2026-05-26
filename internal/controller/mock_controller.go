@@ -13,6 +13,7 @@ import (
 	"github.com/nicopozo/mockserver/internal/service"
 	httputils "github.com/nicopozo/mockserver/internal/utils/http"
 	"github.com/nicopozo/mockserver/internal/utils/log"
+	"github.com/oklog/ulid/v2"
 )
 
 type MockController struct {
@@ -48,8 +49,19 @@ func (controller *MockController) Execute(writer http.ResponseWriter, request *h
 	// Build base log entry from the incoming request.
 	logEntry := controller.buildLogEntry(request, path, reqBody)
 
+	// Generate a log ID upfront so the webhook callback can reference it.
+	logID := ulid.Make().String()
+	logEntry.ID = logID
+
+	// Callback to record webhook result into the same log entry.
+	onWebhookResult := func(result model.WebhookResult) {
+		controller.LogService.Update(logID, func(entry *model.LogEntry) {
+			entry.WebhookResults = append(entry.WebhookResults, result)
+		})
+	}
+
 	response, assertionResult, err := controller.MockService.SearchResponseForRequest(
-		reqContext, request, path, reqBody)
+		reqContext, request, path, reqBody, onWebhookResult)
 
 	// Attach assertion errors to the log entry regardless of outcome.
 	logEntry.AssertionErrors = assertionResult.AssertionErrors

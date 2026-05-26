@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/oklog/ulid/v2"
 )
@@ -79,6 +80,22 @@ func (r *logMemoryRepository) GetAll(ctx context.Context, paging model.Paging) (
 		Results: result,
 		Paging:  paging,
 	}, nil
+}
+
+func (r *logMemoryRepository) Update(ctx context.Context, logID string, updater func(entry *model.LogEntry)) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i := range r.entries {
+		if r.entries[i].ID == logID {
+			updater(&r.entries[i])
+
+			return nil
+		}
+	}
+
+	//nolint:wrapcheck
+	return mockserrors.NewLogEntryNotFoundError(logID)
 }
 
 func findStartIndex(entries []model.LogEntry, lastID string) int {

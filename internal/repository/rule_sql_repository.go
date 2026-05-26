@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -53,6 +54,7 @@ type ResponseRow struct {
 	Scene       *string `db:"scene"`
 	RuleKey     string  `db:"rule_key"`
 	Description *string `db:"description"`
+	Webhook     *string `db:"webhook"`
 }
 
 // NewRuleSQLRepository creates a repository that works with both MySQL and PostgreSQL.
@@ -430,13 +432,21 @@ func (repository *ruleSQLRepository) insertResponses(ctx context.Context, rule *
 	logger := mockscontext.Logger(ctx)
 
 	query := FormatQuery(
-		"INSERT INTO responses (body, content_type, http_status, delay, scene, rule_key, description) "+
-			"VALUES (?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO responses (body, content_type, http_status, delay, scene, rule_key, description, webhook) "+
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 		repository.db.DriverName(),
 	)
 
-	for _, r := range rule.Responses {
-		_, err := trx.ExecContext(ctx, query, r.Body, r.ContentType, r.HTTPStatus, r.Delay, r.Scene, rule.Key, r.Description)
+	for _, resp := range rule.Responses {
+		var webhookJSON *string
+
+		if resp.Webhook != nil {
+			w := jsonutils.Marshal(resp.Webhook)
+			webhookJSON = &w
+		}
+
+		_, err := trx.ExecContext(ctx, query, resp.Body, resp.ContentType, resp.HTTPStatus,
+			resp.Delay, resp.Scene, rule.Key, resp.Description, webhookJSON)
 		if err != nil {
 			logger.Error(repository, nil, err, "error creating rule response in DB")
 
@@ -516,7 +526,7 @@ func newWhereClause(params map[string]interface{}, driver string) (string, error
 	return where, nil
 }
 
-func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *model.Rule {
+func parseVariables(variables []VariableRow) []*model.Variable {
 	vars := make([]*model.Variable, 0, len(variables))
 
 	for _, variable := range variables {
@@ -539,30 +549,45 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 		vars = append(vars, newVar)
 	}
 
+	return vars
+}
+
+func parseResponses(responses []ResponseRow) []model.Response {
 	resps := make([]model.Response, 0, len(responses))
 
-	for _, resp := range responses {
+	for _, row := range responses {
 		scene := ""
 
-		if resp.Scene != nil {
-			scene = *resp.Scene
+		if row.Scene != nil {
+			scene = *row.Scene
 		}
 
 		newResp := model.Response{
-			Body:        resp.Body,
-			ContentType: resp.ContentType,
-			HTTPStatus:  resp.HTTPStatus,
-			Delay:       resp.Delay,
+			Body:        row.Body,
+			ContentType: row.ContentType,
+			HTTPStatus:  row.HTTPStatus,
+			Delay:       row.Delay,
 			Scene:       scene,
 		}
 
-		if resp.Description != nil {
-			newResp.Description = *resp.Description
+		if row.Description != nil {
+			newResp.Description = *row.Description
+		}
+
+		if row.Webhook != nil && *row.Webhook != "" {
+			var webhook model.WebhookConfig
+			if err := json.Unmarshal([]byte(*row.Webhook), &webhook); err == nil {
+				newResp.Webhook = &webhook
+			}
 		}
 
 		resps = append(resps, newResp)
 	}
 
+	return resps
+}
+
+func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *model.Rule {
 	return &model.Rule{
 		Key:               row.Key,
 		Group:             row.Group,
@@ -571,8 +596,8 @@ func parseRule(row RuleRow, variables []VariableRow, responses []ResponseRow) *m
 		Strategy:          row.Strategy,
 		Method:            row.Method,
 		Status:            row.Status,
-		Variables:         vars,
-		Responses:         resps,
+		Variables:         parseVariables(variables),
+		Responses:         parseResponses(responses),
 		NextResponseIndex: row.NextResponseIndex,
 	}
 }

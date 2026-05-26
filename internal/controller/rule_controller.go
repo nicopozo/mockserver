@@ -151,6 +151,10 @@ func (controller *RuleController) Get(writer http.ResponseWriter, request *http.
 		return
 	}
 
+	// Debug: log the full rule JSON returned
+	taskJSON := jsonutils.Marshal(task)
+	logger.Debug(controller, map[string]string{"rule_json": taskJSON}, "Rule returned from get")
+
 	httputils.WriteJSON(writer, http.StatusOK, task)
 }
 

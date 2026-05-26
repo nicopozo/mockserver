@@ -26,6 +26,7 @@ CREATE TABLE `mockserver`.`responses`
     `scene`        varchar(255) DEFAULT NULL,
     `rule_key`     varchar(255) NOT NULL,
     `description`  varchar(255) DEFAULT NULL,
+    `webhook`      longtext     DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `rules_idx` (`rule_key`),
     CONSTRAINT `rules` FOREIGN KEY (`rule_key`) REFERENCES `rules` (`key`)
@@ -60,6 +61,7 @@ CREATE TABLE `mockserver`.`request_logs`
     `response_status`  int,
     `response_body`    longtext,
     `assertion_errors` longtext,
+    `webhook_results` longtext,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = latin1;

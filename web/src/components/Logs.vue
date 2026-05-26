@@ -154,6 +154,49 @@
                       </tbody>
                     </v-table>
                   </v-col>
+                  <!-- WEBHOOK RESULTS -->
+                  <v-col cols="12" v-if="item.webhook_results && item.webhook_results.length > 0">
+                    <div class="text-overline text-primary mb-1">
+                      <v-icon size="small" class="mr-1">mdi-webhook</v-icon>
+                      Webhook Results ({{ item.webhook_results.length }})
+                    </div>
+                    <v-card
+                      v-for="(wh, whIdx) in item.webhook_results"
+                      :key="whIdx"
+                      variant="outlined"
+                      density="compact"
+                      class="mb-2"
+                    >
+                      <v-list-item density="compact">
+                        <template v-slot:prepend>
+                          <v-chip
+                            :color="wh.error ? 'red' : 'green'"
+                            size="x-small"
+                            label
+                            class="mr-2"
+                          >
+                            {{ wh.status_code || 'ERR' }}
+                          </v-chip>
+                        </template>
+                        <v-list-item-title class="text-caption text-mono">
+                          {{ wh.method }} {{ wh.url }}
+                        </v-list-item-title>
+                        <v-list-item-subtitle class="text-caption">
+                          <template v-if="wh.duration_ms">
+                            {{ wh.duration_ms }}ms
+                          </template>
+                          <template v-if="wh.error">
+                            <v-icon size="small" color="error" class="mx-1">mdi-alert-circle-outline</v-icon>
+                            {{ wh.error }}
+                          </template>
+                        </v-list-item-subtitle>
+                        <div v-if="wh.response_body" class="mt-2">
+                          <div class="text-caption text-grey font-weight-medium mb-1">Response Body:</div>
+                          <pre class="code-block" style="font-size: 11px; max-height: 150px; overflow-y: auto;">{{ formatBody(wh.response_body) }}</pre>
+                        </div>
+                      </v-list-item>
+                    </v-card>
+                  </v-col>
                   <!-- ASSERTION ERRORS -->
                   <v-col cols="12" v-if="item.assertion_errors && item.assertion_errors.length > 0">
                     <div class="text-overline text-error mb-1">

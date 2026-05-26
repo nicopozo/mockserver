@@ -11,6 +11,7 @@ import (
 	mockserrors "github.com/nicopozo/mockserver/internal/errors"
 	"github.com/nicopozo/mockserver/internal/model"
 	"github.com/nicopozo/mockserver/internal/repository"
+	jsonutils "github.com/nicopozo/mockserver/internal/utils/json"
 )
 
 //go:generate mockgen -destination=../utils/test/mocks/rule_service_mock.go -package=mocks -source=./rule_service.go
@@ -43,6 +44,10 @@ func (ruleService *ruleService) Save(ctx context.Context, rule model.Rule) (mode
 	logger := mockscontext.Logger(ctx)
 
 	logger.Debug(ruleService, nil, "Entering ruleService Save()")
+
+	// Debug: log the full rule JSON to see if webhook arrives
+	ruleJSON := jsonutils.Marshal(rule)
+	logger.Debug(ruleService, map[string]string{"rule_json": ruleJSON}, "Rule received for save")
 
 	if err := validateRule(rule); err != nil {
 		logger.Error(ruleService, nil, err, "Rule Validation failed")

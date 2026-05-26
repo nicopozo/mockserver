@@ -134,9 +134,11 @@ func (r *DynamoRuleRepository) Search(
 	}, nil
 }
 
-// lowerFieldMap maps searchable field names to their lowercase shadow field stored in DynamoDB.
 // DynamoDB does not support case-insensitive functions in FilterExpressions, so we store
 // pre-lowercased copies of string fields and search against those instead.
+//
+//goland:noinspection GoUnusedGlobalVariable
+//nolint:gochecknoglobals
 var lowerFieldMap = map[string]string{
 	"group": "group_lower",
 	"name":  "name_lower",
@@ -162,6 +164,7 @@ func (r *DynamoRuleRepository) buildSearchExpression(
 		// Use lowercase shadow field when available for case-insensitive matching.
 		dynamoField := key
 		searchVal := fmt.Sprintf("%v", val)
+
 		if lf, ok := lowerFieldMap[key]; ok {
 			dynamoField = lf
 			searchVal = strings.ToLower(searchVal)

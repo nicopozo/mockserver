@@ -17,6 +17,15 @@ export interface Variable {
   assertions: Assertion[];
 }
 
+export interface WebhookConfig {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body: string;
+  enabled: boolean;
+  timeout?: number;
+}
+
 export interface Response {
   description: string;
   body: string;
@@ -24,6 +33,7 @@ export interface Response {
   http_status: number;
   delay: number;
   scene?: string;
+  webhook?: WebhookConfig;
 }
 
 export interface Mock {
@@ -50,6 +60,15 @@ export interface PaginatedMocks {
   paging: Paging;
 }
 
+export interface WebhookResult {
+  url: string;
+  method: string;
+  status_code: number;
+  duration_ms: number;
+  error?: string;
+  response_body?: string;
+}
+
 export interface LogEntry {
   id: string;
   timestamp: string;
@@ -61,6 +80,7 @@ export interface LogEntry {
   response_status: number;
   response_body: string;
   assertion_errors?: string[];
+  webhook_results?: WebhookResult[];
 }
 
 export interface LogList {

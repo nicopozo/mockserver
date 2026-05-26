@@ -154,7 +154,7 @@ func TestMockController_Execute(t *testing.T) {
 				mockSearchPath = "/" + mockSearchPath
 			}
 
-			mockServiceMock.EXPECT().SearchResponseForRequest(gomock.Any(), gomock.Any(), mockSearchPath, gomock.Any()).
+			mockServiceMock.EXPECT().SearchResponseForRequest(gomock.Any(), gomock.Any(), mockSearchPath, gomock.Any(), gomock.Any()).
 				Return(tt.serviceResponse, model.AssertionResult{}, tt.serviceErr).Times(tt.serviceCallTimes)
 
 			response, request := testutils.GetHTTPContext()

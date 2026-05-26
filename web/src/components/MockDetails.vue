@@ -168,6 +168,53 @@
                 </div>
               </v-col>
             </v-row>
+
+            <!-- Webhook Section -->
+            <v-divider class="my-3"></v-divider>
+            <div class="d-flex align-center">
+              <v-icon size="small" color="grey" class="mr-1">mdi-webhook</v-icon>
+              <span class="text-caption font-weight-bold text-grey">Webhook</span>
+              <v-spacer></v-spacer>
+              <v-btn
+                variant="text"
+                color="primary"
+                size="x-small"
+                :prepend-icon="(response as any)._webhookExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+                @click="toggleWebhook(index)"
+              >
+                {{ (response as any)._webhookExpanded ? 'Hide' : 'Configure' }}
+              </v-btn>
+            </div>
+            <div v-show="(response as any)._webhookExpanded" class="mt-3 pl-2 border-left">
+              <v-row dense>
+                <v-col cols="12" md="9">
+                  <v-text-field label="Webhook URL" v-model="response.webhook!.url" variant="outlined" density="compact" placeholder="https://hooks.example.com/callback"/>
+                </v-col>
+                <v-col cols="12" md="3" class="d-flex align-center">
+                  <v-switch v-model="response.webhook!.enabled" color="success" label="Enabled" density="compact" hide-details class="text-caption mt-n4"/>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col cols="12" md="2">
+                  <v-select label="HTTP Method" v-model="response.webhook!.method" :items="['GET','POST','PUT','PATCH','DELETE']" variant="outlined" density="compact"/>
+                </v-col>
+                <v-col cols="12" md="2">
+                  <v-text-field label="Timeout (ms)" v-model.number="response.webhook!.timeout" variant="outlined" density="compact" type="number" placeholder="5000"/>
+                </v-col>
+                <v-col cols="12" md="8">
+                  <v-textarea label="Webhook Headers (JSON)" 
+                    :model-value="JSON.stringify(response.webhook?.headers || {}, null, 2)"
+                    @update:model-value="setWebhookHeadersFromJSON(index, $event)"
+                    variant="outlined" density="compact" auto-grow rows="2" 
+                    placeholder='{ "Authorization": "Bearer token" }'/>
+                </v-col>
+              </v-row>
+              <v-row dense>
+                <v-col cols="12">
+                  <v-textarea label="Webhook Body" v-model="response.webhook!.body" variant="outlined" density="compact" auto-grow rows="3" placeholder='{ "event": "payment_created", "id": "{payment_id}" }'/>
+                </v-col>
+              </v-row>
+            </div>
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
@@ -387,7 +434,7 @@
 import { ref, reactive, watch, onMounted, onUnmounted, computed, nextTick } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import axios from 'axios';
-import type { Mock, Variable, Assertion, Response } from '@/types';
+import type { Mock, Variable, Assertion } from '@/types';
 
 const props = defineProps<{
   theKey?: string;
@@ -500,32 +547,60 @@ function baseURL() {
   return "http://localhost:8080/mock-service/rules"
 }
 
+function cleanMockForSubmit(): any {
+  const clean = JSON.parse(JSON.stringify(mock.value));
+  // Remove internal UI properties
+  if (clean.responses) {
+    clean.responses.forEach((resp: any) => {
+      delete resp._webhookExpanded;
+      delete resp._webhookHeaderKeys;
+      // Remove webhook if it has no URL and is disabled (was never configured)
+      if (resp.webhook && !resp.webhook.url && !resp.webhook.enabled) {
+        delete resp.webhook;
+      } else if (resp.webhook) {
+        // Ensure webhook headers is a plain object
+        if (typeof resp.webhook.headers === 'object') {
+          const cleanHeaders: Record<string, string> = {};
+          for (const key of Object.keys(resp.webhook.headers)) {
+            cleanHeaders[key] = String(resp.webhook.headers[key]);
+          }
+          resp.webhook.headers = cleanHeaders;
+        }
+      }
+    });
+  }
+  return clean;
+}
+
 function submit() {
   if (!form.value?.validate()) {
     showAlert("Some fields are not valid!", "validation error");
     return;
   }
 
+  // Clean internal properties before sending
+  const cleanMock = cleanMockForSubmit();
+
   if (props.theKey) {
-    submitUpdate();
+    submitUpdate(cleanMock);
   } else {
-    submitCreate();
+    submitCreate(cleanMock);
   }
 }
 
-async function submitCreate() {
+async function submitCreate(cleanMock: any) {
   const confirmTitle = "Creating New Mock";
   const confirmMsg = confirmTitle + "\n\nPlease confirm you want to create this mock";
   if (window.confirm(confirmMsg)) {
-    createMock();
+    createMock(cleanMock);
   }
 }
 
-async function submitUpdate() {
+async function submitUpdate(cleanMock: any) {
   const confirmTitle = "Updating Mock: " + props.theKey;
   const confirmMsg = confirmTitle + "\n\nPlease confirm you want to update this mock";
   if (window.confirm(confirmMsg)) {
-    updateMock();
+    updateMock(cleanMock);
   }
 }
 
@@ -546,10 +621,10 @@ async function resetForm() {
   }
 }
 
-function createMock() {
+function createMock(cleanMock: any) {
   saving.value = true;
   axios
-      .post<Mock>(baseURL(), mock.value, {
+      .post<Mock>(baseURL(), cleanMock, {
         headers: { "Content-Type": "application/json" },
       })
       .then((res) => {
@@ -560,14 +635,14 @@ function createMock() {
       .finally(() => saving.value = false);
 }
 
-function updateMock() {
+function updateMock(cleanMock: any) {
   saving.value = true;
   axios
-      .put(baseURL() + "/" + props.theKey, mock.value, {
+      .put(baseURL() + "/" + props.theKey, cleanMock, {
         headers: { "Content-Type": "application/json" },
       })
       .then(() => {
-        originalMockString.value = JSON.stringify(mock.value);
+        originalMockString.value = JSON.stringify(cleanMock);
         showAlert("Mock successfully updated!");
       })
       .catch((err) => showAlert("Error updating mock", err))
@@ -681,13 +756,22 @@ function removeAssertion(variableIndex: number, assertionIndex: number) {
 }
 
 function addResponse() {
-  const newResponse: Response = {
+  const newResponse: any = {
     description: "",
     body: "",
     content_type: "application/json",
     http_status: 200,
     delay: 0,
     scene: "",
+    webhook: {
+      url: "",
+      method: "POST",
+      headers: {},
+      body: "",
+      enabled: false,
+      timeout: 5000,
+    },
+    _webhookExpanded: false,
   };
   if (!mock.value.responses) {
     mock.value.responses = [newResponse];
@@ -698,6 +782,29 @@ function addResponse() {
 
 function removeResponse(i: number) {
   mock.value.responses.splice(i, 1);
+}
+
+function toggleWebhook(index: number) {
+  const resp = mock.value.responses[index] as any;
+  if (!resp.webhook) {
+    resp.webhook = { url: '', method: 'POST', headers: {}, body: '', enabled: false, timeout: 5000 };
+  }
+  resp._webhookExpanded = !resp._webhookExpanded;
+}
+
+function setWebhookHeadersFromJSON(index: number, jsonString: string) {
+  const resp = mock.value.responses[index] as any;
+  if (!resp.webhook) {
+    resp.webhook = { url: '', method: 'POST', headers: {}, body: '', enabled: true };
+  }
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+      resp.webhook.headers = parsed;
+    }
+  } catch (e) {
+    // Invalid JSON, ignore
+  }
 }
 
 function onDragStart(index: number, event: DragEvent) {
@@ -870,6 +977,24 @@ function initialize() {
         .get<Mock>(baseURL() + "/" + props.theKey)
         .then((res) => {
           mock.value = res.data;
+          // Ensure webhook config exists on each response
+          if (mock.value.responses) {
+            mock.value.responses.forEach((resp: any) => {
+              if (!resp.webhook) {
+                resp.webhook = { url: '', method: 'POST', headers: {}, body: '', enabled: false, timeout: 5000 };
+              } else {
+                // If the webhook exists but URL is empty, force disabled
+                if (!resp.webhook.url) {
+                  resp.webhook.enabled = false;
+                }
+                // Ensure timeout has a default
+                if (resp.webhook.timeout === undefined || resp.webhook.timeout === null) {
+                  resp.webhook.timeout = 5000;
+                }
+              }
+              resp._webhookExpanded = false;
+            });
+          }
           originalMockString.value = JSON.stringify(res.data);
           nextTick(() => {
             form.value?.resetValidation();

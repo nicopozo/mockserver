@@ -52,6 +52,7 @@ func BuildContainer(cfg *configs.Config) MockContainer {
 		// Services
 		service.NewLogService,
 		service.NewRuleService,
+		service.NewWebhookService,
 		service.NewMockService,
 
 		// Controllers
