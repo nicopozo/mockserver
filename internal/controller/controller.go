@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -11,6 +12,8 @@ import (
 const (
 	defaultPageSize = 30
 )
+
+var errPagingLimitZero = errors.New("error parsing paging limit: limit must be greater than 0")
 
 func getPagingFromRequest(request *http.Request) (*model.Paging, error) {
 	paging := &model.Paging{
@@ -31,18 +34,18 @@ func getPagingFromRequest(request *http.Request) (*model.Paging, error) {
 
 	limit := request.URL.Query().Get("limit")
 	if limit != "" {
-		l, err := strconv.ParseInt(limit, 10, 32)
+		parsedLimit, err := strconv.ParseInt(limit, 10, 32)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing paging limit, %w", err)
 		}
 
-		if l < 0 {
-			l = 999999
-		} else if l == 0 {
-			return nil, fmt.Errorf("error parsing paging limit: limit must be greater than 0, got %d", l)
+		if parsedLimit < 0 {
+			parsedLimit = 999999
+		} else if parsedLimit == 0 {
+			return nil, errPagingLimitZero
 		}
 
-		paging.Limit = int32(l)
+		paging.Limit = int32(parsedLimit)
 	}
 
 	paging.LastID = request.URL.Query().Get("last_id")
