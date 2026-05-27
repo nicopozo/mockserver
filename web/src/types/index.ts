@@ -23,6 +23,7 @@ export interface WebhookConfig {
   headers: Record<string, string>;
   body: string;
   enabled: boolean;
+  delay: number;
   timeout?: number;
 }
 

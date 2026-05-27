@@ -195,17 +195,26 @@
                 </v-col>
               </v-row>
               <v-row dense>
-                <v-col cols="12" md="2">
-                  <v-select label="HTTP Method" v-model="response.webhook!.method" :items="['GET','POST','PUT','PATCH','DELETE']" variant="outlined" density="compact"/>
-                </v-col>
-                <v-col cols="12" md="2">
-                  <v-text-field label="Timeout (ms)" v-model.number="response.webhook!.timeout" variant="outlined" density="compact" type="number" placeholder="5000"/>
+                <v-col cols="12" md="4">
+                  <v-row dense>
+                    <v-col cols="6">
+                      <v-select label="HTTP Method" v-model="response.webhook!.method" :items="['GET','POST','PUT','PATCH','DELETE']" variant="outlined" density="compact"/>
+                    </v-col>
+                    <v-col cols="6">
+                      <v-text-field label="Timeout (ms)" v-model.number="response.webhook!.timeout" variant="outlined" density="compact" type="number" placeholder="5000"/>
+                    </v-col>
+                  </v-row>
+                  <v-row dense class="mt-1">
+                    <v-col cols="6">
+                      <v-text-field label="Delay (ms)" v-model.number="response.webhook!.delay" variant="outlined" density="compact" type="number" placeholder="0"/>
+                    </v-col>
+                  </v-row>
                 </v-col>
                 <v-col cols="12" md="8">
                   <v-textarea label="Webhook Headers (JSON)" 
                     :model-value="JSON.stringify(response.webhook?.headers || {}, null, 2)"
                     @update:model-value="setWebhookHeadersFromJSON(index, $event)"
-                    variant="outlined" density="compact" auto-grow rows="2" 
+                    variant="outlined" density="compact" auto-grow rows="4" 
                     placeholder='{ "Authorization": "Bearer token" }'/>
                 </v-col>
               </v-row>

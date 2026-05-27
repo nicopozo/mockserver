@@ -64,7 +64,7 @@ aws-lambda-deploy:
 	chmod +x ./scripts/aws/deploy-lambda.sh
 	./scripts/aws/deploy-lambda.sh $(VERSION)
 
-aws-lambda-full: docker-build aws-docker-push aws-lambda-deploy
+aws-lambda-full: bump docker-build aws-docker-push aws-lambda-deploy
 
 bump:
 	@old_version=$$(cat VERSION); \

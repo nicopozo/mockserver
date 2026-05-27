@@ -258,13 +258,13 @@ const tableOptions = ref({
 // pageCursors[page] = the ID of the last item of page (page - 1)
 const pageCursors = ref<Record<number, string>>({})
 
-const autoRefresh = ref(true)
+const autoRefresh = ref(localStorage.getItem('logs-auto-refresh') !== 'false')
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 const snackbar = ref({ show: false, color: 'green', text: '' })
 
 const columns = [
-  { title: 'Time', key: 'timestamp', width: '160px', sortable: false },
+  { title: 'Time', key: 'timestamp', width: '200px', sortable: false },
   { title: 'Method', key: 'method', width: '90px', sortable: false },
   { title: 'URL', key: 'url', sortable: false },
   { title: 'Request Body', key: 'request_body', sortable: false },
@@ -297,9 +297,13 @@ function statusColor(status: number): string {
 
 function formatTimestamp(ts: string): string {
   const d = new Date(ts)
-  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-  const ms = String(d.getMilliseconds()).padStart(3, '0')
-  return `${time}.${ms}`
+  const date = d.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+  const ms = d.getMilliseconds()
+  if (ms > 0) {
+    return `${date} ${time}.${String(ms).padStart(3, '0')}`
+  }
+  return `${date} ${time}`
 }
 
 function truncate(text: string, maxLen: number): string {
@@ -396,6 +400,7 @@ async function clearLogs() {
 
 function toggleAutoRefresh() {
   autoRefresh.value = !autoRefresh.value
+  localStorage.setItem('logs-auto-refresh', String(autoRefresh.value))
   if (autoRefresh.value) {
     startTimer()
   } else {
@@ -421,7 +426,9 @@ function showSnackbar(text: string, isError = false) {
 
 onMounted(() => {
   // Initial fetch will be triggered by @update:options on v-data-table-server
-  startTimer()
+  if (autoRefresh.value) {
+    startTimer()
+  }
 })
 
 onUnmounted(() => {

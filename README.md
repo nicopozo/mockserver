@@ -107,7 +107,8 @@ From the UI, you can:
 - Create, edit, and delete mocks.
 - Configure variables (Path, Query, Header, Body, XML, Random, Hash, Composite).
 - Define assertions (Equals, Regex, Contains, JSON Schema, etc.).
-- View real-time logs of mocked requests.
+- Configure **webhooks** per response to fire HTTP calls asynchronously.
+- View real-time logs of mocked requests, including webhook results.
 
 ### Execute a mock
 
@@ -124,3 +125,21 @@ curl --location --request GET 'http://localhost:8080/mock-service/mock/users/123
     "user_id": "123"
 }
 ```
+
+### Webhooks
+
+Each response can optionally fire an asynchronous **webhook** — an HTTP call to an external URL triggered after the mock response is returned.
+
+**Configuration fields:**
+
+| Field | Description |
+| --- | --- |
+| `url` | Target URL for the webhook call |
+| `method` | HTTP method (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`) |
+| `headers` | Custom headers sent with the request (JSON object) |
+| `body` | Request body, supports `{variable}` placeholders |
+| `enabled` | Enable or disable the webhook |
+| `delay` | Milliseconds to wait before firing the webhook |
+| `timeout` | Maximum time (ms) to wait for the webhook response |
+
+Webhooks are fired **asynchronously** — the mock response is returned immediately and the webhook runs in the background. Check the **Request Logs** page to see webhook results (status, duration, response body).

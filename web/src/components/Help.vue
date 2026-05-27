@@ -159,7 +159,81 @@
         </v-expansion-panel-text>
       </v-expansion-panel>
 
-      <!-- 4. DYNAMIC VARIABLES -->
+      <!-- 4. WEBHOOKS -->
+      <v-expansion-panel id="webhooks" class="section-card mb-4" elevation="2">
+        <v-expansion-panel-title class="panel-title">
+          <v-icon color="primary" class="mr-3">mdi-webhook</v-icon>
+          <span class="font-weight-bold">Webhooks</span>
+        </v-expansion-panel-title>
+        <v-expansion-panel-text>
+          <div class="help-content pa-4">
+            <p>
+              Each response can optionally fire a <strong>webhook</strong> — an HTTP call to an external URL
+              that is triggered asynchronously after the mock response is returned. This is useful for
+              notifying external systems, logging, or triggering follow-up actions.
+            </p>
+
+            <h3 class="mb-3 mt-4">Configuration</h3>
+            <p>To configure a webhook, expand the <strong>Webhook</strong> section within a response:</p>
+
+            <v-table density="compact" class="my-4 rounded border">
+              <thead><tr><th>Field</th><th>Description</th><th>Example</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="font-weight-medium">Webhook URL</td>
+                  <td>The target URL that will receive the HTTP call</td>
+                  <td><code>https://hooks.example.com/callback</code></td>
+                </tr>
+                <tr>
+                  <td class="font-weight-medium">Enabled</td>
+                  <td>Toggle to enable or disable the webhook</td>
+                  <td><code>true</code></td>
+                </tr>
+                <tr>
+                  <td class="font-weight-medium">HTTP Method</td>
+                  <td>The HTTP method used for the webhook call</td>
+                  <td><code>POST</code></td>
+                </tr>
+                <tr>
+                  <td class="font-weight-medium">Delay (ms)</td>
+                  <td>Milliseconds to wait before firing the webhook</td>
+                  <td><code>3000</code></td>
+                </tr>
+                <tr>
+                  <td class="font-weight-medium">Timeout (ms)</td>
+                  <td>Maximum time to wait for the webhook response</td>
+                  <td><code>5000</code></td>
+                </tr>
+                <tr>
+                  <td class="font-weight-medium">Headers</td>
+                  <td>Custom HTTP headers sent with the webhook request</td>
+                  <td><code>{"Authorization": "Bearer token"}</code></td>
+                </tr>
+                <tr>
+                  <td class="font-weight-medium">Body</td>
+                  <td>The request body sent with the webhook. Supports <code>{variable}</code> placeholders</td>
+                  <td><code>{"event": "payment_created", "id": "{payment_id}"}</code></td>
+                </tr>
+              </tbody>
+            </v-table>
+
+            <h3 class="mb-3 mt-4">Variable Substitution</h3>
+            <p>
+              The webhook <strong>URL</strong>, <strong>Body</strong>, and <strong>Headers</strong>
+              support the same <code>{variable_name}</code> syntax used in response bodies.
+              Variables are resolved using values extracted from the incoming request.
+            </p>
+
+            <v-alert type="info" variant="tonal" density="compact" class="my-4">
+              Webhooks are fired <strong>asynchronously</strong> — the mock response is returned to the client
+              immediately, and the webhook is sent in the background. Check the <strong>Request Logs</strong>
+              to see the webhook result (status, duration, response body) for each request.
+            </v-alert>
+          </div>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
+
+      <!-- 5. DYNAMIC VARIABLES -->
       <v-expansion-panel id="variables" class="section-card mb-4" elevation="2">
         <v-expansion-panel-title class="panel-title">
           <v-icon color="primary" class="mr-3">mdi-variable</v-icon>
@@ -249,7 +323,7 @@
         </v-expansion-panel-text>
       </v-expansion-panel>
 
-      <!-- 5. ASSERTIONS -->
+      <!-- 6. ASSERTIONS -->
       <v-expansion-panel id="assertions" class="section-card mb-4" elevation="2">
         <v-expansion-panel-title class="panel-title">
           <v-icon color="primary" class="mr-3">mdi-shield-check-outline</v-icon>
@@ -290,7 +364,7 @@
         </v-expansion-panel-text>
       </v-expansion-panel>
 
-      <!-- 6. IMPORT / EXPORT -->
+      <!-- 7. IMPORT / EXPORT -->
       <v-expansion-panel id="import-export" class="section-card mb-4" elevation="2">
         <v-expansion-panel-title class="panel-title">
           <v-icon color="primary" class="mr-3">mdi-swap-horizontal</v-icon>
@@ -317,7 +391,7 @@
         </v-expansion-panel-text>
       </v-expansion-panel>
 
-      <!-- 7. REQUEST LOGS -->
+      <!-- 8. REQUEST LOGS -->
       <v-expansion-panel id="logs" class="section-card mb-4" elevation="2">
         <v-expansion-panel-title class="panel-title">
           <v-icon color="primary" class="mr-3">mdi-format-list-bulleted</v-icon>
@@ -384,6 +458,7 @@ const tocSections = [
   { id: 'getting-started', title: 'Getting Started', icon: 'mdi-rocket-launch-outline' },
   { id: 'creating-mock', title: 'Creating a Mock', icon: 'mdi-plus-circle-outline' },
   { id: 'strategies', title: 'Response Strategies', icon: 'mdi-layers-outline' },
+  { id: 'webhooks', title: 'Webhooks', icon: 'mdi-webhook' },
   { id: 'variables', title: 'Dynamic Variables', icon: 'mdi-variable' },
   { id: 'assertions', title: 'Assertions', icon: 'mdi-shield-check-outline' },
   { id: 'import-export', title: 'Import & Export', icon: 'mdi-swap-horizontal' },

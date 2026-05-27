@@ -36,6 +36,12 @@ func getPagingFromRequest(request *http.Request) (*model.Paging, error) {
 			return nil, fmt.Errorf("error parsing paging limit, %w", err)
 		}
 
+		if l < 0 {
+			l = 999999
+		} else if l == 0 {
+			return nil, fmt.Errorf("error parsing paging limit: limit must be greater than 0, got %d", l)
+		}
+
 		paging.Limit = int32(l)
 	}
 

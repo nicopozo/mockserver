@@ -7,6 +7,7 @@ type WebhookConfig struct {
 	Headers map[string]string `json:"headers" example:"{\"Authorization\":\"Bearer token\"}"`
 	Body    string            `json:"body" example:"{\"event\":\"payment_created\",\"id\":\"{payment_id}\"}"`
 	Enabled bool              `json:"enabled" example:"true"`
+	Delay   int               `json:"delay" example:"3000"`
 	Timeout *int              `json:"timeout,omitempty" example:"5000"`
 }
 

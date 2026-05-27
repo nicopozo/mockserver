@@ -53,6 +53,12 @@ func (s *webhookService) fireAsync(
 	logger := mockscontext.Logger(ctx)
 	start := time.Now()
 
+	// Apply delay before sending the webhook, if configured.
+	if webhook.Delay > 0 {
+		logger.Debug(s, map[string]string{"delay_ms": fmt.Sprintf("%d", webhook.Delay)}, "delaying webhook execution")
+		time.Sleep(time.Duration(webhook.Delay) * time.Millisecond)
+	}
+
 	// Use background context to prevent cancellation when parent request finishes.
 	webhookCtx := context.Background()
 	timeout := s.resolveTimeout(webhook.Timeout)
