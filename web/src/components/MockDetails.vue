@@ -651,7 +651,7 @@ function updateMock(cleanMock: any) {
         headers: { "Content-Type": "application/json" },
       })
       .then(() => {
-        originalMockString.value = JSON.stringify(cleanMock);
+        originalMockString.value = JSON.stringify(mock.value);
         showAlert("Mock successfully updated!");
       })
       .catch((err) => showAlert("Error updating mock", err))
@@ -811,7 +811,7 @@ function setWebhookHeadersFromJSON(index: number, jsonString: string) {
     if (typeof parsed === 'object' && !Array.isArray(parsed)) {
       resp.webhook.headers = parsed;
     }
-  } catch (e) {
+  } catch {
     // Invalid JSON, ignore
   }
 }
@@ -1004,7 +1004,7 @@ function initialize() {
               resp._webhookExpanded = false;
             });
           }
-          originalMockString.value = JSON.stringify(res.data);
+          originalMockString.value = JSON.stringify(mock.value);
           nextTick(() => {
             form.value?.resetValidation();
           });
