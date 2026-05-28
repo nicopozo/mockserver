@@ -81,11 +81,11 @@
       >
         <template v-slot:item.status="{ item }">
           <div class="d-flex align-center">
-            <v-switch v-model="raw(item).status" 
-                      color="success" 
-                      true-value="enabled" 
-                      false-value="disabled" 
-                      hide-details 
+            <v-switch v-model="raw(item).status"
+                      color="success"
+                      true-value="enabled"
+                      false-value="disabled"
+                      hide-details
                       density="compact"
                       @update:model-value="callStatus(raw(item))"
                       class="status-switch"
@@ -95,7 +95,7 @@
             </span>
           </div>
         </template>
-        
+
         <template v-slot:item.name="{ item }">
           <div class="d-flex align-center">
             <v-avatar color="primary" variant="tonal" size="32" class="mr-3">
@@ -183,8 +183,8 @@ const filters = reactive({
 const table = reactive({
   columns: [
     {title: "Status", key: "status", align: 'start', sortable: false},
-    {title: "Name", key: "name", align: 'start'},
-    {title: "Group", key: "group", align: 'start'},
+    {title: "Name", key: "name", width: "30%", align: 'start'},
+    {title: "Group", key: "group", width: "15%", align: 'start'},
     {title: "Path", key: "path", width: "35%", align: 'start'},
     {title: "Strategy", key: "strategy", align: 'center'},
     {title: "Method", key: "method", align: 'center'},
