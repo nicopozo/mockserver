@@ -80,20 +80,23 @@
           class="custom-table"
       >
         <template v-slot:item.status="{ item }">
-          <div class="d-flex align-center">
-            <v-switch v-model="raw(item).status"
-                      color="success"
-                      true-value="enabled"
-                      false-value="disabled"
-                      hide-details
-                      density="compact"
-                      @update:model-value="callStatus(raw(item))"
-                      class="status-switch"
-            ></v-switch>
-            <span class="text-caption ml-2 text-uppercase font-weight-bold" :class="raw(item).status === 'enabled' ? 'text-success' : 'text-grey'">
-              {{ raw(item).status }}
-            </span>
-          </div>
+          <v-switch v-model="raw(item).status"
+                    color="success"
+                    true-value="enabled"
+                    false-value="disabled"
+                    hide-details
+                    inline
+                    density="compact"
+                    @update:model-value="callStatus(raw(item))"
+                    class="status-switch"
+          >
+            <template #label>
+              <span class="text-caption text-uppercase font-weight-bold text-no-wrap"
+                    :class="raw(item).status === 'enabled' ? 'text-success' : 'text-grey'">
+                {{ raw(item).status }}
+              </span>
+            </template>
+          </v-switch>
         </template>
 
         <template v-slot:item.name="{ item }">
@@ -409,6 +412,16 @@ watch(options, () => {
 
 .custom-field :deep(.v-field) {
   border-radius: 12px;
+}
+
+.status-switch {
+  min-width: max-content;
+  grid-template-columns: max-content auto max-content;
+}
+
+.status-switch :deep(.v-selection-control__wrapper) {
+  width: auto;
+  min-width: 36px;
 }
 
 </style>
