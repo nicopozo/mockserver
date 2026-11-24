@@ -15,7 +15,7 @@ type RuleRepository interface {
 	Create(ctx context.Context, rule *model.Rule) (*model.Rule, error)
 	Update(ctx context.Context, rule *model.Rule) (*model.Rule, error)
 	Get(ctx context.Context, key string) (*model.Rule, error)
-	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (*model.RuleList, error)
+	Search(ctx context.Context, params map[string]any, paging model.Paging) (*model.RuleList, error)
 	SearchByMethodAndPath(ctx context.Context, method string, path string) (*model.Rule, error)
 	Delete(ctx context.Context, key string) error
 }

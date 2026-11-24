@@ -462,7 +462,7 @@ func TestRuleController_Search(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			ruleServiceMock.EXPECT().Search(gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(ctx context.Context, params map[string]interface{}, paging model.Paging) (model.RuleList, error) {
+				DoAndReturn(func(ctx context.Context, params map[string]any, paging model.Paging) (model.RuleList, error) {
 					if tt.serviceErr != nil {
 						return model.RuleList{}, tt.serviceErr
 					}

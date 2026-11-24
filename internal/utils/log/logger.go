@@ -15,12 +15,12 @@ const (
 )
 
 type ILogger interface {
-	Info(source interface{}, tags map[string]string, message string, args ...interface{})
-	Warn(source interface{}, tags map[string]string, message string, args ...interface{})
-	Error(source interface{}, tags map[string]string, err error, message string, args ...interface{})
-	Debug(source interface{}, tags map[string]string, message string, args ...interface{})
+	Info(source any, tags map[string]string, message string, args ...any)
+	Warn(source any, tags map[string]string, message string, args ...any)
+	Error(source any, tags map[string]string, err error, message string, args ...any)
+	Debug(source any, tags map[string]string, message string, args ...any)
 	GetTrackingID() string
-	GetMessage(message string, args ...interface{}) string
+	GetMessage(message string, args ...any) string
 }
 
 type log struct {
@@ -62,20 +62,20 @@ func NewLogger(trackingID string) ILogger {
 	return iLogger
 }
 
-func (logger *log) Info(source interface{}, tags map[string]string, message string, args ...interface{}) {
+func (logger *log) Info(source any, tags map[string]string, message string, args ...any) {
 	logger.logrus.Infof("%s - %v", logger.GetMessage(message, args...), logger.getTags(source, tags))
 }
 
-func (logger *log) Warn(source interface{}, tags map[string]string, message string, args ...interface{}) {
+func (logger *log) Warn(source any, tags map[string]string, message string, args ...any) {
 	logger.logrus.Warnf("%s - %v", logger.GetMessage(message, args...), logger.getTags(source, tags))
 }
 
-func (logger *log) Error(source interface{}, tags map[string]string, err error, message string, args ...interface{}) {
+func (logger *log) Error(source any, tags map[string]string, err error, message string, args ...any) {
 	logger.logrus.Errorf("%s - error: %s - %v", logger.GetMessage(message, args...), err.Error(),
 		logger.getTags(source, tags))
 }
 
-func (logger *log) Debug(source interface{}, tags map[string]string, message string, args ...interface{}) {
+func (logger *log) Debug(source any, tags map[string]string, message string, args ...any) {
 	logger.logrus.Debugf("%s - %v", logger.GetMessage(message, args...), logger.getTags(source, tags))
 }
 
@@ -83,7 +83,7 @@ func (logger *log) GetTrackingID() string {
 	return logger.trackingID
 }
 
-func (logger *log) GetMessage(message string, args ...interface{}) string {
+func (logger *log) GetMessage(message string, args ...any) string {
 	if len(args) > 0 {
 		return fmt.Sprintf(message, args...)
 	}
@@ -95,7 +95,7 @@ func newRequestID() string {
 	return ulid.Make().String()
 }
 
-func getClass(source interface{}) string {
+func getClass(source any) string {
 	if t := reflect.TypeOf(source); t != nil {
 		return t.String()
 	}
@@ -103,7 +103,7 @@ func getClass(source interface{}) string {
 	return ""
 }
 
-func (logger *log) getTags(source interface{}, tags map[string]string) []string {
+func (logger *log) getTags(source any, tags map[string]string) []string {
 	var res []string
 
 	index := 0

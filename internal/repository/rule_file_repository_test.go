@@ -90,7 +90,7 @@ func Test_ruleFileRepository_Get(t *testing.T) {
 func Test_ruleFileRepository_Search(t *testing.T) {
 	type args struct {
 		ctx    context.Context
-		params map[string]interface{}
+		params map[string]any
 		paging model.Paging
 	}
 
@@ -104,7 +104,7 @@ func Test_ruleFileRepository_Search(t *testing.T) {
 			name: "Should search and return all rules",
 			args: args{
 				ctx:    context.Background(),
-				params: map[string]interface{}{},
+				params: map[string]any{},
 				paging: model.Paging{Limit: 10},
 			},
 			wantLen: 4,
@@ -114,7 +114,7 @@ func Test_ruleFileRepository_Search(t *testing.T) {
 			name: "Should search with limit",
 			args: args{
 				ctx:    context.Background(),
-				params: map[string]interface{}{},
+				params: map[string]any{},
 				paging: model.Paging{Limit: 1},
 			},
 			wantLen: 1,
@@ -124,7 +124,7 @@ func Test_ruleFileRepository_Search(t *testing.T) {
 			name: "Should search with LastID (keyset pagination)",
 			args: args{
 				ctx:    context.Background(),
-				params: map[string]interface{}{},
+				params: map[string]any{},
 				paging: model.Paging{Limit: 10, LastID: "c3"}, // c3 is index 1 after sorting newest first (d4, c3, b2, a1)
 			},
 			wantLen: 2, // b2, a1
@@ -134,7 +134,7 @@ func Test_ruleFileRepository_Search(t *testing.T) {
 			name: "Should search with filters",
 			args: args{
 				ctx:    context.Background(),
-				params: map[string]interface{}{"name": "TestMock"},
+				params: map[string]any{"name": "TestMock"},
 				paging: model.Paging{Limit: 10},
 			},
 			wantLen: 1,

@@ -40,7 +40,7 @@ type Error struct {
 	ErrorCause []ErrorCause `json:"cause"` //nolint:tagliatelle
 }
 
-func NewError(causeCode int64, message string, args ...interface{}) Error {
+func NewError(causeCode int64, message string, args ...any) Error {
 	c := causeMap[int(causeCode)]
 	cause := []ErrorCause{{Code: causeCode, Description: c.message}}
 	newError := Error{

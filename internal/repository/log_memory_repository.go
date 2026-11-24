@@ -68,10 +68,7 @@ func (r *logMemoryRepository) GetAll(ctx context.Context, paging model.Paging) (
 	}
 
 	if start != -1 && start < len(allEntries) {
-		end := start + int(paging.Limit)
-		if end > len(allEntries) {
-			end = len(allEntries)
-		}
+		end := min(start+int(paging.Limit), len(allEntries))
 
 		result = allEntries[start:end]
 	}

@@ -15,7 +15,13 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
-const columnMethod = "method"
+const (
+	columnMethod = "method"
+	columnKey    = "key"
+	columnGroup  = "group"
+	columnName   = "name"
+	columnPath   = "path"
+)
 
 type ruleSQLRepository struct {
 	db Database
@@ -232,7 +238,7 @@ func (repository *ruleSQLRepository) Get(ctx context.Context, key string) (*mode
 	if err != nil {
 		if err.Error() == noRowsMessage {
 			msg := fmt.Sprintf("no rule found with key: %s", key)
-			logger.Error(repository, nil, err, msg)
+			logger.Error(repository, nil, err, "%s", msg)
 
 			return nil, mockserrors.RuleNotFoundError{
 				Message: msg,
@@ -272,7 +278,7 @@ func (repository *ruleSQLRepository) Get(ctx context.Context, key string) (*mode
 	return parseRule(row, variables, responses), nil
 }
 
-func (repository *ruleSQLRepository) Search(ctx context.Context, params map[string]interface{},
+func (repository *ruleSQLRepository) Search(ctx context.Context, params map[string]any,
 	paging model.Paging,
 ) (*model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)
@@ -457,7 +463,7 @@ func (repository *ruleSQLRepository) insertResponses(ctx context.Context, rule *
 	return nil
 }
 
-func newSearchQuery(params map[string]interface{}, paging model.Paging, driver string) (string, []interface{}, error) {
+func newSearchQuery(params map[string]any, paging model.Paging, driver string) (string, []any, error) {
 	query := "SELECT * FROM rules"
 
 	where, err := newWhereClause(params, driver)
@@ -465,7 +471,7 @@ func newSearchQuery(params map[string]interface{}, paging model.Paging, driver s
 		return "", nil, err
 	}
 
-	var args []interface{}
+	var args []any
 
 	if paging.LastID != "" {
 		if where == " " {
@@ -492,38 +498,31 @@ func newSearchQuery(params map[string]interface{}, paging model.Paging, driver s
 	return query + where + order, append(args, paging.Limit, paging.Offset), nil
 }
 
-func newWhereClause(params map[string]interface{}, driver string) (string, error) {
+func newWhereClause(params map[string]any, driver string) (string, error) {
 	if len(params) == 0 {
 		return " ", nil
 	}
 
-	where := " WHERE "
+	clauses := make([]string, 0, len(params))
 
-	index := 0
 	for key, value := range params {
-		if index > 0 {
-			where += " AND "
-		}
+		lowerValue := strings.ToLower(fmt.Sprintf("%v", value))
 
 		switch key {
-		case "status", columnMethod, "pattern", "strategy", "path", "name":
-			v := strings.ToLower(fmt.Sprintf("%v", value))
-			where += key + " like '%" + v + "%'"
-		case "group", "key":
-			v := strings.ToLower(fmt.Sprintf("%v", value))
+		case "status", columnMethod, "pattern", "strategy", columnPath, columnName:
+			clauses = append(clauses, fmt.Sprintf("%s like '%%%s%%'", key, lowerValue))
+		case columnGroup, columnKey:
 			if driver == datasourcePostgres {
-				where += `"` + key + `"` + " like '%" + v + "%'"
+				clauses = append(clauses, fmt.Sprintf(`"%s" like '%%%s%%'`, key, lowerValue))
 			} else {
-				where += "`" + key + "` like '%" + v + "%'"
+				clauses = append(clauses, fmt.Sprintf("`%s` like '%%%s%%'", key, lowerValue))
 			}
 		default:
 			return "", mockserrors.InvalidRulesError{Message: fmt.Sprintf("%s is not a valid parameter", key)}
 		}
-
-		index++
 	}
 
-	return where, nil
+	return " WHERE " + strings.Join(clauses, " AND "), nil
 }
 
 func parseVariables(variables []VariableRow) []*model.Variable {

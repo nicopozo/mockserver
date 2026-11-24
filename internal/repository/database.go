@@ -28,9 +28,9 @@ const (
 //go:generate mockgen -destination=../utils/test/mocks/sql_result_mock.go -package=mocks database/sql Result
 
 type Database interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-	Get(dest interface{}, query string, args ...interface{}) error
-	Select(dest interface{}, query string, args ...interface{}) error
+	Exec(query string, args ...any) (sql.Result, error)
+	Get(dest any, query string, args ...any) error
+	Select(dest any, query string, args ...any) error
 	Prepare(query string) (*sql.Stmt, error)
 	Beginx() (*sqlx.Tx, error)
 	DriverName() string

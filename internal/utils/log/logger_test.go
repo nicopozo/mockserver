@@ -13,7 +13,7 @@ func Test_log_getMessage(t *testing.T) {
 
 	type args struct {
 		message string
-		args    []interface{}
+		args    []any
 	}
 
 	tests := []struct {
@@ -36,7 +36,7 @@ func Test_log_getMessage(t *testing.T) {
 			fields: fields{trackingID: "123"},
 			args: args{
 				message: "with one string %v message",
-				args:    []interface{}{"argument"},
+				args:    []any{"argument"},
 			},
 			want: "with one string argument message",
 		},
@@ -45,7 +45,7 @@ func Test_log_getMessage(t *testing.T) {
 			fields: fields{trackingID: "123"},
 			args: args{
 				message: "with %v int argument message",
-				args:    []interface{}{1},
+				args:    []any{1},
 			},
 			want: "with 1 int argument message",
 		},
@@ -54,7 +54,7 @@ func Test_log_getMessage(t *testing.T) {
 			fields: fields{trackingID: "123"},
 			args: args{
 				message: "with one string %s and %d int value message",
-				args:    []interface{}{"argument", 1},
+				args:    []any{"argument", 1},
 			},
 			want: "with one string argument and 1 int value message",
 		},

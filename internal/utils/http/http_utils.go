@@ -19,7 +19,7 @@ func WriteJSON(writer http.ResponseWriter, status int, data any) {
 }
 
 // WriteError writes a consistent error response using the model.Error structure.
-func WriteError(writer http.ResponseWriter, causeCode int64, message string, args ...interface{}) {
+func WriteError(writer http.ResponseWriter, causeCode int64, message string, args ...any) {
 	errResult := model.NewError(causeCode, message, args...)
 
 	WriteJSON(writer, errResult.Status, errResult)

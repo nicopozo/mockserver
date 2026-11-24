@@ -227,7 +227,7 @@ func (svc *mockService) getBodyVariableValue(key, body string) (string, error) {
 		return "", fmt.Errorf("invalid JSON path for key %s - %w", key, err)
 	}
 
-	var reqMap interface{}
+	var reqMap any
 	if err := json.Unmarshal([]byte(body), &reqMap); err != nil {
 		return "", fmt.Errorf("error unmarshalling request body. Body: %s: %w", body, err)
 	}

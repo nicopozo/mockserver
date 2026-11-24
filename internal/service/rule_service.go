@@ -21,7 +21,7 @@ type RuleService interface {
 	Update(ctx context.Context, key string, rule model.Rule) (model.Rule, error)
 	UpdateStatus(ctx context.Context, key string, rule model.RuleStatus) (model.Rule, error)
 	Get(ctx context.Context, key string) (model.Rule, error)
-	Search(ctx context.Context, params map[string]interface{}, paging model.Paging) (model.RuleList, error)
+	Search(ctx context.Context, params map[string]any, paging model.Paging) (model.RuleList, error)
 	SearchByMethodAndPath(ctx context.Context, method, path string) (model.Rule, error)
 	Delete(ctx context.Context, key string) error
 }
@@ -125,7 +125,7 @@ func (ruleService *ruleService) Get(ctx context.Context, key string) (model.Rule
 	return *repoRule, nil
 }
 
-func (ruleService *ruleService) Search(ctx context.Context, params map[string]interface{},
+func (ruleService *ruleService) Search(ctx context.Context, params map[string]any,
 	paging model.Paging,
 ) (model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)

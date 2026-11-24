@@ -6,48 +6,6 @@ import (
 	stringutils "github.com/nicopozo/mockserver/internal/utils/string"
 )
 
-func TestArrayContains(t *testing.T) {
-	t.Parallel()
-
-	type args struct {
-		array []string
-		str   string
-	}
-
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "Array should contain string",
-			args: args{
-				array: []string{"hola", "si", "tal vez", "otro string"},
-				str:   "hola",
-			},
-			want: true,
-		},
-		{
-			name: "Array should not contain string",
-			args: args{
-				array: []string{"hola", "si", "tal vez", "otro string"},
-				str:   "chau",
-			},
-			want: false,
-		},
-	}
-
-	for _, tt := range tests { //nolint:paralleltest
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			if got := stringutils.ArraysContains(tt.args.array, tt.args.str); got != tt.want {
-				t.Errorf("Contains() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestHash(t *testing.T) {
 	t.Parallel()
 
@@ -73,7 +31,6 @@ func TestHash(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

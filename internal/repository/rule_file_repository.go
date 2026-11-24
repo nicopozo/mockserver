@@ -139,12 +139,12 @@ func (repository *ruleFileRepository) Get(ctx context.Context, key string) (*mod
 		Message: msg,
 	}
 
-	logger.Error(repository, nil, err, msg)
+	logger.Error(repository, nil, err, "%s", msg)
 
 	return nil, err
 }
 
-func (repository *ruleFileRepository) Search(ctx context.Context, params map[string]interface{},
+func (repository *ruleFileRepository) Search(ctx context.Context, params map[string]any,
 	paging model.Paging,
 ) (*model.RuleList, error) {
 	logger := mockscontext.Logger(ctx)
@@ -192,10 +192,7 @@ func (repository *ruleFileRepository) Search(ctx context.Context, params map[str
 		return ruleList, nil
 	}
 
-	to := start + int(paging.Limit)
-	if to > len(filtered) {
-		to = len(filtered)
-	}
+	to := min(start+int(paging.Limit), len(filtered))
 
 	ruleList.Results = filtered[start:to]
 
@@ -210,19 +207,19 @@ func applies(rule model.Rule, params map[string]any) bool {
 		formattedValue := strings.ToLower(fmt.Sprintf("%v", value))
 
 		switch key {
-		case "group":
+		case columnGroup:
 			result = result && strings.Contains(strings.ToLower(rule.Group), formattedValue)
 		case "status":
 			result = result && strings.Contains(strings.ToLower(rule.Status), formattedValue)
-		case "method":
+		case columnMethod:
 			result = result && strings.Contains(strings.ToLower(rule.Method), formattedValue)
 		case "strategy":
 			result = result && strings.Contains(strings.ToLower(rule.Strategy), formattedValue)
-		case "path":
+		case columnPath:
 			result = result && strings.Contains(strings.ToLower(rule.Path), formattedValue)
-		case "name":
+		case columnName:
 			result = result && strings.Contains(strings.ToLower(rule.Name), formattedValue)
-		case "key":
+		case columnKey:
 			result = result && strings.Contains(strings.ToLower(rule.Key), formattedValue)
 		}
 	}

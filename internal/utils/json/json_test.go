@@ -50,7 +50,7 @@ func TestUnmarshal(t *testing.T) {
 
 func TestMarshal(t *testing.T) {
 	type args struct {
-		model interface{}
+		model any
 	}
 
 	tests := []struct {

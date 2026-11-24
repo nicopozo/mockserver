@@ -116,7 +116,7 @@ func (controller *MockController) handleExecutionError(
 	}
 
 	if errors.As(err, &ruleserrors.AssertionError{}) {
-		logger.Debug(controller, nil, "One or more assertions failed.",
+		logger.Debug(controller, nil, "One or more assertions failed for path %s and method %s.",
 			path, request.Method)
 
 		errorResult := model.NewError(model.ValidationError, "%s", err.Error())
@@ -190,7 +190,7 @@ func (controller *MockController) extractExecutionBody(logger log.ILogger, body 
 
 	bodyContents, err := io.ReadAll(body)
 	if err != nil {
-		logger.Error(controller, nil, err, "Error extracting body from execution: "+err.Error())
+		logger.Error(controller, nil, err, "Error extracting body from execution: %s", err.Error())
 
 		return "<error>"
 	}

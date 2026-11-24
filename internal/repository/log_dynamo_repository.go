@@ -14,6 +14,11 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
+const (
+	logAttrType = "type"
+	logItemType = "log"
+)
+
 type DynamoLogRepository struct {
 	client    *dynamodb.Client
 	tableName string
@@ -38,7 +43,7 @@ func (r *DynamoLogRepository) Add(ctx context.Context, entry model.LogEntry) err
 
 	item := logItem{
 		ID:              entry.ID,
-		Type:            "log",
+		Type:            logItemType,
 		Timestamp:       entry.Timestamp,
 		Method:          entry.Method,
 		URL:             entry.URL,
@@ -72,8 +77,8 @@ func (r *DynamoLogRepository) GetAll(ctx context.Context, paging model.Paging) (
 
 	if paging.LastID != "" {
 		exclusiveStartKey = map[string]types.AttributeValue{
-			"id":   &types.AttributeValueMemberS{Value: paging.LastID},
-			"type": &types.AttributeValueMemberS{Value: "log"},
+			"id":        &types.AttributeValueMemberS{Value: paging.LastID},
+			logAttrType: &types.AttributeValueMemberS{Value: logItemType},
 		}
 	}
 
@@ -82,10 +87,10 @@ func (r *DynamoLogRepository) GetAll(ctx context.Context, paging model.Paging) (
 		IndexName:              aws.String("type-id-index"),
 		KeyConditionExpression: aws.String("#t = :t"),
 		ExpressionAttributeNames: map[string]string{
-			"#t": "type",
+			"#t": logAttrType,
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":t": &types.AttributeValueMemberS{Value: "log"},
+			":t": &types.AttributeValueMemberS{Value: logItemType},
 		},
 		ScanIndexForward:  aws.Bool(false), // Sort order: descending (newest first)
 		Limit:             aws.Int32(paging.Limit),
@@ -149,8 +154,8 @@ func (r *DynamoLogRepository) Update(ctx context.Context, logID string, updater 
 	result, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(r.tableName),
 		Key: map[string]types.AttributeValue{
-			"id":   &types.AttributeValueMemberS{Value: logID},
-			"type": &types.AttributeValueMemberS{Value: "log"},
+			"id":        &types.AttributeValueMemberS{Value: logID},
+			logAttrType: &types.AttributeValueMemberS{Value: logItemType},
 		},
 	})
 	if err != nil {

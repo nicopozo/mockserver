@@ -68,7 +68,7 @@ func (r *DynamoRuleRepository) Get(ctx context.Context, key string) (*model.Rule
 	result, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(r.tableName),
 		Key: map[string]types.AttributeValue{
-			"key": &types.AttributeValueMemberS{Value: key},
+			columnKey: &types.AttributeValueMemberS{Value: key},
 		},
 	})
 	if err != nil {
@@ -93,7 +93,7 @@ func (r *DynamoRuleRepository) Get(ctx context.Context, key string) (*model.Rule
 
 func (r *DynamoRuleRepository) Search(
 	ctx context.Context,
-	params map[string]interface{},
+	params map[string]any,
 	paging model.Paging,
 ) (*model.RuleList, error) {
 	exclusiveStartKey := r.getExclusiveStartKey(paging.LastID)
@@ -140,13 +140,13 @@ func (r *DynamoRuleRepository) Search(
 //goland:noinspection GoUnusedGlobalVariable
 //nolint:gochecknoglobals
 var lowerFieldMap = map[string]string{
-	"group": "group_lower",
-	"name":  "name_lower",
-	"path":  "path_lower",
+	columnGroup: "group_lower",
+	columnName:  "name_lower",
+	columnPath:  "path_lower",
 }
 
 func (r *DynamoRuleRepository) buildSearchExpression(
-	params map[string]interface{},
+	params map[string]any,
 ) (*string, map[string]types.AttributeValue, map[string]string) {
 	if len(params) == 0 {
 		return nil, nil, nil
@@ -185,7 +185,7 @@ func (r *DynamoRuleRepository) getExclusiveStartKey(lastID string) map[string]ty
 	}
 
 	return map[string]types.AttributeValue{
-		"key": &types.AttributeValueMemberS{Value: lastID},
+		columnKey: &types.AttributeValueMemberS{Value: lastID},
 	}
 }
 
@@ -258,7 +258,7 @@ func (r *DynamoRuleRepository) Delete(ctx context.Context, key string) error {
 	_, err := r.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		TableName: aws.String(r.tableName),
 		Key: map[string]types.AttributeValue{
-			"key": &types.AttributeValueMemberS{Value: key},
+			columnKey: &types.AttributeValueMemberS{Value: key},
 		},
 	})
 	if err != nil {

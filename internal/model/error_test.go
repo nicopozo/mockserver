@@ -12,7 +12,7 @@ func TestNewError(t *testing.T) {
 	type args struct {
 		causeCode int64
 		message   string
-		args      []interface{}
+		args      []any
 	}
 
 	tests := []struct {
@@ -27,7 +27,7 @@ func TestNewError(t *testing.T) {
 			args: args{
 				causeCode: model.InternalError,
 				message:   "Some error %s",
-				args:      []interface{}{"detail"},
+				args:      []any{"detail"},
 			},
 			wantStatus:    http.StatusInternalServerError,
 			wantCauseDesc: "Internal server error",
